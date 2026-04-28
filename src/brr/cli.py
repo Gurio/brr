@@ -20,6 +20,8 @@ def main(argv: list[str] | None = None) -> None:
 
     p = sub.add_parser("init", help="set up a repo for brr")
     p.add_argument("url", nargs="?", default=None, help="clone URL (optional)")
+    p.add_argument("-i", "--interactive", action="store_true",
+                   help="ask setup questions (runner, config) with timed defaults")
     p.set_defaults(func=cmd_init)
 
     p = sub.add_parser("run", help="run a task through the runner")
@@ -38,10 +40,34 @@ def main(argv: list[str] | None = None) -> None:
     p.set_defaults(func=cmd_connect)
 
     p = sub.add_parser("up", help="start the daemon")
+    p.add_argument("--debug", action="store_true", default=None,
+                    help="keep worktrees and write traces for troubleshooting")
     p.set_defaults(func=cmd_up)
 
     p = sub.add_parser("down", help="stop the daemon")
     p.set_defaults(func=cmd_down)
+
+    p = sub.add_parser("inspect", help="show details for a task or event")
+    p.add_argument("--event-body", action="store_true",
+                   help="include the originating event body")
+    p.add_argument("--prompt", action="store_true",
+                   help="include the latest linked runner prompt")
+    p.add_argument("task_id", help="task ID (or partial match)")
+    p.set_defaults(func=cmd_inspect)
+
+    p = sub.add_parser("docs", help="show bundled brr documentation")
+    p.add_argument("topic", nargs="?", default=None,
+                    help="doc topic (omit to list available topics)")
+    p.set_defaults(func=cmd_docs)
+
+    p = sub.add_parser("streams", help="list known workstreams")
+    p.set_defaults(func=cmd_streams)
+
+    p = sub.add_parser("stream", help="workstream operations")
+    stream_sub = p.add_subparsers(dest="stream_command", required=True)
+    p_show = stream_sub.add_parser("show", help="show a workstream's details")
+    p_show.add_argument("stream_id", help="stream ID (or partial match)")
+    p_show.set_defaults(func=cmd_stream_show)
 
     p = sub.add_parser("eject", help="copy bundled prompts for customization")
     p.set_defaults(func=cmd_eject)
@@ -56,12 +82,14 @@ def _repo_root() -> Path:
 
 
 def _brr_dir() -> Path:
-    return _repo_root() / ".brr"
+    from . import gitops
+
+    return gitops.shared_brr_dir(_repo_root())
 
 
 def cmd_init(args):
     from . import adopt
-    adopt.init_repo(args.url)
+    adopt.init_repo(args.url, interactive=args.interactive)
 
 
 def cmd_run(args):
@@ -93,7 +121,7 @@ def cmd_connect(args):
 def cmd_up(args):
     from . import daemon as daemon_mod
     root = _repo_root()
-    daemon_mod.start(root)
+    daemon_mod.start(root, debug=args.debug)
 
 
 def cmd_down(args):
@@ -103,6 +131,52 @@ def cmd_down(args):
         print("[brr] daemon stopped")
     else:
         print("[brr] daemon not running")
+
+
+def cmd_inspect(args):
+    from . import status as status_mod
+    sys.stdout.write(
+        status_mod.inspect_task(
+            args.task_id,
+            _repo_root(),
+            show_event_body=args.event_body,
+            show_prompt=args.prompt,
+        ) + "\n"
+    )
+
+
+def cmd_streams(args):
+    from . import status as status_mod
+    sys.stdout.write(status_mod.list_streams() + "\n")
+
+
+def cmd_stream_show(args):
+    from . import status as status_mod
+    sys.stdout.write(status_mod.show_stream(args.stream_id) + "\n")
+
+
+def cmd_docs(args):
+    from . import docs as docs_mod
+    from . import gitops
+    try:
+        repo_root = gitops.ensure_git_repo()
+    except (RuntimeError, SystemExit):
+        repo_root = None
+
+    if not args.topic:
+        sys.stdout.write(docs_mod.format_listing(repo_root) + "\n")
+        return
+
+    content = docs_mod.read_topic(args.topic, repo_root)
+    if content is None:
+        topics = docs_mod.list_topics(repo_root)
+        available = ", ".join(topics) if topics else "(none)"
+        raise SystemExit(
+            f"[brr] unknown doc topic: {args.topic} (available: {available})"
+        )
+    sys.stdout.write(content)
+    if not content.endswith("\n"):
+        sys.stdout.write("\n")
 
 
 def cmd_eject(args):
