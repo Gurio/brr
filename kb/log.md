@@ -1454,3 +1454,14 @@ task manifests, conversation logs, responses, traces, worktrees, and
 preserved containers under `.brr/` when needed. `RunProgressView`
 remains the single progress projection for gates and any future
 operator view.
+
+## [2026-05-13] fix | Compress oversized repo dive-in map
+
+Post-task kb consistency pass. Rewrote `repo-dive-in-map.md` from a
+large file-by-file chronicle into a concise current-state source
+navigator that delegates canonical subsystem synthesis to the subject
+hubs. Updated the index summary to match the page's current role.
+
+The deterministic preflight no longer reports the oversized-page
+warning for the map. The remaining findings are the existing
+info-level fleet hub and developer-reload scaffolding advisories.
