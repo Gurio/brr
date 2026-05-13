@@ -2,216 +2,109 @@
 
 Status: shipped on 2026-05-10
 
-Design for making brr self-development less clumsy without adding a
-general user-facing "restart brr" product feature. This page hangs off
-the daemon subject hub, [`subject-daemon.md`](subject-daemon.md), and
-the recent live-run ergonomics review,
-[`research-runner-context-ergonomics-2026-05-09.md`](research-runner-context-ergonomics-2026-05-09.md).
+Developer reload is the brr self-development path for a long-running
+foreground `brr up` process. It is intentionally narrow: an operator
+who is hacking on brr installs the package in editable mode and opts
+into quiescent daemon re-exec so source changes landed by an agent are
+loaded before the next task.
 
-## Problem
+This page hangs off the daemon subject hub,
+[`subject-daemon.md`](subject-daemon.md). It was compressed on
+2026-05-13 from proposal form into current-state synthesis because the
+implementation and tests now carry the detailed behavior.
 
-When developing brr itself, the long-running `brr up` process keeps the
-old Python modules in memory. After an agent lands a bigger change, the
-operator currently has to:
+## Current shape
 
-1. reinstall brr into the venv with `pip install .`;
-2. switch to the terminal running `brr up`;
-3. press Ctrl-C;
-4. start `brr up` again.
-
-That is tolerable for occasional package releases, but it is poor for
-remote-assisted development of brr itself. The running daemon is the
-thing receiving the Telegram/Slack task, so an agent cannot safely
-restart it mid-task; killing the process before stdout capture, response
-delivery, kb preflight, finalize, and push would break the task that
-requested the reload.
-
-## Goals
-
-- Remove the normal need to reinstall brr after source-only changes.
-- Remove the normal need to manually Ctrl-C and restart the foreground
-  `brr up` terminal after each landed code change.
-- Restart only after the current task has reached a safe boundary:
-  response captured, event marked terminal, env finalized, kb maintenance
-  done, and push attempted.
-- Keep the normal user-facing daemon surface small: `brr up` and
-  `brr down` remain the public lifecycle model.
-- Stay stdlib-only.
-
-## Non-goals
-
-- Do not add a chat command like "restart brr".
-- Do not let agents run `brr down`, `brr restart`, or lifecycle control
-  commands from inside daemon tasks.
-- Do not build a production supervisor. systemd, launchd, Docker, tmux,
-  and future `brnrd` supervision are separate concerns.
-- Do not attempt Python `importlib.reload()` inside the live daemon.
-  Threads, module globals, class identity, and already-imported function
-  references make in-process reload a worse abstraction than replacing
-  the process image.
-- Do not automate `pip install .`. Package installation mutates the
-  operator's environment and should stay explicit.
-
-## Recommendation
-
-Use an editable install for brr development and add an opt-in
-development reload mode to the foreground daemon:
+For brr self-development:
 
 ```bash
-pip install -e ".[dev]"       # once per venv, or after packaging metadata changes
-brr up --dev-reload           # opt-in brr-development mode
+pip install -e ".[dev]"
+brr up --dev-reload
 ```
 
 `--dev-reload` watches brr's installed package directory for source and
-package-data changes. When a change is detected before the next task
-starts, the daemon immediately re-execs itself. If a task changes brr's
-package files, the daemon waits until the task has fully finalized and
-the push path has run, then re-execs.
+package-data changes. The same behavior can be made persistent in a
+self-development checkout with `dev_reload=true` in `.brr/config`.
 
-The shipped implementation also accepts `dev_reload=true` in
-`.brr/config` for operators who always want this behaviour in a brr
-self-development checkout.
+When the watcher detects a change before the next task starts, the
+daemon immediately re-execs itself. When the current task changes brr
+package files, the daemon waits until the safe boundary has passed:
+response captured, event terminal, environment finalized, kb
+maintenance complete, and push attempted. It then re-execs before
+claiming another event.
 
-The re-exec keeps the same terminal session and can keep the same PID by
-calling `os.execv`/`os.execve`; there is no shell supervisor required.
-The new process imports brr from disk again, so an editable install
-picks up source changes that were fast-forwarded into the main checkout
-by the completed task.
+Reload is explicit rather than the default. Normal users, package
+installs, and external supervisors can treat `brr up` as a stable
+foreground process that exits only on signal or crash. Developers who
+want source reload choose it with the CLI flag or config key.
 
-This is intentionally a development mode, not a new product workflow.
-It can be documented in brr's own Development section and omitted from
-the quick-start command table. If exposed in argparse help, the label
-should be explicit: "developer: re-exec daemon when brr package files
-change".
+## Implementation boundary
 
-## Option vs default
+The watcher lives in [`dev_reload.py`](../src/brr/dev_reload.py). It
+snapshots files under the installed package directory using stable
+metadata such as relative path, size, and `st_mtime_ns`, with package
+data that brr loads included alongside Python files. When the repo root
+is discoverable, `pyproject.toml` is included so packaging metadata
+changes still prompt a restart; the operator may still need to reinstall
+after metadata or dependency changes.
 
-The implementation keeps reload explicit instead of making it an
-unconditional `brr up` default. The deciding boundary is process
-lifecycle: normal users and external supervisors should be able to treat
-`brr up` as a stable foreground daemon that only stops on signal or
-crash. Developer reload deliberately replaces the process image when
-package files change, which is useful in an editable brr checkout but
-surprising in packaged installs, supervised deployments, or repos where
-the operator is not actively developing brr itself.
+[`daemon.start`](../src/brr/daemon.py) creates the watcher only when
+`--dev-reload` or `dev_reload=true` is set. The daemon checks the watcher
+at quiescent points: before claiming a task and after a task's finalize /
+push path has completed.
 
-Auto-detecting editable installs was rejected as the default because it
-turns local packaging shape into hidden lifecycle policy. A developer
-who wants the behaviour can choose `--dev-reload` or `dev_reload=true`;
-everyone else keeps the small public model: `brr up`, `brr down`, and
-an external supervisor for uptime policy.
+Re-exec uses the current Python executable and argv through
+`os.execve`, with `BRR_REEXEC=1` in the environment. Startup accepts the
+existing PID file only for this self-reexec case, where the recorded PID
+matches the current process. Duplicate-daemon protection remains strict
+for every other startup.
 
-## Why editable install is the first fix
+Signals keep their normal meaning. Ctrl-C and `brr down` drain and stop;
+they do not restart.
 
-With a normal `pip install .`, Python imports brr from copied files in
-`site-packages`. Source changes in the checkout do not affect the
-running package until the operator reinstalls. No daemon restart design
-can erase that packaging fact.
+## Safety rules
 
-With `pip install -e ".[dev]"`, the venv imports brr from the checkout's
-`src/brr`. When the daemon fast-forwards an agent's committed changes
-back into the base checkout, a process restart is enough to load them.
-Reinstall is only needed when packaging metadata changes, dependencies
-change, or the editable install itself is missing.
+- Agents do not get a chat command or task-level mechanism to restart
+  the daemon.
+- The daemon never restarts while a runner is active.
+- Reload stays local and terminal-owned, not gate-owned.
+- brr does not automate `pip install .`; mutating the operator's Python
+  environment remains an explicit human action.
+- The implementation replaces the process image instead of trying
+  `importlib.reload()`, avoiding in-process module identity and thread
+  hazards.
 
-## Implementation sketch
+## Tests and source
 
-The shipped code uses a small `dev_reload.py` helper:
+Read:
 
-```python
-class DevReloadWatcher:
-    def __init__(self, package_dir: Path, extra_paths: list[Path] = ...):
-        self._snapshot = snapshot(package_dir, extra_paths)
+- [`dev_reload.py`](../src/brr/dev_reload.py)
+- [`daemon.py`](../src/brr/daemon.py)
+- [developer reload tests](../tests/test_dev_reload.py)
+- [daemon tests](../tests/test_daemon.py)
 
-    def changed(self) -> bool:
-        current = snapshot(...)
-        if current == self._snapshot:
-            return False
-        self._snapshot = current
-        return True
-```
-
-Snapshot entries should be stable tuples of relative path, size, and
-`st_mtime_ns` for files under `Path(__file__).resolve().parent` with
-extensions brr actually loads (`.py`, `.md`, `Dockerfile`, and maybe
-package data without an extension). Include `pyproject.toml` when the
-repo root appears to be the brr source checkout. The point is not a
-perfect file watcher; it is a cheap polling guard evaluated on the same
-cadence as the daemon inbox scan.
-
-Daemon loop shape:
-
-1. `brr up` accepts `--dev-reload` and passes `dev_reload=True` to
-   `daemon.start`.
-2. `daemon.start` creates the watcher only when `dev_reload` is set or
-   `dev_reload=true` appears in `.brr/config`.
-3. Each loop checks `watcher.changed()` before claiming a pending event.
-   A change at this boundary re-execs before the next task starts.
-4. After each task completes, after `_push_if_needed`, the daemon checks
-   the watcher again and re-execs if the task changed brr package files.
-5. Re-exec uses the same Python and argv:
-
-   ```python
-   env = os.environ.copy()
-   env["BRR_REEXEC"] = "1"
-   os.execve(sys.executable, [sys.executable, *sys.argv], env)
-   ```
-
-6. On startup, allow the existing PID file only when
-   `BRR_REEXEC=1` and the PID in `.brr/daemon.pid` equals the current
-   `os.getpid()`. Then rewrite the PID file and continue normally.
-   Other duplicate-daemon checks stay strict.
-
-The existing signal behavior should remain unchanged. Ctrl-C and
-`brr down` still mean "drain and stop", not "restart".
-
-## Tests
-
-Covered by focused tests rather than an end-to-end self-reexec test:
-
-- watcher detects `.py` and package-data changes and ignores unchanged
-  snapshots;
-- `daemon.start` permits an existing PID only for the current PID during
-  `BRR_REEXEC`;
-- `daemon.start` still rejects a different running PID;
-- `--dev-reload` does not call the re-exec helper while `_run_worker` is
-  active;
-- when a change is detected during a task, the re-exec helper is called
-  only after event status, finalize, kb maintenance, and push hooks have
-  run;
-- regular `brr down` / Ctrl-C behavior remains drain-and-stop.
-
-Older live Docker runner images used for brr self-work lacked Python,
-pytest, and `rg` in some sessions. The bundled runner Dockerfile now
-includes the baseline tools needed to run brr's normal dev install
-inside the container, but verify against a freshly rebuilt image; stale
-local `brr-runner:*` tags can still reproduce the old limitation noted in
-[`research-runner-context-ergonomics-2026-05-09.md`](research-runner-context-ergonomics-2026-05-09.md).
+The tests cover watcher change detection, same-PID reexec startup,
+strict rejection of other PID files, no reexec while `_run_worker` is
+active, and post-task reexec after event status, finalize, kb
+maintenance, and push hooks have run.
 
 ## Rejected alternatives
 
 | Alternative | Why not |
 | ----------- | ------- |
-| Public `brr restart` | Adds broad product surface for a development-only pain. Also needs wait/drain semantics and still does not solve non-editable installs. |
-| Telegram/Slack "restart" command | Lets remote input control the process responsible for delivering that same remote response. Too easy to make self-referential and unsafe. |
-| Agent writes `.brr/restart` marker | Puts lifecycle control into gitignored runtime scratch and invites agents to edit `.brr/`, which the playbook currently tells them not to do. |
-| `importlib.reload()` | In-process reload is fragile with threads, module globals, and already-bound functions/classes. Re-exec is simpler and closer to how daemons normally reload code. |
-| systemd/launchd/brnrd supervisor now | Correct layer for production uptime and fleet management, but too much ceremony for one-repo development reload. |
+| Public `brr restart` | Broad product surface for a development-only pain, and it still would not solve non-editable installs. |
+| Telegram/Slack "restart" command | Lets remote input control the process responsible for delivering that same remote response. |
+| Agent writes `.brr/restart` marker | Puts lifecycle control in gitignored runtime scratch and invites agents to edit `.brr/`. |
+| `importlib.reload()` | Fragile with threads, globals, and already-bound functions/classes. Re-exec is simpler. |
+| systemd/launchd/brnrd supervisor now | The right layer for production uptime and fleet management, but too much ceremony for local brr self-development. |
 
 ## Operator workflow
 
-For brr self-development:
-
-```bash
-cd /path/to/brr
-pip install -e ".[dev]"
-brr up --dev-reload
-```
-
-Then leave the terminal alone. When an agent lands a source change,
-the daemon finishes that task, pushes the result, notices the package
-tree changed, and re-execs before processing the next event.
+For brr self-development, run the daemon from an editable install and
+leave the terminal alone. After an agent lands source changes, the
+daemon completes that task, pushes the result, notices the package tree
+changed, and re-execs before processing the next event.
 
 For normal brr users, nothing changes: install the package, configure a
 gate, run `brr up`, stop it with `brr down` or Ctrl-C, and use an
-external supervisor if they want always-on uptime.
+external supervisor if always-on uptime is required.

@@ -1454,3 +1454,11 @@ migration slice keeps compatibility by teaching the daemon to import
 legacy inbox events while built-in gates switch to writing pending task
 files directly, responses move to task IDs, and gates mark delivered
 tasks instead of deleting the only ingress record.
+
+## [2026-05-13] fix | KB consistency cleanup
+
+Compressed `kb/repo-dive-in-map.md` from an exhaustive source tour into
+a current-state navigator under the oversized-page threshold, rewrote
+the shipped daemon dev-reload design out of proposal shape, and added a
+fleet/overlays subject hub so the paused roadmap pages have a synthesis
+entry point.

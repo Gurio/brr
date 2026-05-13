@@ -3,6 +3,11 @@
 **Status: blocked.** Overlays are paused behind the env work and a
 research gate. Do not start implementation until both are resolved.
 
+Current synthesis lives in
+[`subject-fleet-overlays.md`](subject-fleet-overlays.md). This plan is
+the blocked implementation receipt for the overlay axis, not a current
+spec to execute.
+
 Concrete plan for user-level steering overlays: change agent behaviour
 across many repos without per-repo edits. Absorbs the personal-workflow
 variants idea and the `brr eject` retirement.

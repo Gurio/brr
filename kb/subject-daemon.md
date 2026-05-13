@@ -133,4 +133,4 @@ Read these in order when changing daemon behavior:
    [`decision-remove-triage.md`](decision-remove-triage.md) for the
    recent simplifications that keep daemon context lean.
 7. [`design-daemon-dev-reload.md`](design-daemon-dev-reload.md) for the
-   current development reload proposal.
+   current development reload behavior.
