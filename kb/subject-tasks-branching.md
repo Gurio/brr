@@ -17,6 +17,14 @@ The reasoning for removing LLM-based task routing lives in
 branch/task design history lives in
 [`plan-branch-modes.md`](plan-branch-modes.md).
 
+There is an active follow-up proposal to collapse the remaining event
+file layer into the task file itself:
+[`design-task-file-ingress.md`](design-task-file-ingress.md). That
+would keep task construction mechanical, but change the daemon ingress
+contract from "gate writes event, daemon creates task" to "gate writes
+pending task, daemon claims task." Until that lands, the current code
+and docs still use `.brr/inbox/` event files as the daemon queue.
+
 The daemon resolves the execution environment from `.brr/config` and
 the event metadata. `environment=auto` means Docker when a Docker image
 is configured, otherwise a git worktree. `host` is explicit only. That
@@ -78,16 +86,19 @@ for the rationale.
 
 1. [`decision-remove-triage.md`](decision-remove-triage.md) for why
    task construction is mechanical and branching moved to runtime.
-2. [`plan-branch-modes.md`](plan-branch-modes.md) for the older design
+2. [`design-task-file-ingress.md`](design-task-file-ingress.md) for
+   the active proposal to make task files the gate-written ingress
+   queue and remove the event file layer.
+3. [`plan-branch-modes.md`](plan-branch-modes.md) for the older design
    history and discarded per-task branch fields.
-3. [`subject-envs.md`](subject-envs.md) for the env protocol,
+4. [`subject-envs.md`](subject-envs.md) for the env protocol,
    durability contract, and salvage rule the worktree/docker
    finalizers implement; [`design-env-interface.md`](design-env-interface.md)
    for the underlying design.
-4. [`design-daemon-landing-branch.md`](design-daemon-landing-branch.md)
+5. [`design-daemon-landing-branch.md`](design-daemon-landing-branch.md)
    for the accepted branch-intent resolver design and remaining future
    source-metadata expansion points.
-5. [`research-branch-plan-simplification-2026-05-12.md`](research-branch-plan-simplification-2026-05-12.md)
+6. [`research-branch-plan-simplification-2026-05-12.md`](research-branch-plan-simplification-2026-05-12.md)
    for a follow-up critique of the current resolver surface, especially
    the recommendation to keep mechanical landing defaults while demoting
    inferred conversation branch history to runner context.

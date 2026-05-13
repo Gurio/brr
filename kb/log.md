@@ -1438,3 +1438,19 @@ After the change the preflight is down to one intentional
 `proposal-scaffolding` advisory on `design-daemon-dev-reload.md`
 that the next grooming pass will pick up. Full test suite is green
 (295 passing, up from 288).
+
+## [2026-05-13] plan | Task-file ingress simplification
+
+Captured an active design for simplifying the repo dive-in map's
+one-sentence runtime model by collapsing the remaining `.brr/inbox/`
+event-file layer into `.brr/tasks/`. The proposed model is
+`gate -> task -> env -> runner -> response -> gate`, with conversation
+logs kept as a sidecar for thread history and progress projection.
+
+The design deliberately treats this as a narrow amendment to
+`decision-remove-triage.md`: after LLM triage disappeared, event files
+stopped doing enough to justify being a separate queue entity. The
+migration slice keeps compatibility by teaching the daemon to import
+legacy inbox events while built-in gates switch to writing pending task
+files directly, responses move to task IDs, and gates mark delivered
+tasks instead of deleting the only ingress record.

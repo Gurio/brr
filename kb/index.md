@@ -65,6 +65,10 @@ dive-in map) and are stable until something contradicts them.
   agent-owned runtime branching, worktree finalization, and the active
   branch-intent design that removes both ambient host checkout state and
   hidden universal landing-branch config from daemon-produced commits.
+- [Task-file ingress design](design-task-file-ingress.md) —
+  *active*. Proposal to collapse the daemon's `.brr/inbox/` event file
+  layer into `.brr/tasks/`, making task files the gate-written ingress
+  queue while keeping conversation logs as the thread sidecar.
 - [Daemon branch intent design](design-daemon-landing-branch.md) —
   *accepted, amended*. Resolve seed refs and optional auto-land targets
   from explicit structured event data; conversation branch facts are
