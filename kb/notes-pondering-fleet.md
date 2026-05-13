@@ -186,7 +186,8 @@ it uses (see brnrd notes below). The brr-side groundwork is just:
 **Brr-side TODO when this lands:**
 - `adopt.init_repo` appends to `~/.local/state/brr/repos.json` after success.
 - New `brr forget` (or `brr init --remove`) command for explicit removal.
-- `brr status --json` for machine-readable status (brnrd needs this anyway).
+- Future machine-readable repo health (`brr status --json` or a new
+  command) for brnrd.
 
 ---
 
@@ -201,7 +202,8 @@ brnrd is the agent that takes over that role.
 
 What brnrd *uses* (existing brr surface, mostly):
 - `~/.local/state/brr/repos.json` — fleet inventory.
-- `brr status --json` per repo — health, recent tasks, pending events.
+- future machine-readable repo health per repo — recent tasks,
+  pending events, and daemon state.
 - Writing to each brr's `.brr/inbox/` (brnrd is essentially a "meta gate" — could even register itself as one).
 - Reading each brr's `.brr/responses/` and `kb/`.
 - Triggering `brr run` for one-shot tasks.
@@ -220,8 +222,8 @@ It is not a per-machine local process.
 
 Three small things, none of which are urgent but all of which are cheap:
 
-1. **`brr status --json`** — machine-readable status. Existing `brr status`
-   stays human-formatted; `--json` flag adds the structured form.
+1. **Machine-readable repo health** — a future command or API that
+   reports daemon state, recent tasks, and pending events.
 2. **Self-maintaining registry** (see #5).
 3. **A "remote gate" stub idea** — document that anything writing to
    `.brr/inbox/` over any transport is a valid gate. brnrd will write a
@@ -356,7 +358,7 @@ cleanly, we designed it right.
 - **Open questions for the plugin.** Auth model (personal token vs.
   org-level?); image choice ergonomics (default to the repo's
   devcontainer when one exists?); cost visibility (per-workspace
-  pricing should surface in `brr inspect`).
+  pricing should surface through task/runtime metadata).
 
 ### Neighbouring candidates
 

@@ -1438,3 +1438,19 @@ After the change the preflight is down to one intentional
 `proposal-scaffolding` advisory on `design-daemon-dev-reload.md`
 that the next grooming pass will pick up. Full test suite is green
 (295 passing, up from 288).
+
+## [2026-05-13] implement | Remove orphaned local status module
+
+Deleted `src/brr/status.py` after confirming the public `status` and
+`inspect` commands were already removed and the module had no
+production imports. The remaining tests were only exercising private
+helpers, so they were removed with the module and the CLI test now
+only asserts the current public surface.
+
+Updated bundled docs and kb synthesis to make the current shape
+explicit: gate progress cards are the live UX; agents orient from the
+Task Context Bundle and generated run context file; humans debug from
+task manifests, conversation logs, responses, traces, worktrees, and
+preserved containers under `.brr/` when needed. `RunProgressView`
+remains the single progress projection for gates and any future
+operator view.

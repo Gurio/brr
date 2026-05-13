@@ -54,7 +54,7 @@ class FinalizeReport:
     branch_pushed: bool        # branch ref reachable from host's git
     commits: int               # commit count on the branch (0 = no work)
     response_written: bool     # response_path exists on host
-    notes: str = ""            # free-form, surfaced in `brr inspect`
+    notes: str = ""            # free-form, recorded in task/runtime metadata
 
 class Env(Protocol):
     name: str                  # "local" | "worktree" | "docker" | …
@@ -214,8 +214,8 @@ dirs, devcontainers) is torn down only when the task finished cleanly
 with nothing left uncommitted in the worktree. On `error` /
 `conflict`, or when the worktree has untracked/unstaged files,
 scratch is preserved so the user can inspect or salvage work.
-`brr inspect <task-id>` surfaces the preserved location via
-`task.meta`.
+The preserved location is recorded in `task.meta` and the task
+manifest.
 
 ### Enforcement
 

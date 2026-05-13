@@ -252,7 +252,7 @@ Largest phase; lands the new contract end-to-end. Sub-steps below; closely relat
 **Bot UX:**
 
 - `src/brr/gates/telegram.py:render_update` — fix message duplication: cache the last-rendered text in `telegram_progress.json`, short-circuit when text is unchanged; treat Telegram's "message is not modified" 400 as success rather than a fall-through trigger.
-- `src/brr/run_progress.py:render_text` — make the compact rendering terser (drop `branch`, `env`, `attempt`, `last`, `response: <path>` rows). Keep the verbose form for `brr status` / `brr inspect`.
+- `src/brr/run_progress.py:render_text` — make the compact rendering terser (drop `branch`, `env`, `attempt`, `last`, `response: <path>` rows). Keep the verbose form available for diagnostics without coupling it to a public local status command.
 
 **Docker init-i:**
 

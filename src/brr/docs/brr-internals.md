@@ -226,10 +226,13 @@ progress to a human:
 - The Git gate is a no-op for live progress. Git is not a great surface
   for live status; commits and PRs remain its primary delivery path.
 
-Local commands (`status`, `inspect_task`) are now troubleshooting
-helpers. They render the same `RunProgressView` as gates so that if a
-remote run looks wrong, `brr status` shows the same view a Telegram
-card would.
+There is no separate local status CLI. Agents should use the Task
+Context Bundle and generated run context file for the current task
+instead of running inspection commands. Human operators can inspect
+`.brr/tasks/`, `.brr/conversations/`, `.brr/responses/`, and preserved
+traces/worktrees/containers from the runtime paths recorded there.
+Gate cards remain the live progress surface and render from
+`RunProgressView`.
 
 ## Concurrency model
 
