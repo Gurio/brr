@@ -1438,3 +1438,30 @@ After the change the preflight is down to one intentional
 `proposal-scaffolding` advisory on `design-daemon-dev-reload.md`
 that the next grooming pass will pick up. Full test suite is green
 (295 passing, up from 288).
+
+## [2026-05-13] implement | Remove orphaned local status module
+
+Deleted `src/brr/status.py` after confirming the public `status` and
+`inspect` commands were already removed and the module had no
+production imports. The remaining tests were only exercising private
+helpers, so they were removed with the module and the CLI test now
+only asserts the current public surface.
+
+Updated bundled docs and kb synthesis to make the current shape
+explicit: gate progress cards are the live UX; agents orient from the
+Task Context Bundle and generated run context file; humans debug from
+task manifests, conversation logs, responses, traces, worktrees, and
+preserved containers under `.brr/` when needed. `RunProgressView`
+remains the single progress projection for gates and any future
+operator view.
+
+## [2026-05-13] fix | Compress oversized repo dive-in map
+
+Post-task kb consistency pass. Rewrote `repo-dive-in-map.md` from a
+large file-by-file chronicle into a concise current-state source
+navigator that delegates canonical subsystem synthesis to the subject
+hubs. Updated the index summary to match the page's current role.
+
+The deterministic preflight no longer reports the oversized-page
+warning for the map. The remaining findings are the existing
+info-level fleet hub and developer-reload scaffolding advisories.

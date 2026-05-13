@@ -95,11 +95,18 @@ than becoming unconditional `brr up` behaviour.
 
 ## Status and troubleshooting
 
-Remote gates are the primary progress surface. Local status helpers are
-for troubleshooting: answer whether the daemon is running, what task is
-active, and where to inspect traces, responses, worktrees, or preserved
-Docker containers after a failure. New product UX should not accrete in
-`status.py`; the repo dive-in map records this as a runtime invariant.
+Remote gates are the primary progress surface. There is no local
+`status` / `inspect` command or private `status.py` troubleshooting
+module now; agents orient from the Task Context Bundle and generated
+run context file, while humans can inspect task manifests,
+conversation logs, responses, traces, worktrees, and preserved Docker
+containers directly under `.brr/` when debugging a failed run. Product
+UX should stay on gates or a deliberately designed new operator view,
+not a hidden helper module.
+
+Lineage: local `status.py` diagnostics survived briefly after the
+public commands were removed, then were deleted on 2026-05-13 because
+they had no production callers.
 
 ## Deferred directions
 

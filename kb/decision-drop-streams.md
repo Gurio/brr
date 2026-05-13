@@ -1,6 +1,6 @@
 ## Drop streams; conversations are routing+history, not identity
 
-Status: accepted, 2026-05-05.
+Status: accepted on 2026-05-05
 
 Supersedes: the `Workstream ergonomics — first slice` decision implicit
 in the [2026-04-27 implementation log entry](log.md). Triggered by two
@@ -104,17 +104,22 @@ for that line of work. There is no special CLI for them.
 
 ## CLI surface after the change
 
-| Command            | Status                                                |
-|--------------------|-------------------------------------------------------|
-| `brr status`       | trimmed: daemon health, runner, AGENTS.md, active task |
-| `brr inspect <id>` | unchanged in spirit; drops stream cross-references    |
-| `brr streams`      | removed                                               |
-| `brr stream show`  | removed                                               |
+| Command           | Status  |
+|-------------------|---------|
+| `brr status`      | removed |
+| `brr inspect`     | removed |
+| `brr streams`     | removed |
+| `brr stream show` | removed |
 
-`brr status` and `brr inspect` are dev-phase troubleshooting tools.
-The primary user surface stays the gate (Telegram), which already
-shows per-task progress cards. The chat history is the conversation
-history — there is no separate "what happened" UI, by design.
+The primary user surface stays the gate (Telegram/Slack), which shows
+per-task progress cards. The chat history is the conversation history
+— there is no separate "what happened" UI, by design. Operators debug
+from the task context bundle and `.brr/` runtime artifacts when needed.
+
+Lineage: the first stream-removal slice kept `brr status` /
+`brr inspect` as dev-phase helpers; the public commands were later
+removed, and the leftover private `status.py` module was deleted on
+2026-05-13 once it had no production callers.
 
 ## What this decision deliberately defers
 

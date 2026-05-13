@@ -18,6 +18,11 @@ Per-task log files (`kb/log-<task-id>.md`) referenced below are gone —
 see [`decision-kb-shape.md`](decision-kb-shape.md). Stdout is the
 chat reply; commits are mandatory for any file write.
 
+Local status helpers referenced below are historical too:
+`src/brr/status.py`, `brr status`, and `brr inspect` were removed once
+gate progress cards and direct runtime artifacts became the real
+operator surfaces.
+
 This page is preserved for the architectural reasoning that survives;
 read [`design-env-interface.md`](design-env-interface.md) and the
 current [`envs/__init__.py`](../src/brr/envs/__init__.py) for the

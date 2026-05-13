@@ -25,10 +25,10 @@ dive-in map) and are stable until something contradicts them.
 
 ## Architecture & orientation
 
-- [Repo Dive-In Map](repo-dive-in-map.md) — bottom-up source map for
-  understanding the repo file by file, with branch-neutral relative
-  links, core entity cross-references, runtime invariants, and
-  recommended reading paths.
+- [Repo Dive-In Map](repo-dive-in-map.md) — source-oriented navigator
+  for reading the repo by layers, with branch-neutral relative links,
+  core entity cross-references, runtime invariants, and pointers to
+  subject hubs for canonical synthesis.
 - **Hub: [daemon and process lifecycle](subject-daemon.md)** —
   synthesis of the foreground `brr up` process, gate/file-protocol
   boundary, serial worker lifecycle, local process control, and where
