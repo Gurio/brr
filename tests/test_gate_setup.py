@@ -1,4 +1,4 @@
-from brr.gates import git_gate, slack, telegram
+from brr.gates import git, slack, telegram
 
 
 def test_telegram_setup_saves_token_and_accepts_any_chat(tmp_path, monkeypatch):
@@ -48,12 +48,36 @@ def test_git_setup_saves_watch_configuration(tmp_path, monkeypatch):
     inputs = iter(["incoming/", "y"])
 
     monkeypatch.setattr("builtins.input", lambda prompt: next(inputs))
-    monkeypatch.setattr(git_gate, "_run_git", lambda *args, cwd=None: "abc123def")
+    monkeypatch.setattr(git, "_run_git", lambda *args, cwd=None: "abc123def")
 
-    git_gate.setup(brr_dir)
+    git.setup(brr_dir)
 
-    assert git_gate._load_state(brr_dir) == {
+    assert git._load_state(brr_dir) == {
+        "enabled": True,
         "watch_dir": "incoming/",
+        "diff_filter": "AM",
         "use_pull": True,
         "last_commit": "abc123def",
     }
+
+
+def test_git_gate_is_configured_by_default(tmp_path):
+    brr_dir = tmp_path / ".brr"
+
+    assert git.is_configured(brr_dir) is True
+
+
+def test_git_gate_can_be_disabled(tmp_path):
+    brr_dir = tmp_path / ".brr"
+    git._save_state(brr_dir, {"enabled": False})
+
+    assert git.is_configured(brr_dir) is False
+
+
+def test_git_gate_reads_legacy_state_file(tmp_path):
+    brr_dir = tmp_path / ".brr"
+    legacy = brr_dir / "gates" / "git_gate.json"
+    legacy.parent.mkdir(parents=True)
+    legacy.write_text('{"enabled": false}\n', encoding="utf-8")
+
+    assert git.is_configured(brr_dir) is False

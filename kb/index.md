@@ -33,6 +33,14 @@ dive-in map) and are stable until something contradicts them.
   synthesis of the foreground `brr up` process, gate/file-protocol
   boundary, serial worker lifecycle, local process control, and where
   developer reload fits without becoming broad product UX.
+- **Hub: [gates](subject-gates.md)** — synthesis of the gate/file
+  protocol, the built-in Git / Telegram / Slack adapters, progress
+  rendering hooks, and the boundary between generic Git task files and
+  provider-aware forge sources.
+- [Git gate defaults and forge boundary](design-git-gate.md) —
+  *active*. Default the credential-free Git gate to task-file polling,
+  keep repository-change automation opt-in, and treat PR/issues as
+  provider-aware forge work rather than generic Git.
 - [Developer daemon reload design](design-daemon-dev-reload.md) —
   *shipped*. Opt-in brr self-development reload mode: editable install
   plus quiescent re-exec between tasks when brr package files change;

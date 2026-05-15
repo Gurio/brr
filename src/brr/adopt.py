@@ -266,6 +266,9 @@ def _setup_brr_dir(repo_root: Path) -> None:
     else:
         gi.write_text(f"# brr runtime\n{marker}\n", encoding="utf-8")
 
+    from .gates import git as git_gate_mod
+    git_gate_mod.configure_default(brr)
+
     print("[brr] .brr/ directory ready")
 
 

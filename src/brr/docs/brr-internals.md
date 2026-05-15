@@ -123,6 +123,12 @@ The runner checks prompt overrides first, then falls back to the
 bundled copy. Docs helpers do the same for doc overrides when used
 internally.
 
+The Git gate is the only built-in gate enabled by default. It has no auth step:
+`brr init` writes `.brr/gates/git.json`, and the daemon will also use default
+Git settings when no state file exists. The default watches `tasks/` on the
+repo's default branch and emits one event per new or modified task file. Set
+`enabled=false` in `git.json` to turn it off.
+
 Project-specific knowledge belongs in `kb/` (the knowledge base),
 never in `.brr/`. The split is:
 

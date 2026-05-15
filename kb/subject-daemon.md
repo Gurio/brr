@@ -127,6 +127,9 @@ for troubleshooting: answer whether the daemon is running, what task is
 active, and where to inspect traces, responses, worktrees, or preserved
 Docker containers after a failure. New product UX should not accrete in
 `status.py`; the repo dive-in map records this as a runtime invariant.
+The current gate shape, including the default-on Git task-file source and
+the boundary between Git and forge-specific PR/issue sources, is synthesized
+in [`subject-gates.md`](subject-gates.md).
 
 ## Deferred directions
 

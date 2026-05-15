@@ -81,17 +81,19 @@ Read these in order if you want the quickest useful mental model:
 
 1. [README](../README.md) for the product shape and CLI surface.
 2. [Gate protocol](../src/brr/gates/README.md) for the file-based I/O contract.
-3. [Protocol source](../src/brr/protocol.py) with [protocol tests](../tests/test_protocol.py).
-4. [Task model](../src/brr/task.py) with [task tests](../tests/test_task.py).
-5. [Conversation log](../src/brr/conversations.py) with [conversation tests](../tests/test_conversations.py).
-6. [Runner plumbing](../src/brr/runner.py) with [runner tests](../tests/test_runner.py), then [prompt assembly](../src/brr/prompts.py) with [prompt tests](../tests/test_prompts.py).
-7. [Environment backends](../src/brr/envs/__init__.py) with [env tests](../tests/test_envs.py) and [Dockerfile tests](../tests/test_dockerfile.py).
-8. [Daemon worker](../src/brr/daemon.py) plus
+3. [Gates hub](subject-gates.md) for the current built-in gate shape and the
+   Git/forge boundary.
+4. [Protocol source](../src/brr/protocol.py) with [protocol tests](../tests/test_protocol.py).
+5. [Task model](../src/brr/task.py) with [task tests](../tests/test_task.py).
+6. [Conversation log](../src/brr/conversations.py) with [conversation tests](../tests/test_conversations.py).
+7. [Runner plumbing](../src/brr/runner.py) with [runner tests](../tests/test_runner.py), then [prompt assembly](../src/brr/prompts.py) with [prompt tests](../tests/test_prompts.py).
+8. [Environment backends](../src/brr/envs/__init__.py) with [env tests](../tests/test_envs.py) and [Dockerfile tests](../tests/test_dockerfile.py).
+9. [Daemon worker](../src/brr/daemon.py) plus
    [developer reload](../src/brr/dev_reload.py) with
    [daemon tests](../tests/test_daemon.py),
    [developer reload tests](../tests/test_dev_reload.py), and
    [daemon-conversation tests](../tests/test_daemon_conversations.py).
-9. [Bundled execution map](../src/brr/docs/execution-map.md) to re-read the system top-down after seeing the parts.
+10. [Bundled execution map](../src/brr/docs/execution-map.md) to re-read the system top-down after seeing the parts.
 
 ## Spiral reading route
 
@@ -258,7 +260,7 @@ Read:
 - [`src/brr/gates/__init__.py`](../src/brr/gates/__init__.py)
 - [`src/brr/gates/telegram.py`](../src/brr/gates/telegram.py)
 - [`src/brr/gates/slack.py`](../src/brr/gates/slack.py)
-- [`src/brr/gates/git_gate.py`](../src/brr/gates/git_gate.py)
+- [`src/brr/gates/git.py`](../src/brr/gates/git.py)
 - [`src/brr/status.py`](../src/brr/status.py)
 - [`src/brr/docs/__init__.py`](../src/brr/docs/__init__.py)
 - [`src/brr/docs/brr-internals.md`](../src/brr/docs/brr-internals.md)
@@ -273,7 +275,7 @@ Keep in mind:
 - Gates create event files and deliver response files.
 - `updates.emit()` can call optional gate `render_update()` hooks, but gate-side failures are swallowed.
 - Telegram and Slack gates render a live per-task progress card via `render_update`: send-on-`task_created`, edit-on-progress through `editMessageText`/`chat.update`, fallback to a fresh send when the original message is gone. State lives at `.brr/gates/telegram_progress.json` and `.brr/gates/slack_progress.json`.
-- The Git gate is a deliberate no-op for live rendering — Git is not a great surface for live progress; commits and PRs remain its primary delivery.
+- The Git gate is enabled by default as a conservative task-file source and is a deliberate no-op for live rendering — Git is not a great surface for live progress; commits and PRs remain its primary delivery.
 - `status.py` is now a troubleshooting helper, not the primary UX. It uses the same `RunProgressView` projection to keep local and remote views consistent.
 - Bundled docs live in `src/brr/docs/`; per-repo overrides live in `.brr/docs/`.
 - Project-specific durable knowledge lives in `kb/`, not `.brr/`.
@@ -583,7 +585,7 @@ Source:
 - [`gates/__init__.py`](../src/brr/gates/__init__.py)
 - [`gates/telegram.py`](../src/brr/gates/telegram.py)
 - [`gates/slack.py`](../src/brr/gates/slack.py)
-- [`gates/git_gate.py`](../src/brr/gates/git_gate.py)
+- [`gates/git.py`](../src/brr/gates/git.py)
 
 Referenced by:
 

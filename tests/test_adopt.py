@@ -50,6 +50,7 @@ def test_creates_brr_dir(tmp_path, monkeypatch):
                 "tasks", "traces", "reviews", "worktrees"):
         assert (brr / sub).exists(), f".brr/{sub} missing"
     assert (brr / "config").exists()
+    assert (brr / "gates" / "git.json").exists()
 
 
 def test_gitignore_updated(tmp_path, monkeypatch):

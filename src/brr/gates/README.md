@@ -1,8 +1,14 @@
 # Gates — file protocol spec
 
-A gate connects brr to an external channel (Telegram, Slack, Git, or
+A gate connects brr to an external channel (Git, Telegram, Slack, or
 anything else).  Gates communicate with the daemon exclusively through
 the filesystem — no shared memory, no function calls.
+
+The built-in Git gate is enabled by default because it needs no credentials.
+It watches `tasks/` on the repo's default branch and turns new or modified task
+files into inbox events. It does not run the agent for every code push; broader
+repository-change automation needs an explicit mode so users do not spend
+runner tokens by surprise.
 
 ## File protocol
 
@@ -90,4 +96,4 @@ selection when a gate wants to expose them separately.  If `setup` is missing,
 the CLI falls back to calling `auth` and then `bind`.
 
 The daemon imports configured gates and calls `run_loop` in a thread.  See
-`telegram.py`, `slack.py`, or `git_gate.py` for examples.
+`telegram.py`, `slack.py`, or `git.py` for examples.

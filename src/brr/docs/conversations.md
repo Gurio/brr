@@ -1,7 +1,7 @@
 # Conversations
 
-A conversation is the running history of one gate thread — Telegram
-chat+topic, Slack channel+thread, or git source file. brr appends
+A conversation is the running history of one gate thread — Git task file,
+Telegram chat+topic, or Slack channel+thread. brr appends
 events, task lifecycle rows, artifact records, and lifecycle update
 packets to one ndjson per thread. That log is the recent-activity
 context the next agent in the same thread sees.
@@ -20,9 +20,9 @@ project knowledge still belongs in `kb/`.
 
 A conversation key is the gate-thread fingerprint:
 
+- `git:<file>`
 - `telegram:<chat_id>:<topic_id>`
 - `slack:<channel>:<thread_ts>`
-- `git:<file>`
 
 For filenames, `:` is encoded as `__`. Each file is an append-only
 ndjson; every record carries a `ts` (UTC ISO 8601) and a `kind`:

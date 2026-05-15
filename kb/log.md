@@ -1516,3 +1516,26 @@ Tests: 353 passing (up from 295). New coverage:
 - `tests/test_prompts.py` — one case for the no-local-paths bullet;
   the existing PR-nudge case rewritten for the branch-rename
   bullet.
+
+## [2026-05-15] implement | Default Git gate and forge boundary design
+
+Revisited the Git gate UX and shipped the safe first slice:
+
+- Renamed the built-in module from `git_gate.py` to `git.py` so it matches
+  the public gate name; CLI, daemon startup, and update dispatch now import
+  `git`.
+- Defaulted the credential-free Git gate on. `brr init` writes
+  `.brr/gates/git.json`, the daemon treats missing Git gate state as default
+  config, and `enabled=false` disables it. Legacy `.brr/gates/git_gate.json`
+  is still read.
+- Kept the default deliberately narrow: watch `tasks/` on the repo default
+  branch, create events for new or modified task files, and use fetch+diff
+  unless `use_pull=true` is configured. This avoids spending runner tokens on
+  ordinary code syncs or self-triggering on brr-produced branches.
+- Added `subject-gates.md` plus `design-git-gate.md` to capture the current
+  gate shape and the Git/forge boundary: generic Git handles refs and task
+  files; PRs, issues, review comments, labels, and notifications need
+  provider-aware forge gates or hooks.
+
+Docs now describe Git as the default gate and point at `git.py` / `git.json`.
+Tests: 359 passing.

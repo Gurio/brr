@@ -47,7 +47,7 @@ pip install git+https://github.com/you/brr.git
 brr init                          # detect runner, create AGENTS.md + kb/
 brr run "fix the failing tests"   # run a task through the configured environment
 
-brr setup telegram                # configure a remote input
+brr setup telegram                # optional: configure a chat input
 brr up                            # start the daemon
 ```
 
@@ -92,8 +92,10 @@ Gates are transport adapters — they create event files and deliver responses.
 The daemon scans the inbox and runs workers.  The runner is whatever AI CLI
 you have installed.
 
-Telegram works with just a bot token.  Once the daemon is running, send the
-bot a message; brr records the chat ID from each message and replies there.
+The Git gate is enabled by default because it needs no credentials; it watches
+`tasks/` on the repo's default branch and turns new or changed task files into
+events. Telegram works with just a bot token. Once the daemon is running, send
+the bot a message; brr records the chat ID from each message and replies there.
 
 ## CLI
 
@@ -107,13 +109,18 @@ bot a message; brr records the chat ID from each message and replies there.
 | `brr up`               | Start the daemon (foreground)         |
 | `brr down`             | Stop the daemon                       |
 
-Gates: `telegram`, `slack`, `git`.
+Gates: `git` (enabled by default), `telegram`, `slack`.
 
 ## Extending
 
 **Gates** follow a file protocol: write to `.brr/inbox/`, read from
 `.brr/responses/`.  Any language works.  See `src/brr/gates/README.md`
 for the spec and a bash example.
+
+The built-in Git gate is deliberately conservative: it watches explicit task
+files, not every code push, so the default path does not spend runner tokens on
+ordinary repository syncs. Use `.brr/gates/git.json` to disable it or adjust the
+watch directory.
 
 **Runners** are CLI commands on PATH.  Built-in profiles: `claude`,
 `codex`, `gemini`.  Set `runner=<name>` in `.brr/config` or use any

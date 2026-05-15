@@ -13,9 +13,13 @@ event (inbox) → task (persisted) → context file → run env → response →
 
 ### 1. Event arrives
 
-A gate (Telegram, Slack, Git) or a script writes a markdown file to
+A gate (Git, Telegram, Slack) or a script writes a markdown file to
 `.brr/inbox/`. The file has frontmatter (`id`, `source`, `status`) and
 a body with the user's message.
+
+The Git gate is enabled by default and watches task files under `tasks/`.
+Chat gates are configured explicitly with `brr setup telegram` or
+`brr setup slack`.
 
 ### 2. Task created
 

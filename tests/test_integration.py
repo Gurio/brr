@@ -56,6 +56,7 @@ class TestEmptyRepo:
         assert (tmp_path / ".brr" / "config").exists()
         assert (tmp_path / ".brr" / "inbox").is_dir()
         assert (tmp_path / ".brr" / "responses").is_dir()
+        assert (tmp_path / ".brr" / "gates" / "git.json").exists()
 
     def test_gitignore_has_brr(self, tmp_path, monkeypatch):
         _git_init(tmp_path)
