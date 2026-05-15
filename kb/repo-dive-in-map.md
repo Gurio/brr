@@ -36,11 +36,9 @@ ring — this header just names the ones that change the *reading* most:
   deterministic preflight ([`kb_preflight.py`](../src/brr/kb_preflight.py))
   plus an inline LLM cleanup pass after task delivery.
 
-Past arcs (the kb-shape arc, the 2026-05-05 streams-to-conversations
-refactor, the 2026-05-06 triage removal, the 2026-05-12 branch-plan
-simplification, the Docker host-UID rework) live in `git log` and in
-their decision/design pages. The current shape is what this guide
-describes; lineage breadcrumbs sit on the relevant kb pages.
+Architectural lineage lives in `git log` and the relevant
+decision/design pages. The current shape is what this guide describes;
+lineage breadcrumbs sit on the relevant kb pages.
 
 ## Current ownership snapshot
 
@@ -163,8 +161,8 @@ Read:
 
 Keep in mind:
 
-- `Task` is the central work unit constructed mechanically from an event. It carries the originating event, concrete environment backend, status, source, conversation key, and freeform metadata (worktree path, branch name, response path, etc.). There is no longer a `branch` field — branching is decided by the agent inside the worktree at runtime.
-- A conversation is just a per-gate-thread append-only ndjson log of events, tasks, artifacts, and lifecycle update packets. There is no manifest, no title, no intent — those leaky stream-identity fields were removed in the 2026-05-05 refactor (see [decision-drop-streams.md](decision-drop-streams.md)).
+- `Task` is the central work unit constructed mechanically from an event. It carries the originating event, concrete environment backend, status, source, conversation key, and freeform metadata (worktree path, branch name, response path, etc.). Branching is decided by the agent inside the worktree at runtime.
+- A conversation is just a per-gate-thread append-only ndjson log of events, tasks, artifacts, and lifecycle update packets. It has no manifest, title, or intent; see [decision-drop-streams.md](decision-drop-streams.md).
 - `UpdatePacket` is lifecycle telemetry routed to a conversation log and, optionally, gate `render_update` hooks. The packet vocabulary covers env prep, attempts, retries, finalize, push, and Docker container births/preservations.
 - `RunProgressView` (in `run_progress.py`) folds conversation records into a compact per-task projection that both gates and local diagnostics render. Adding new lifecycle UX should extend this projection, not reinvent rendering per gate.
 - `run_context.py` writes a per-task context file under `.brr/runs/<task-id>/context.md` so an agent can recover orientation without poking around runtime state.
@@ -185,7 +183,7 @@ and how the chosen environment shapes that runner invocation.
 
 Read:
 
-- [`src/brr/runner.py`](../src/brr/runner.py) — subprocess plumbing only (since phase 3a)
+- [`src/brr/runner.py`](../src/brr/runner.py) — subprocess plumbing
 - [`src/brr/prompts.py`](../src/brr/prompts.py) — prompt assembly, Task Context Bundle, conversation injection
 - [`src/brr/envs/__init__.py`](../src/brr/envs/__init__.py)
 - [`src/brr/prompts/runners.md`](../src/brr/prompts/runners.md)
@@ -203,7 +201,7 @@ Keep in mind:
 - The user-facing policy key is `environment=<auto|host|worktree|docker>` in `.brr/config`; legacy `env` and `default_env` are still accepted.
 - Task files still store the concrete backend as `env`.
 - Current built-in backends on this branch are `host`, `worktree`, and `docker`. Design notes also discuss future `ssh` and `devcontainer` backends.
-- The Docker env auto-wires credentials so users don't have to bake them into images: known runner env vars (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `GOOGLE_API_KEY`) pass through, host login dirs (`~/.claude`, `~/.claude.json`, `~/.codex`, `~/.gemini`, `~/.gitconfig`) bind-mount into `/brr-home/<basename>` when present, and `safe.directory='*'` is injected via `GIT_CONFIG_*` env vars so git works against the bind-mounted repo regardless of UID. The container itself runs as the host UID (`-u "$(id -u):$(id -g)"`) with `HOME=/brr-home`, so writes inside the bind-mounted repo are host-owned and `.git/objects/` no longer collects root-owned residue. Toggles: `docker.env=KEY1,KEY2` and `docker.mount_credentials=false`. The bundled [`envs.md`](../src/brr/docs/envs.md) is the user-facing reference.
+- The Docker env auto-wires credentials so users don't have to bake them into images: known runner env vars (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `GOOGLE_API_KEY`) pass through, host login dirs (`~/.claude`, `~/.claude.json`, `~/.codex`, `~/.gemini`, `~/.gitconfig`) bind-mount into `/brr-home/<basename>` when present, and `safe.directory='*'` is injected via `GIT_CONFIG_*` env vars so git works against the bind-mounted repo regardless of UID. The container itself runs as the host UID (`-u "$(id -u):$(id -g)"`) with `HOME=/brr-home`, so writes inside the bind-mounted repo stay host-owned. Toggles: `docker.env=KEY1,KEY2` and `docker.mount_credentials=false`. The bundled [`envs.md`](../src/brr/docs/envs.md) is the user-facing reference.
 
 Tests:
 
@@ -237,7 +235,7 @@ Read `_run_worker()` in passes rather than all at once:
 7. Build the daemon prompt via [`prompts.build_daemon_prompt`](../src/brr/prompts.py) — preamble, recent conversation block, Task Context Bundle, delivery contract.
 8. Invoke the runner, with retries when the runner prints no final reply on stdout.
 9. Capture the plain-text response file (written from stdout).
-10. Run [`kb_preflight.scan`](../src/brr/kb_preflight.py); if it has findings or `kb/` was touched, run the kb-maintenance LLM pass with findings injected. Otherwise skip — the pass is now a true safety net.
+10. Run [`kb_preflight.scan`](../src/brr/kb_preflight.py); if it has findings or `kb/` was touched, run the kb-maintenance LLM pass with findings injected. Otherwise skip — the pass is a safety net.
 11. Finalize the environment — `WorktreeEnv.finalize` reads the worktree's git state to decide between fast-forward landing and branch preservation.
 12. Update task status and append matching update packets to the conversation log.
 
@@ -276,7 +274,7 @@ Keep in mind:
 - `updates.emit()` can call optional gate `render_update()` hooks, but gate-side failures are swallowed.
 - Telegram and Slack gates render a live per-task progress card via `render_update`: send-on-`task_created`, edit-on-progress through `editMessageText`/`chat.update`, fallback to a fresh send when the original message is gone. State lives at `.brr/gates/telegram_progress.json` and `.brr/gates/slack_progress.json`.
 - The Git gate is enabled by default as a conservative task-file source and is a deliberate no-op for live rendering — Git is not a great surface for live progress; commits and PRs remain its primary delivery.
-- `status.py` is now a troubleshooting helper, not the primary UX. It uses the same `RunProgressView` projection to keep local and remote views consistent.
+- `status.py` is a troubleshooting helper, not the primary UX. It uses the same `RunProgressView` projection to keep local and remote views consistent.
 - Bundled docs live in `src/brr/docs/`; per-repo overrides live in `.brr/docs/`.
 - Project-specific durable knowledge lives in `kb/`, not `.brr/`.
 
@@ -291,779 +289,89 @@ Tests:
 
 ## Main entities
 
-### Event
-
-Source:
-
-- [`protocol.create_event()`](../src/brr/protocol.py)
-- [`protocol.list_pending()`](../src/brr/protocol.py)
-- [`protocol.set_status()`](../src/brr/protocol.py)
-
-Referenced by:
-
-- Gates create events.
-- Daemon scans events.
-- Task creation copies selected event metadata.
-- Conversation logs record event summaries keyed by gate thread.
-
-Persistence:
-
-- `.brr/inbox/<event-id>.md`
-
-Important fields:
-
-- `id`
-- `source`
-- `status`
-- gate-specific metadata such as `telegram_chat_id`, `slack_channel`, or `git_file`
-- body text after frontmatter
-
-Read with:
-
-- [protocol tests](../tests/test_protocol.py)
-- [Telegram gate tests](../tests/test_telegram_gate.py)
-
-### Task
-
-Source:
-
-- [`Task`](../src/brr/task.py)
-- [`Task.from_event()`](../src/brr/task.py)
-- [`resolve_env()`](../src/brr/task.py)
-
-Referenced by:
-
-- Daemon creates and updates tasks.
-- Environments use tasks to set up the worktree and route the runner.
-- `run_context.py` renders task metadata into context files.
-- `status.py` reads persisted tasks for inspection.
-
-Persistence:
-
-- `.brr/tasks/<task-id>.md`
-
-Important fields:
-
-- `id`
-- `event_id`
-- `body`
-- `env` for the concrete backend (`host`, `worktree`, `docker`, or plugin/future name)
-- `status`
-- `source`
-- `conversation_key` (gate-thread fingerprint, used to route lifecycle records and progress cards)
-- freeform `meta` (carries gate delivery info such as `telegram_chat_id` or `slack_channel`, plus runtime branch/worktree paths populated by env prepare/finalize)
-
-Environment policy details:
-
-- New config should use `environment`.
-- `environment=auto` prefers configured Docker isolation, otherwise picks `worktree`. `host` is never auto-picked.
-- `env` and `default_env` are legacy aliases still accepted by the resolver.
-- The env is resolved deterministically when the task is built — there is no LLM in the loop.
-
-Read with:
-
-- [task tests](../tests/test_task.py)
-- [daemon tests](../tests/test_daemon.py)
-
-### Conversation log
-
-Source:
-
-- [`conversation_key_for_event()`](../src/brr/conversations.py)
-- [`append_event()` / `append_task()` / `append_artifact()` / `append_update()`](../src/brr/conversations.py)
-- [`read_records()` / `read_recent()` / `records_for_task()`](../src/brr/conversations.py)
-
-Referenced by:
-
-- Daemon routes every event to a conversation key and appends lifecycle records.
-- Runner prompt builders receive recent records and render them under a `Recent in this conversation` block.
-- Status helpers project conversation records into `RunProgressView`.
-- Updates append lifecycle update packets to the same per-conversation log.
-
-Persistence:
-
-- `.brr/conversations/<safe-key>.ndjson` — one append-only ndjson per gate thread; `:` is encoded as `__` in filenames.
-
-Important concepts:
-
-- Conversations have no manifest, no title, no intent. Identity is the bug we removed; see [decision-drop-streams.md](decision-drop-streams.md).
-- The conversation key is `telegram:<chat>:<topic>`, `slack:<channel>:<thread_ts>`, or `git:<file>` — a gate-thread fingerprint.
-- Each record carries `ts` and a `kind` discriminator (`event`, `task`, `artifact`, `update`).
-- Lines of work that span runs belong in `kb/`, not in a runtime field.
-
-Read with:
-
-- [conversation tests](../tests/test_conversations.py)
-- [conversations doc](../src/brr/docs/conversations.md)
-
-### UpdatePacket
-
-Source:
-
-- [`UpdatePacket`](../src/brr/updates.py)
-- [`emit()`](../src/brr/updates.py)
-- [`PACKET_TYPES`](../src/brr/updates.py)
-
-Referenced by:
-
-- Daemon emits lifecycle packets at every meaningful step in `_run_worker`.
-- `_push_if_needed` emits push packets routed to the task's conversation.
-- Conversation logs persist packets as `kind=update` rows.
-- Gates may render them if they expose `render_update`.
-- `run_progress.project_task` walks them to derive the per-task `RunProgressView`.
-
-Persistence:
-
-- `.brr/conversations/<safe-key>.ndjson` (records with `kind=update`)
-
-Stable packet types, in roughly chronological order (see `PACKET_TYPES` in `updates.py` for the canonical list):
-
-- `event_received`
-- `task_created`
-- `env_prepared`
-- `container_started`
-- `run_started`
-- `attempt_started`
-- `attempt_failed`
-- `retrying`
-- `artifact_created`
-- `finalizing`
-- `container_preserved`
-- `push_started`
-- `push_done`
-- `done`
-- `failed`
-- `conflict`
-
-Read with:
-
-- [updates source](../src/brr/updates.py)
-- [daemon-conversation tests](../tests/test_daemon_conversations.py)
-- [daemon-progress-packet tests](../tests/test_daemon_progress_packets.py)
-
-### RunProgressView
-
-Source:
-
-- [`RunProgressView`](../src/brr/run_progress.py)
-- [`project_task()`](../src/brr/run_progress.py)
-- [`project_conversation_latest()`](../src/brr/run_progress.py)
-- [`render_text()`](../src/brr/run_progress.py)
-
-Referenced by:
-
-- Telegram and Slack gates render compact cards from this view.
-- `status.get_status` uses it to surface the active task across conversations.
-- `status.inspect_task` uses it for the per-task progress block.
-
-Persistence:
-
-- Derived on demand from `.brr/conversations/<safe-key>.ndjson` filtered by `task_id`. The view itself is not persisted.
-
-Important fields:
-
-- `conversation_key`, `task_id`, `event_id`
-- `phase` (queued, preparing, running, finalizing, delivering, delivered, failed, conflict)
-- `state` (active, succeeded, failed)
-- `branch_name`, `display_base`, `env`, `attempt`
-- `started_at`, `updated_at`, `detail`, `error`
-- `artifacts`, `container_ids`, `response_path`
-
-Important rule:
-
-- New live UX should add packet types to `updates.py`, then teach `run_progress` to fold them into `RunProgressView`. Do not bypass the projection by reading the conversation log directly from each gate.
-
-Read with:
-
-- [run-progress tests](../tests/test_run_progress.py)
-- [Telegram render-update tests](../tests/test_telegram_render_update.py)
-- [Slack render-update tests](../tests/test_slack_render_update.py)
-
-### RunnerInvocation and RunnerResult
-
-Source:
-
-- [`RunnerInvocation`](../src/brr/runner.py)
-- [`RunnerResult`](../src/brr/runner.py)
-- [`invoke_runner()`](../src/brr/runner.py)
-
-Referenced by:
-
-- `adopt.py` for setup.
-- `runner.run_task()` for the direct `brr run` path.
-- `daemon.py` for execution and KB maintenance.
-- `envs` for environment-specific invocation.
-
-Persistence:
-
-- Optional traces under `.brr/traces/<kind>/<label>-<timestamp>/`
-- Trace files include prompt, stdout, stderr, metadata, and copies of any expected files registered through `required_artifacts` (today: adopt's AGENTS.md and kb files).
-
-Important rule:
-
-- `RunnerResult.ok` means subprocess exit code was zero.
-- `RunnerResult.has_response` means stdout was non-empty (only meaningful when `invocation.response_path` is set).
-- `RunnerResult.validation_ok` is the combined contract: exit zero, no missing required artifacts, and `has_response` whenever a response was requested.
-- For daemon-run invocations, the response file is written by `invoke_runner` from captured stdout; the agent does not write that file.
-
-Read with:
-
-- [runner tests](../tests/test_runner.py)
-
-### RunContext
-
-Source:
-
-- [`RunContext`](../src/brr/envs/__init__.py)
-- [`write_context_file()`](../src/brr/run_context.py)
-
-Referenced by:
-
-- Environment backends return it from `prepare()`.
-- Daemon uses it to build prompts and validate response paths.
-- `run_context.py` renders it to a recovery document.
-
-Persistence:
-
-- `.brr/runs/<task-id>/context.md`
-
-Important fields:
-
-- `name`
-- `cwd`
-- `repo_root`
-- `runtime_dir`
-- `response_path_host`
-- `response_path_env`
-- `branch_name`
-- `branch_plan` (a `branching.BranchPlan`)
-- `env_state`
-
-Per-task narrative lands as a curated entry in `kb/log.md` when the
-session was substantial enough to record — there is no per-task
-`log_file` field. Branch state lives entirely on `branch_plan`; the
-auto-land target is `branch_plan.auto_land_branch` and renderers
-show "branch ← target" only when an auto-land target is explicitly
-set (seed_ref is setup context, not a landing target).
-
-Read with:
-
-- [run context source](../src/brr/run_context.py)
-- [daemon tests](../tests/test_daemon.py)
-
-### EnvBackend
-
-Source:
-
-- [`EnvBackend`](../src/brr/envs/__init__.py)
-- [`HostEnv`](../src/brr/envs/__init__.py)
-- [`WorktreeEnv`](../src/brr/envs/__init__.py)
-- [`DockerEnv`](../src/brr/envs/__init__.py)
-- [`get_env()`](../src/brr/envs/__init__.py)
-
-Referenced by:
-
-- Daemon calls `get_env(task.env)`.
-- Host and worktree envs call into `runner`, `gitops`, and `worktree`.
-- Docker wraps the runner command inside `docker run` and uses worktree behavior for non-current branches.
-
-Important phases:
-
-- `prepare()`
-- `invoke()`
-- `finalize()`
-
-Read with:
-
-- [env tests](../tests/test_envs.py)
-- [env design note](design-env-interface.md)
-
-### Gate module
-
-Source:
-
-- [`gates/__init__.py`](../src/brr/gates/__init__.py)
-- [`gates/telegram.py`](../src/brr/gates/telegram.py)
-- [`gates/slack.py`](../src/brr/gates/slack.py)
-- [`gates/git.py`](../src/brr/gates/git.py)
-
-Referenced by:
-
-- CLI loads gates for `setup`, `auth`, and `bind`.
-- Daemon starts configured gates.
-- Updates optionally dispatch lifecycle packets to gates.
-
-Daemon hook shape:
-
-- `is_configured(brr_dir)`
-- `run_loop(brr_dir, inbox_dir, responses_dir)`
-
-CLI setup hooks:
-
-- `setup(brr_dir)` for the preferred one-step flow
-- `auth(brr_dir)` and `bind(brr_dir)` as split setup, or as fallback when
-  `setup` is missing
-
-Optional update hook:
-
-- `render_update(brr_dir, packet)` — gates that opt in render a per-task
-  progress card from the `RunProgressView` projection. Telegram does this
-  via `sendMessage` + `editMessageText`; Slack via `chat.postMessage` +
-  `chat.update`. Per-gate progress state lives at
-  `.brr/gates/<gate>_progress.json`. The Git gate skips this hook on
-  purpose (no live UX).
-
-Read with:
-
-- [gate protocol doc](../src/brr/gates/README.md)
-- [Telegram gate tests](../tests/test_telegram_gate.py)
-- [Telegram render-update tests](../tests/test_telegram_render_update.py)
-- [Slack render-update tests](../tests/test_slack_render_update.py)
+| Entity | Source | Persistence | Current shape | Read with |
+| ------ | ------ | ----------- | ------------- | --------- |
+| Event | [`protocol.py`](../src/brr/protocol.py) | `.brr/inbox/<event-id>.md` | Frontmatter-backed inbox item with `id`, `source`, `status`, gate metadata such as `telegram_chat_id`, `slack_channel`, or `git_file`, and body text. Gates create events; the daemon claims them. | [protocol tests](../tests/test_protocol.py), [gate tests](../tests/test_telegram_gate.py) |
+| Task | [`task.py`](../src/brr/task.py) | `.brr/tasks/<task-id>.md` | Mechanical unit of work created from an event and `.brr/config`. It stores the concrete `env`, source, conversation key, status, body, and freeform runtime metadata. `environment` is the preferred config key; `env` and `default_env` are legacy aliases. | [task tests](../tests/test_task.py), [daemon tests](../tests/test_daemon.py) |
+| Conversation log | [`conversations.py`](../src/brr/conversations.py) | `.brr/conversations/<safe-key>.ndjson` | Append-only per-gate-thread history. Keys are gate fingerprints such as `telegram:<chat>:<topic>`, `slack:<channel>:<thread_ts>`, or `git:<file>`. There is no manifest, title, or intent; lines of work that need durable naming belong in `kb/`. | [conversation tests](../tests/test_conversations.py), [conversations doc](../src/brr/docs/conversations.md) |
+| Update packet | [`updates.py`](../src/brr/updates.py) | Conversation records with `kind=update` | Lifecycle telemetry emitted by the daemon and push path. Gates may render packets through `render_update`; `run_progress.py` folds them into the user-visible task card. `PACKET_TYPES` is the canonical vocabulary. | [daemon-conversation tests](../tests/test_daemon_conversations.py), [daemon-progress-packet tests](../tests/test_daemon_progress_packets.py) |
+| Run progress view | [`run_progress.py`](../src/brr/run_progress.py) | Derived, not persisted | Projection of conversation records into task phase, state, branch/base display, environment, attempts, details, artifacts, containers, response path, and forge view URL. New live UX should extend packets and this projection first. | [run-progress tests](../tests/test_run_progress.py), [Telegram render-update tests](../tests/test_telegram_render_update.py), [Slack render-update tests](../tests/test_slack_render_update.py) |
+| Runner invocation/result | [`runner.py`](../src/brr/runner.py) | Optional `.brr/traces/<kind>/<label>-<timestamp>/` | Subprocess execution plus trace capture. `validation_ok` combines exit status, expected artifacts, and non-empty stdout when a response path is requested. Daemon responses are written from captured stdout by brr. | [runner tests](../tests/test_runner.py) |
+| Run context | [`run_context.py`](../src/brr/run_context.py), [`envs/__init__.py`](../src/brr/envs/__init__.py) | `.brr/runs/<task-id>/context.md` | Recovery document and prompt input for the selected env, including host/env response paths, repo/runtime roots, branch plan, and env state. Branch landing facts live on `branch_plan` and task metadata, not on a per-task narrative file. | [daemon tests](../tests/test_daemon.py) |
+| Env backend | [`envs/__init__.py`](../src/brr/envs/__init__.py) | Worktree/Docker state under `.brr/` | Three-phase backend protocol: `prepare`, `invoke`, `finalize`. Built-ins are host, worktree, and docker; the env design covers future SSH/devcontainer shapes. | [env tests](../tests/test_envs.py), [env design](design-env-interface.md) |
+| Gate module | [`gates/`](../src/brr/gates/) | `.brr/gates/<gate>.json` plus inbox/response files | Transport adapters implement `is_configured` and `run_loop`; setup hooks are optional. Telegram/Slack render live progress, while Git is a default task-file source and skips live rendering. | [gate protocol](../src/brr/gates/README.md), [gates hub](subject-gates.md) |
 
 ## Module cross-reference map
 
-### Entry and commands
-
-- [`__main__.py`](../src/brr/__main__.py) imports [`cli.main`](../src/brr/cli.py).
-- [`cli.py`](../src/brr/cli.py) dispatches to:
-  - [`adopt.py`](../src/brr/adopt.py) for `brr init`
-  - [`runner.py`](../src/brr/runner.py) for `brr run`
-  - [`daemon.py`](../src/brr/daemon.py) for `brr up` and `brr down`
-  - [`gates.import_gate()`](../src/brr/gates/__init__.py) for `auth` and `bind`
-
-### Bootstrap and project adoption
-
-- [`adopt.py`](../src/brr/adopt.py) depends on:
-  - [`gitops.py`](../src/brr/gitops.py) for repo detection
-  - [`config.py`](../src/brr/config.py) for `.brr/config`
-  - [`runner.py`](../src/brr/runner.py) for setup prompt execution
-
-Tests:
-
-- [adopt tests](../tests/test_adopt.py)
-- [integration tests](../tests/test_integration.py)
-
-### Filesystem protocol
-
-- [`protocol.py`](../src/brr/protocol.py) is consumed by:
-  - gates, to create events and read responses
-  - daemon, to list and update events
-  - runner, to parse runner profiles
-  - task, to parse/persist task frontmatter
-  - status, to recover event body text
-
-This is one of the lowest-level modules. Read it early.
-
-### Task and conversation state
-
-- [`task.py`](../src/brr/task.py) is consumed by:
-  - daemon
-  - envs
-  - run_context
-  - status
-  - gates (to look up delivery info from `task.meta`)
-
-- [`conversations.py`](../src/brr/conversations.py) is consumed by:
-  - daemon
-  - updates
-  - run_progress
-  - run_context
-  - status
-
-- [`updates.py`](../src/brr/updates.py) depends on `conversations` for routing packets and is used by daemon. It also dispatches packets to gate `render_update` hooks.
-
-- [`run_progress.py`](../src/brr/run_progress.py) depends on `conversations`. It is consumed by:
-  - Telegram and Slack gate `render_update` hooks
-  - status (`get_status`, `inspect_task`)
-
-The key distinction:
-
-- `Task` answers "what unit of work are we executing?"
-- The conversation log answers "what has happened in this gate thread, in order?"
-- `UpdatePacket` answers "what just changed for a particular task?"
-- `RunProgressView` answers "what is the live state of this task right now, in a form a gate or an operator can render?"
-
-### Runner and prompts
-
-The runner / prompts boundary was split in phase 3a of the kb-shape arc.
-They were one file before; the split keeps subprocess plumbing
-testable in isolation from prompt assembly.
-
-- [`runner.py`](../src/brr/runner.py) owns:
-  - runner profile detection
-  - command construction
-  - subprocess execution
-  - trace writing
-  - the `TaskRunner` worker thread for serial `brr run` execution
-
-- [`prompts.py`](../src/brr/prompts.py) owns:
-  - reading bundled prompt templates (with `.brr/prompts/<name>.md` overrides)
-  - reading [`src/brr/AGENTS.md`](../src/brr/AGENTS.md) and threading
-    it into init prompts
-  - assembling the **Task Context Bundle** (task body, env, branch,
-    delivery contract, recent conversation block)
-  - rendering recent `kb/log.md` entries into a conversation
-    context block
-  - exposing `build_init_prompt`, `build_run_prompt`,
-    `build_daemon_prompt`, `build_kb_maintenance_prompt`
-
-- [`kb_preflight.py`](../src/brr/kb_preflight.py) owns the
-  deterministic kb consistency scan that feeds the kb-maintenance
-  prompt: orphan detection, stale index entries, broken cross-links.
-  Synthesis-heavy checks (lifecycle drift, contradictions with the
-  log) are deferred to the LLM redundancy pass.
-
-`runner.py` is called from:
-
-- [`adopt.py`](../src/brr/adopt.py) for the `brr init` setup invocation
-- [`daemon.py`](../src/brr/daemon.py) for execution and the
-  kb-maintenance LLM pass
-- [`envs/__init__.py`](../src/brr/envs/__init__.py) for
-  environment-specific invocation
-- [`cli.py`](../src/brr/cli.py) for `brr run`
-
-`prompts.py` is called from:
-
-- [`adopt.py`](../src/brr/adopt.py) → `build_init_prompt`
-- [`daemon.py`](../src/brr/daemon.py) → `build_daemon_prompt`,
-  `build_kb_maintenance_prompt`
-- [`runner.py`](../src/brr/runner.py) → `build_run_prompt` (for
-  `brr run`)
-
-`kb_preflight.py` is called from:
-
-- [`daemon.py`](../src/brr/daemon.py) inside `_maybe_kb_maintenance`,
-  before deciding whether to invoke the LLM pass
-
-Prompt files to read alongside the modules:
-
-- [`setup.md`](../src/brr/prompts/setup.md) — adopter setup; reads
-  brr's own [`AGENTS.md`](../src/brr/AGENTS.md) as the model.
-- [`run.md`](../src/brr/prompts/run.md) — daemon-originated task
-  prompt; carries the delivery contract.
-- [`runners.md`](../src/brr/prompts/runners.md) — runner profile
-  registry.
-- [`kb-maintenance.md`](../src/brr/prompts/kb-maintenance.md) —
-  thin redundancy pass; points at AGENTS.md → "Knowledge base shape"
-  for the rules.
-
-### Execution environments
-
-- [`envs/__init__.py`](../src/brr/envs/__init__.py) depends on:
-  - [`branching.py`](../src/brr/branching.py)
-  - [`gitops.py`](../src/brr/gitops.py)
-  - [`worktree.py`](../src/brr/worktree.py)
-  - [`runner.py`](../src/brr/runner.py)
-  - [`task.py`](../src/brr/task.py)
-
-Host execution:
-
-- runs in the main repo checkout
-- requires `branch_name is None`
-- finalization is a no-op
-
-Worktree execution:
-
-- creates `.brr/worktrees/<task-id>` on a fresh `brr/<task-id>` branch sprouted from the resolved seed ref
-- finalize reads the worktree's git state: fast-forward the resolved auto-land target when one exists, preserve the task branch otherwise
-- outcome-aware cleanup: removes the worktree on clean success with nothing uncommitted, keeps it on `error` / `conflict` or when untracked/unstaged files remain
-
-Docker execution:
-
-- requires Docker CLI and `docker.image`
-- wraps the normal runner command in `docker run`
-- bind-mounts the repo at the same absolute path
-- always uses a worktree on a fresh `brr/<task-id>` branch, so the host's working tree stays clean
-- tracks containers for cleanup or salvage
-- forwards known runner env vars (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `GOOGLE_API_KEY`) and any names listed in `docker.env=` when set on the daemon
-- runs the container as the host UID via `-u "$(id -u):$(id -g)"` and exports `HOME=/brr-home`, so file writes inside the bind-mounted repo are host-owned and the in-container CLIs find their credentials at `$HOME/...` regardless of whether the runtime UID has an `/etc/passwd` entry
-- bind-mounts host login directories (`~/.claude`, `~/.claude.json`, `~/.codex`, `~/.gemini`, `~/.gitconfig`) into `/brr-home/<basename>` when present, unless `docker.mount_credentials=false`
-- injects `safe.directory='*'` via git's `GIT_CONFIG_*` env vars so git works against the bind-mounted repo even though the container's runtime UID may differ from the host owner — no per-image baked-in config required
-
-Environment resolution:
-
-- User-facing config should use `environment`.
-- `environment=auto` is deterministic: configured Docker first, otherwise `worktree`. `host` is never auto-picked.
-- If Docker is configured via `docker.image` and Docker is on PATH, auto selects `docker`.
-- Otherwise, auto selects `worktree`. Pick `host` explicitly if you want to forgo isolation.
-
-### Daemon
-
-[`daemon.py`](../src/brr/daemon.py) is the main integration point. It imports
-nearly every core module because it owns the lifecycle:
-
-- config loading
-- PID file management
-- gate startup
-- optional developer reload watcher (`dev_reload.py`)
-- inbox scan
-- conversation key derivation
-- mechanical task construction (`Task.from_event`)
-- task persistence
-- branch intent resolution (`branching.BranchPlan`)
-- env prepare/invoke/finalize
-- attempt loop with retries and lifecycle packets
-- response validation
-- `kb_preflight.scan` plus a conditional kb-maintenance LLM pass (see the kb-consistency invariant below)
-- branch-aware git push attempt with `push_started` / `push_done` packets
-- quiescent re-exec after package-file changes when `--dev-reload` or
-  `dev_reload=true` is active
-
-The worker emits the full run-progress packet stream (`env_prepared`,
-`attempt_started`, `attempt_failed`, `retrying`, `finalizing`, plus
-`container_started` / `container_preserved` for the Docker env). Read these
-helpers in `daemon.py` next to the worker loop:
-
-- `_emit_new_containers` — diffs `env_ctx.env_state["docker_containers"]` between attempts.
-- `_emit_preserved_containers` — fires `container_preserved` when finalize left containers behind.
-
-When debugging behavior, read daemon tests before modifying daemon source:
-
-- [daemon tests](../tests/test_daemon.py)
-- [developer reload tests](../tests/test_dev_reload.py)
-- [daemon-conversation tests](../tests/test_daemon_conversations.py)
-- [daemon-progress-packet tests](../tests/test_daemon_progress_packets.py)
+| Area | Primary files | Direction |
+| ---- | ------------- | --------- |
+| CLI and adoption | [`__main__.py`](../src/brr/__main__.py), [`cli.py`](../src/brr/cli.py), [`adopt.py`](../src/brr/adopt.py) | `cli.py` routes `init` to adoption, `run` to runner execution, `up`/`down` to the daemon, and gate setup commands through `gates.import_gate()`. Read with [CLI tests](../tests/test_cli.py), [adopt tests](../tests/test_adopt.py), and [integration tests](../tests/test_integration.py). |
+| Filesystem protocol | [`protocol.py`](../src/brr/protocol.py), [`config.py`](../src/brr/config.py), [`gitops.py`](../src/brr/gitops.py), [`worktree.py`](../src/brr/worktree.py) | These are the low-level file and git contracts. Gates and daemon code should use them rather than hand-parsing runtime files. |
+| Task and conversation state | [`task.py`](../src/brr/task.py), [`conversations.py`](../src/brr/conversations.py), [`updates.py`](../src/brr/updates.py), [`run_progress.py`](../src/brr/run_progress.py) | `Task` says what is executing, conversation logs say what happened in a gate thread, packets say what just changed, and `RunProgressView` is the rendering projection. |
+| Runner and prompts | [`runner.py`](../src/brr/runner.py), [`prompts.py`](../src/brr/prompts.py), [`kb_preflight.py`](../src/brr/kb_preflight.py), [`src/brr/prompts/`](../src/brr/prompts/) | `runner.py` owns subprocess execution and traces. `prompts.py` owns bundled prompt loading, the Task Context Bundle, recent conversation/log injection, and kb-maintenance prompts. `kb_preflight.py` is the deterministic scanner that decides when the LLM redundancy pass has concrete findings. |
+| Environments | [`envs/__init__.py`](../src/brr/envs/__init__.py), [`branching.py`](../src/brr/branching.py), [`gitops.py`](../src/brr/gitops.py), [`worktree.py`](../src/brr/worktree.py) | Host runs in-place; worktree creates a fresh `brr/<task-id>` branch from the resolved seed ref; Docker wraps worktree execution in `docker run`, forwards known runner credentials, uses the host UID, and injects git `safe.directory`. `environment=auto` selects configured Docker, otherwise worktree. |
+| Daemon | [`daemon.py`](../src/brr/daemon.py), [`dev_reload.py`](../src/brr/dev_reload.py) | Main lifecycle spine: PID file, gate startup, inbox scan, task construction, branch intent, env prepare/invoke/finalize, retry/response validation, kb preflight, branch-aware push, progress packets, and optional quiescent re-exec for brr self-development. Read [subject-daemon.md](subject-daemon.md) before editing it. |
+| Gates and operator views | [`gates/__init__.py`](../src/brr/gates/__init__.py), [`gates/git.py`](../src/brr/gates/git.py), [`gates/telegram.py`](../src/brr/gates/telegram.py), [`gates/slack.py`](../src/brr/gates/slack.py), [`status.py`](../src/brr/status.py) | Gates translate external surfaces to the file protocol and optional progress cards. Local status is a troubleshooting view over the same run-progress projection. Read [subject-gates.md](subject-gates.md) for the Git/forge boundary. |
 
 ## Runtime invariants
 
-### `.brr/` is runtime state
-
-Runtime files live in `.brr/` and are gitignored. They include inbox events,
-responses, tasks, runs, conversations, traces, reviews, worktrees, gate state,
-prompt overrides, doc overrides, and config.
-
-Do not confuse `.brr/` with durable project knowledge.
-
-### `kb/` is durable project knowledge
-
-This file lives in `kb/` because it is repo-specific knowledge. It should be
-committed and updated when the repo structure changes.
-
-### `src/brr/docs/` is bundled tool documentation
-
-Bundled docs are package data. They explain the tool itself and can be
-overridden per repo by `.brr/docs/<topic>.md`.
-
-Relevant decision:
-
-- [Bundled Docs Location](decision-bundled-docs.md)
-
-### Runner success has three layers
-
-The runner contract has three layers, all checked by
-`RunnerResult.validation_ok`:
-
-- subprocess exit zero (`result.ok`)
-- `required_artifacts` all present (used by `adopt` for AGENTS.md and kb
-  scaffolding; daemon-run invocations don't register any)
-- `has_response` — non-empty stdout — when the invocation specifies a
-  `response_path`. brr captures stdout and writes the response file itself,
-  so empty stdout is the canonical failure signal for an unproductive run
-  and triggers daemon retry.
-
-### Task construction is mechanical, not LLM-driven
-
-There is no triage prompt. `Task.from_event` builds the task directly
-from the inbox event and `.brr/config`. Daemon tests mock exactly one
-runner invocation per attempt — the execution call. See
-[decision-remove-triage.md](decision-remove-triage.md) for the
-rationale and what was removed (`prompts/triage.md`,
-`Task.from_triage_output`, the `branch` field, the `triage_done` /
-`needs_context` packets, the `needs_context` task status, and the
-frontmatter contract on response files).
-
-### The agent owns branching at runtime
-
-Worktree and Docker tasks start on a fresh `brr/<task-id>` branch
-sprouted from the daemon's resolved seed ref. The branch plan names an
-optional auto-land target and its authority. The agent inside the
-worktree decides:
-
-- commit on the current task branch and let brr fast-forward the
-  auto-land target when one exists,
-- commit on the current task branch and let brr preserve/push it when
-  no auto-land target exists, or
-- `git switch -c <name>` before committing, so brr preserves the branch
-  as-is for human review or PR tooling.
-
-`WorktreeEnv.finalize` reads the worktree's git state to make that
-decision — there is no frozen branch strategy on the task file, and the
-host checkout branch is context rather than default authority.
-
-### Environment is the user-facing isolation knob
-
-Most users should choose an environment policy:
-
-- `environment=auto`
-- `environment=host`
-- `environment=worktree`
-- `environment=docker`
-
-The env and branch plan are resolved deterministically before env prep.
-There is no per-task `branch` field anymore — runtime branch state lives
-in `task.meta["branch_name"]`, with `seed_ref`, `auto_land_branch`,
-`preserved_branch`, and `landed_branch` recording daemon gitops facts
-after `prepare`/`finalize`.
-
-### Responses are plain text
-
-`.brr/responses/<event-id>.md` carries the agent's final stdout
-verbatim. There is no frontmatter contract. If the agent cannot
-complete the task (missing context, ambiguous request, unreachable
-service), it should say so plainly and stop. The operator sees the
-reply in the gate thread and follows up with another event.
-
-### Conversations are not KB
-
-Conversation logs are runtime coordination state. They record events and
-update packets, but durable project knowledge still belongs in `kb/`. The
-2026-05-05 refactor explicitly removed identity fields (title, intent) from
-runtime — see [decision-drop-streams.md](decision-drop-streams.md). If a
-line of work matters enough to name, it belongs as a `kb/` page.
-
-### Run progress is a projection, not state
-
-`RunProgressView` is derived on demand from conversation records, filtered
-by `task_id`. The source of truth is the per-conversation ndjson. Rendering
-UX (gates, local status) should always go through `run_progress`; introducing
-parallel ad-hoc derivations across modules is the path to drift.
-
-### KB consistency is preflight + redundancy, not a primary gate
-
-After every successful task, `kb_preflight.scan(run_root)` walks `kb/`
-and returns structured findings — `missing-from-index`,
-`stale-index-entry`, `broken-link`. The findings drive whether the
-LLM kb-maintenance pass runs at all: if both the preflight is clean
-*and* `kb/` is unchanged, the pass is skipped. When findings exist
-or the task touched `kb/`, the maintenance prompt runs with findings
-injected.
-
-The LLM pass is deliberately thin — it points at AGENTS.md →
-"Knowledge base shape" for the rules and either addresses the
-findings or does a brief redundancy check. The primary maintenance
-contract lives in AGENTS.md so external tools (Cursor, Codex CLI,
-Claude Code) follow the same rules without needing brr's preflight.
-
-When adding a new structural kb invariant (a new lifecycle marker,
-a new naming convention, a new graph rule), prefer extending
-`kb_preflight.scan` over expanding the LLM prompt — deterministic
-checks are cheap, reproducible, and run on every task. Reserve the
-LLM pass for synthesis-heavy judgement (lifecycle drift,
-contradictions with the log, cross-subject coherence).
-
-### Local status is troubleshooting
-
-The remote gate is the primary surface for run progress. `status.py` exists
-to answer "is the daemon healthy, what is the active task, and where are
-the trace/response/preserved-container files for a failed run?". It is no
-longer the place to add new product UX.
+| Invariant | Current rule |
+| --------- | ------------ |
+| `.brr/` | Gitignored runtime state: inbox, responses, tasks, runs, conversations, traces, reviews, worktrees, gate state, prompt/doc overrides, and config. Do not treat it as durable project knowledge. |
+| `kb/` | Committed project knowledge. Update it when repo structure, decisions, or durable operational knowledge changes. |
+| `src/brr/docs/` | Bundled package docs, with per-repo overrides in `.brr/docs/<topic>.md`; see [decision-bundled-docs.md](decision-bundled-docs.md). |
+| Runner success | `RunnerResult.validation_ok` requires subprocess success, expected artifacts, and non-empty stdout when a response path is requested. brr writes daemon responses from captured stdout. |
+| Task construction | `Task.from_event` builds tasks mechanically from inbox events and `.brr/config`; there is no triage invocation. See [decision-remove-triage.md](decision-remove-triage.md). |
+| Branching | Worktree/Docker runs start on `brr/<task-id>` from the resolved seed ref. The agent may commit there or switch to another branch; `WorktreeEnv.finalize` reads git state and either fast-forwards an explicit auto-land target or preserves the branch. |
+| Environment | `environment=<auto|host|worktree|docker>` is the user-facing isolation knob. `auto` selects configured Docker, otherwise worktree. Runtime branch facts live in task metadata and `BranchPlan`, not a `Task.branch` field. |
+| Responses | `.brr/responses/<event-id>.md` is plain final stdout. If work cannot complete, the response explains the blocker in text and the operator follows up through the gate. |
+| Conversations | Conversation logs are runtime routing history, not semantic memory. They have no manifest/title/intent; durable named work belongs in `kb/`. See [decision-drop-streams.md](decision-drop-streams.md). |
+| Progress | `RunProgressView` is derived from conversation update packets. Gates and local status should render this projection instead of building parallel state. |
+| KB consistency | `kb_preflight.scan` reports deterministic graph findings; the LLM pass is a thin AGENTS.md-guided redundancy check when findings exist or `kb/` changed. Add deterministic invariants to `kb_preflight.py` first. |
+| Local status | `status.py` is troubleshooting, not the primary product UX; remote gate cards are the normal progress surface. |
 
 ## Tests as a second reading path
 
-If source-first reading feels too abstract, run the test path instead:
-
-1. [protocol tests](../tests/test_protocol.py)
-2. [task tests](../tests/test_task.py)
-3. [conversation tests](../tests/test_conversations.py)
-4. [run-progress tests](../tests/test_run_progress.py)
-5. [runner tests](../tests/test_runner.py)
-6. [prompt tests](../tests/test_prompts.py)
-7. [git/worktree tests](../tests/test_gitops.py)
-8. [env tests](../tests/test_envs.py)
-9. [Dockerfile tests](../tests/test_dockerfile.py)
-10. [kb-preflight tests](../tests/test_kb_preflight.py)
-11. [daemon tests](../tests/test_daemon.py)
-12. [daemon-conversation tests](../tests/test_daemon_conversations.py)
-13. [daemon-progress-packet tests](../tests/test_daemon_progress_packets.py)
-14. [gate tests](../tests/test_telegram_gate.py)
-15. [gate setup tests](../tests/test_gate_setup.py)
-16. [Telegram render-update tests](../tests/test_telegram_render_update.py)
-17. [Slack render-update tests](../tests/test_slack_render_update.py)
-18. [status-troubleshooting tests](../tests/test_status_troubleshooting.py)
-19. [adopt tests](../tests/test_adopt.py)
-20. [integration tests](../tests/test_integration.py)
-21. [CLI tests](../tests/test_cli.py)
-22. [docs tests](../tests/test_docs.py)
-
-This order mirrors dependency growth: file protocol, durable state, the
-run-progress projection, execution (subprocess plumbing then prompt
-assembly), filesystem isolation, kb consistency, orchestration, adapters
-(including their live-progress hooks), troubleshooting helpers, and
-finally CLI/bootstrap.
+If source-first reading feels too abstract, follow the same dependency
+growth through tests: [protocol](../tests/test_protocol.py),
+[task](../tests/test_task.py), [conversations](../tests/test_conversations.py),
+[run progress](../tests/test_run_progress.py), [runner](../tests/test_runner.py),
+[prompts](../tests/test_prompts.py), [git/worktree](../tests/test_gitops.py),
+[envs](../tests/test_envs.py), [Dockerfile](../tests/test_dockerfile.py),
+[kb preflight](../tests/test_kb_preflight.py), [daemon](../tests/test_daemon.py),
+[daemon conversations](../tests/test_daemon_conversations.py),
+[daemon progress packets](../tests/test_daemon_progress_packets.py),
+[gates](../tests/test_telegram_gate.py), [gate setup](../tests/test_gate_setup.py),
+[Telegram updates](../tests/test_telegram_render_update.py),
+[Slack updates](../tests/test_slack_render_update.py),
+[status](../tests/test_status_troubleshooting.py), [adopt](../tests/test_adopt.py),
+[integration](../tests/test_integration.py), [CLI](../tests/test_cli.py), and
+[docs](../tests/test_docs.py).
 
 ## Design history to read after source
 
-The source tells you what is implemented. These KB pages explain why the system
-is shaped this way and where it is going. Lifecycle markers on each page
-say which parts are stable, in flight, or paused.
+The source says what is implemented; the index and subject hubs tell you
+which decision/design pages are live context. Start with [subject-kb.md](subject-kb.md),
+[subject-daemon.md](subject-daemon.md), [subject-gates.md](subject-gates.md),
+[subject-envs.md](subject-envs.md), and [subject-tasks-branching.md](subject-tasks-branching.md).
 
-Subject hub:
+Then read the decisions that still explain current constraints:
+[decision-remove-triage.md](decision-remove-triage.md),
+[decision-drop-streams.md](decision-drop-streams.md),
+[decision-kb-shape.md](decision-kb-shape.md), and
+[decision-bundled-docs.md](decision-bundled-docs.md). For active or
+accepted designs, use [design-git-gate.md](design-git-gate.md),
+[design-daemon-dev-reload.md](design-daemon-dev-reload.md),
+[design-daemon-landing-branch.md](design-daemon-landing-branch.md), and
+[design-env-interface.md](design-env-interface.md).
 
-- [Subject: the kb itself](subject-kb.md) — synthesis of the kb
-  pattern (four memory layers, graph topology, subject genesis,
-  cross-tool maintenance, what was rejected). The first hub page
-  in brr's kb; expect more to accrete as substantial subject-level
-  work lands.
-- [Subject: daemon and process lifecycle](subject-daemon.md) —
-  synthesis of the foreground `brr up` process, gate/file-protocol
-  boundary, serial worker lifecycle, local process control, and the
-  development reload direction.
-
-Decisions ("drop the noisy abstraction" trio in chronological order):
-
-- [Remove triage decision](decision-remove-triage.md) — the LLM
-  triage stage came off first.
-- [Drop streams decision](decision-drop-streams.md) — workstreams
-  came off next.
-- [kb shape decision](decision-kb-shape.md) — per-task log files
-  came off, AGENTS.md became universal schema, kb-maintenance
-  became preflight + redundancy.
-
-Other decisions:
-
-- [Bundled docs decision](decision-bundled-docs.md) — why bundled
-  `src/brr/docs/` + per-repo `.brr/docs/` overrides.
-- [Concurrent worktrees plan](plan-concurrent-worktrees.md) —
-  shipped (one-task-per-worktree slice; merge-coordinator path
-  abandoned).
-- [Branch modes plan](plan-branch-modes.md) — shipped, with
-  revisions (triage reversed, `needs_context` gone).
-- [Overlays plan](plan-overlays.md) — blocked.
-
-Designs and notes still open:
-
-- [Developer daemon reload design](design-daemon-dev-reload.md) —
-  shipped (editable install plus explicit opt-in quiescent re-exec for
-  brr self-development).
-- [Subject: environments](subject-envs.md) — synthesis hub for the
-  current env shape (`local`/`worktree`/`docker` shipped,
-  `ssh`/`devcontainer` designed, plugin point and durability contract
-  explained).
-- [Env protocol design](design-env-interface.md) — accepted on
-  2026-05-06; the protocol spec, per-env mechanics, plugin model, and
-  decentralised merge framing that the hub above synthesises.
-- [Notes: pondering fleet](notes-pondering-fleet.md) — paused.
-
-Strategic decks:
-
-- [Deck: brr fleet & steering](deck-brr-fleet-steering.md) —
-  roadmap (env axis active; overlays / brnrd paused).
-
-Research:
-
-- [Daemon runner context ergonomics](research-runner-context-ergonomics-2026-05-09.md) —
-  point-in-time review of a live daemon run's prompt/context shape,
-  stale bundled-doc contradictions, and Docker tooling gaps.
-- [brr vs gh-aw](research-brr-vs-gh-aw.md) — deep comparison with
-  GitHub Agentic Workflows.
-
-Bundled docs to read alongside the source:
-
-- [Conversations bundled doc](../src/brr/docs/conversations.md)
-- [Envs bundled doc](../src/brr/docs/envs.md)
-- [Active task bundled doc](../src/brr/docs/active-task.md)
-- [Brr internals bundled doc](../src/brr/docs/brr-internals.md)
-- [Execution map bundled doc](../src/brr/docs/execution-map.md)
+Strategic and research context lives in
+[deck-brr-fleet-steering.md](deck-brr-fleet-steering.md),
+[plan-overlays.md](plan-overlays.md),
+[notes-pondering-fleet.md](notes-pondering-fleet.md),
+[research-runner-context-ergonomics-2026-05-09.md](research-runner-context-ergonomics-2026-05-09.md),
+and [research-brr-vs-gh-aw.md](research-brr-vs-gh-aw.md). Bundled user
+docs live under [`src/brr/docs/`](../src/brr/docs/).
 
 ## Practical navigator notes
 
@@ -1075,7 +383,7 @@ Use these heuristics while reading:
 - If a file talks about thread continuity or per-thread history, jump to [conversations.py](../src/brr/conversations.py).
 - If a file talks about lifecycle packets or `render_update`, jump to [updates.py](../src/brr/updates.py).
 - If a file talks about live progress phases, attempt counts, or rendering a per-task card, jump to [run_progress.py](../src/brr/run_progress.py).
-- If a file talks about prompt assembly (Task Context Bundle, `kb/log.md` injection, AGENTS.md bundling), jump to [prompts.py](../src/brr/prompts.py). If it talks about subprocess execution, runner detection, or trace persistence, jump to [runner.py](../src/brr/runner.py). The two used to be one file; they were split in phase 3a of the kb-shape arc.
+- If a file talks about prompt assembly (Task Context Bundle, `kb/log.md` injection, AGENTS.md bundling), jump to [prompts.py](../src/brr/prompts.py). If it talks about subprocess execution, runner detection, or trace persistence, jump to [runner.py](../src/brr/runner.py).
 - If a file talks about daemon process lifecycle, PID files,
   drain-and-stop behavior, or development reload, start with
   [subject-daemon.md](subject-daemon.md) and then jump to

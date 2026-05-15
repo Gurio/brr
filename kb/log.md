@@ -1539,3 +1539,11 @@ Revisited the Git gate UX and shipped the safe first slice:
 
 Docs now describe Git as the default gate and point at `git.py` / `git.json`.
 Tests: 359 passing.
+
+## [2026-05-15] fix | Compress kb lint drift
+
+Post-task kb consistency pass compressed the oversized repo dive-in map by
+collapsing duplicated entity/module/runtime detail into current-state tables,
+and rewrote the shipped daemon dev-reload design from proposal scaffolding into
+the implemented shape. The deterministic preflight is down to the existing
+Fleet & overlays hub-coverage nudge, which remains outside this cleanup pass.
