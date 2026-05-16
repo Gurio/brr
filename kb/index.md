@@ -134,9 +134,10 @@ dive-in map) and are stable until something contradicts them.
   genesis rule, brr's daemon kb-maintenance reframed as a redundancy
   pass; staged execution plan.
 - [State-first kb maintenance plan](plan-kb-state-first-maintenance.md) —
-  *active*. Refine the kb shape around current-state synthesis plus
-  short breadcrumbs to git history, and replace hidden post-task LLM
-  cleanup with explicit, first-class maintenance tasks.
+  *shipped on 2026-05-13*. Current-state synthesis plus short lineage
+  breadcrumbs, recent-log budgeting, preflight advisories, graph stats,
+  and visible/durable inline kb maintenance; scheduled proactive
+  maintenance was rejected for now.
 - [LLM Wiki framing](llm-wiki.md) — the source framing this project
   takes inspiration from for the wiki/synthesis layer.
 

@@ -170,17 +170,18 @@ The state-first principle is now part of the schema (see
 [`AGENTS.md`](../AGENTS.md) → "State first, history in git"): pages
 describe the current shape, lineage breadcrumbs replace inline
 running diffs of past wording, and git is the deep-history layer.
-The execution plan is in
+The shipped receipt is
 [`plan-kb-state-first-maintenance.md`](plan-kb-state-first-maintenance.md).
 
 The inline maintenance pass
 ([`daemon._maybe_kb_maintenance`](../src/brr/daemon.py) plus
 [`prompts/kb-maintenance.md`](../src/brr/prompts/kb-maintenance.md))
 runs on the task's own branch after delivery so cleanup rides on the
-same branch as the work that triggered it. The plan also makes the
-pass commit its edits and surface a status packet so the operator
-sees that grooming happened, rather than the pass silently dropping
-edits (the current bug).
+same branch as the work that triggered it. The prompt asks the
+maintenance runner to commit its own edits; if allowed kb / AGENTS
+edits are left uncommitted, the daemon rolls them into an automated
+maintenance commit and emits a `kb_maintenance_done` status packet so
+the operator sees whether grooming changed files or was clean.
 
 ## What was deliberately rejected
 
@@ -219,7 +220,7 @@ In priority order:
 2. [`decision-kb-shape.md`](decision-kb-shape.md) — why those rules,
    what triggered the rethink, what was deferred.
 3. [`plan-kb-state-first-maintenance.md`](plan-kb-state-first-maintenance.md)
-   — active refinement for keeping pages focused on the current shape
+   — shipped receipt for keeping pages focused on the current shape
    while using git as the deep-history layer.
 4. [`llm-wiki.md`](llm-wiki.md) — the framing the kb pattern took
    inspiration from. Skim for context, not as a spec.
