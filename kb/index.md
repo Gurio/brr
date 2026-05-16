@@ -148,6 +148,11 @@ dive-in map) and are stable until something contradicts them.
   (`test_integration.py` removal, `tests/_helpers.py` extraction,
   `_forge_view_url` stub-based rewrite, docker-mounts parametrize)
   were executed in the same pass.
+- [Agent orientation ergonomics, 2026-05-16](research-agent-orientation-ergonomics-2026-05-16.md) —
+  review of daemon-runner startup friction, AGENTS/README/prompt/context
+  redundancy, and the proposed layering model: keep `AGENTS.md` as the
+  universal repository contract, add explicit stage overlays, and make
+  the Task Context Bundle the hot path for source/environment/delivery.
 - [Branch plan simplification, 2026-05-12](research-branch-plan-simplification-2026-05-12.md) —
   follow-up critique of the accepted branch-intent implementation:
   preserve the mechanical seed/auto-land/finalization contract, but

@@ -1695,3 +1695,23 @@ Suite shape went 29 files / 7970 LOC / 406 tests → 28 + helpers /
 four-file daemon-test split (worker, progress packets,
 conversations, heartbeat) — combined they'd be ~1820 LOC and the
 concerns are genuinely distinct.
+
+## [2026-05-16] research | Agent orientation ergonomics
+
+Filed [`kb/research-agent-orientation-ergonomics-2026-05-16.md`](research-agent-orientation-ergonomics-2026-05-16.md)
+after a daemon-launched review of how quickly a runner can understand
+where it is, which mode it is in, and which context surfaces are
+authoritative. The first orientation batch was enough to recover the
+task, branch, delivery contract, and Docker environment, but the design
+shape required reading several adjacent surfaces because mode data is
+spread across `AGENTS.md`, `run.md`, the Task Context Bundle, the run
+context file, README, and prior kb notes.
+
+Conclusion: keep `AGENTS.md` as the universal repository contract for
+all tools, but make the layering explicit. The primary axis is stage
+(`local/ad-hoc`, `brr daemon task`, `kb maintenance`, `setup`), not
+environment (`docker` / `worktree` / `host`). The low-risk next slice is
+prompt-oriented: add `Stage`, `Source`, and `Environment` to the Task
+Context Bundle, let injected Recent Activity satisfy the startup
+`kb/log.md` read in daemon mode, and treat the generated run context
+file as optional recovery detail once the hot-path bundle is complete.

@@ -132,6 +132,16 @@ yet built; tracked as future work in
 [`decision-kb-shape.md`](decision-kb-shape.md) → "What this decision
 deliberately defers."
 
+Two ergonomics reviews are the main receipts for how this feels in
+practice: the 2026-05-09
+[`daemon runner context ergonomics`](research-runner-context-ergonomics-2026-05-09.md)
+review cleaned up duplicated task bodies and stale docs, and the
+2026-05-16
+[`agent orientation ergonomics`](research-agent-orientation-ergonomics-2026-05-16.md)
+review narrows the next target to stage overlays, AGENTS/README
+duplication, and making the Task Context Bundle the hot path for
+source/environment/delivery facts.
+
 ## Slashing, lifecycle, and the cost of preserving things
 
 A healthy kb is a *small* kb of dense pages, not a big kb of pages
