@@ -27,10 +27,10 @@ runners.
 
 The daemon owns orchestration, not meaning:
 
-- Gates are transport adapters. Telegram, Slack, future forge gates,
-  and any custom script gate communicate through the file protocol
-  under `.brr/inbox/` and `.brr/responses/`. Gate-specific routing and
-  live progress rendering stay in the gate modules.
+- Gates are transport adapters. Telegram, Slack, GitHub, future forge
+  gates, and any custom script gate communicate through the file
+  protocol under `.brr/inbox/` and `.brr/responses/`. Gate-specific
+  routing and live progress rendering stay in the gate modules.
 - Conversation history is append-only routing context, not a workstream
   identity. The decision to drop workstreams is recorded in
   [`decision-drop-streams.md`](decision-drop-streams.md).

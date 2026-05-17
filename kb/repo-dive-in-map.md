@@ -52,10 +52,10 @@ that change the *reading* most are:
   preserved on `error`/`conflict`/uncommitted state.
 - Gates are transport adapters; `telegram`, `slack`, and `github` ship
   built-in. Telegram/Slack are chat surfaces that render a live progress
-  card via `render_update`; the GitHub gate (label-on-issue and
-  mention-in-comment triggers) posts replies as PR/issue comments and
-  passes through `branch_target` so the sync hook refreshes the PR
-  head before the worker runs.
+  card via `render_update`; the GitHub gate supports label, mention,
+  and broad `any` triggers, posts replies as PR/issue comments, and
+  passes through `branch_target` for PR-shaped events so the sync hook
+  refreshes the PR head before the worker runs.
 - The kb is the persistent semantic memory; the kb-shape pattern is
   synthesised in [`subject-kb.md`](subject-kb.md). Maintenance is a
   deterministic preflight ([`kb_preflight.py`](../src/brr/kb_preflight.py))
@@ -368,7 +368,7 @@ Keep in mind:
 - `_BUILTIN_GATES = ["telegram", "slack", "github"]` in `daemon.py`; each one only starts when its `is_configured(brr_dir)` returns true. Adding a built-in means registering it here and shipping a module under `gates/`.
 - `updates.emit()` can call optional gate `render_update()` hooks, but gate-side failures are swallowed. `_dispatch_to_gates` only walks `("telegram", "slack")` today; chat surfaces render a live card, the GitHub gate does not.
 - Telegram and Slack gates render a live per-task progress card via `render_update`: send-on-`task_created`, edit-on-progress through `editMessageText`/`chat.update`, fallback to a fresh send when the original message is gone. Per-task card state lives at `.brr/gates/telegram/progress/<task-id>.json` and `.brr/gates/slack/progress/<task-id>.json` — one file per task so concurrent renders for different tasks never share a state surface.
-- The GitHub gate polls the REST API (stdlib `urllib` only) for two triggers — `label-on-issue` and `mention-in-comment` — and posts replies as comments on the originating issue or PR. PR-comment events carry the PR head branch as `branch_target` so the daemon's pre-task fetch+ff refreshes that branch before the worker runs. Auth resolution at setup time: `gh auth token`, then `GITHUB_TOKEN`, then interactive paste. State lives at `.brr/gates/github.json`. No webhooks in v1.
+- The GitHub gate polls the REST API (stdlib `urllib` only) for three triggers — `label-on-issue`, `mention-in-comment`, and `any` — and posts replies as comments on the originating issue or PR. PR-shaped events carry the PR head branch as `branch_target` so the daemon's pre-task fetch+ff refreshes that branch before the worker runs. Auth resolution at setup time: `gh auth token`, then `GITHUB_TOKEN`, then interactive paste. State lives at `.brr/gates/github.json`. No webhooks in v1.
 - There is no local status module. Keep live progress in `updates.py`, `run_progress.py`, and gate renderers instead of adding transport-specific lifecycle views.
 - Bundled docs live in `src/brr/docs/`; per-repo overrides live in `.brr/docs/`.
 - Project-specific durable knowledge lives in `kb/`, not `.brr/`.
@@ -1478,7 +1478,7 @@ Use these heuristics while reading:
 - If a file talks about kb consistency, orphan pages, broken cross-links, or "should this kb-maintenance pass run?", jump to [kb_preflight.py](../src/brr/kb_preflight.py) and `_maybe_kb_maintenance` in [daemon.py](../src/brr/daemon.py). For pages-by-kind / in-degree / peer-orphans / log size, jump to [kb_health.py](../src/brr/kb_health.py). The maintenance contract itself lives in [AGENTS.md → "Knowledge base shape"](../src/brr/AGENTS.md), not in the brr daemon.
 - If a file talks about cwd, worktrees, Docker, response path translation, or runner credential wiring (env passthrough, login-dir mounts, git safe.directory), jump to [envs/__init__.py](../src/brr/envs/__init__.py).
 - If a file talks about clickable "view branch" URLs, remote-URL parsing, or `forge.kind` / `forge.url_base` overrides, jump to [forges.py](../src/brr/forges.py) and `_forge_view_url` in [daemon.py](../src/brr/daemon.py).
-- If a file talks about transport, auth, polling, or delivery, jump to [gates](../src/brr/gates/). For label-on-issue, mention-in-comment, or PR-comment events carrying `branch_target`, [gates/github.py](../src/brr/gates/github.py) specifically.
+- If a file talks about transport, auth, polling, or delivery, jump to [gates](../src/brr/gates/). For label-on-issue, mention-in-comment, `any`, or PR-shaped events carrying `branch_target`, [gates/github.py](../src/brr/gates/github.py) specifically.
 - If a file feels like "everything at once", you are probably in [daemon.py](../src/brr/daemon.py). Read it in lifecycle passes, not top-to-bottom once.
 
 ## Maintenance rule for this guide

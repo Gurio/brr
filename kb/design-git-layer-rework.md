@@ -1,6 +1,6 @@
 # Design: git layer rework
 
-Status: shipped on 2026-05-15.
+Status: shipped on 2026-05-15; amended on 2026-05-17 for the GitHub `any` trigger.
 
 This page covers brr's git layer in three phases: daemon-side
 freshness, a real GitHub gate, and a prompt-level mitigation for
@@ -128,7 +128,7 @@ must not block the task).
 
 ## Phase 2 — GitHub gate
 
-Status: shipped on 2026-05-15.
+Status: shipped on 2026-05-15; amended on 2026-05-17 for the `any` trigger.
 
 [`gates/github.py`](../src/brr/gates/github.py) is a built-in gate that
 talks to `https://api.github.com` over stdlib `urllib`. Mirrors
@@ -138,7 +138,8 @@ slack/telegram in shape: `is_configured`, `run_loop`, `setup`, `auth`,
 
 ### Triggers
 
-Two opt-in trigger types; both can run at once:
+Three opt-in trigger types. `label-on-issue` and `mention-in-comment`
+can run at once; `any` overrides both when enabled:
 
 - **`label-on-issue`**: polls `GET /repos/{repo}/issues?state=open&
   labels={label}&since={cursor}`. New labelled issues become inbox
@@ -149,13 +150,23 @@ Two opt-in trigger types; both can run at once:
   since={cursor}` (returns both issue and PR comments). Comments
   containing the configured mention string become events. The bot's
   own login is filtered so a reply doesn't re-trigger itself.
+- **`any`**: polls new issues, PRs, and comments without label or
+  mention filtering. It is off by default because it can create many
+  tasks on busy repositories; setup presents it before the narrower
+  label/mention prompts and stores `triggers={"any": true}` when
+  enabled.
 
-PR-comment events derive their `branch_target` by fetching
+PR and PR-comment events derive their `branch_target` by fetching
 `/repos/{repo}/pulls/{number}` once per unique PR per loop tick. This
 is the load-bearing seam to Phase 1: the daemon's
 `_branches_to_refresh` already understands `branch_target`, so
 "comment `@brr fix the failing test` on a PR" Just Works — the
 worktree starts on a freshly fast-forwarded copy of the PR head.
+
+Lineage: the 2026-05-15 shipped gate had only label and mention
+triggers; `any` was added on 2026-05-17 for repositories that want
+unfiltered issue / PR / comment activity (see
+[82cd808](https://github.com/Gurio/brr/commit/82cd808d74894d27b857aed14c9dcb0a75a9d07f)).
 
 `_POLL_INTERVAL = 60`. Authenticated REST quota is 5000/hr; this
 consumes ~120/hr at most. Each trigger keeps both a `since` cursor
@@ -174,8 +185,9 @@ work. An operator who pastes a token gets it stored under `.brr/`
 
 `bind(brr_dir)` autodetects the repo from `git remote get-url origin`
 (both HTTPS and SSH forms recognised; non-github.com hosts return
-None) and prompts for label / mention configuration with sensible
-defaults (`brr` and `@brr-bot`).
+None), prompts first for the broad `any` trigger, and otherwise
+prompts for label / mention configuration with sensible defaults
+(`brr` and `@brr-bot`).
 
 ### Response delivery
 
@@ -202,9 +214,11 @@ distinctly:
 the token resolution chain (stored / gh CLI / env / prompt), repo
 autodetect from both HTTPS and SSH origin URLs, the label trigger
 including the PR-skip rule, the mention trigger producing
-`branch_target` for PR comments and not for issue comments, the bot
-self-filter, comments without the mention being ignored, polling
-cursor advancement, response posting, the rate-limit /
+`branch_target` for PR comments and not for issue comments, the `any`
+trigger producing issue / PR / comment events and overriding
+label/mention routing, the bot self-filter, comments without the
+mention being ignored, polling cursor advancement, response posting,
+the rate-limit /
 `Retry-After` / 4xx error matrix, and the no-op path when the gate
 is unconfigured. All API calls are mocked at the
 `_api_get` / `_api_post` boundary — the same pattern slack and

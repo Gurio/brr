@@ -2038,9 +2038,8 @@ still filtered. Overrides label and mention in `_loop_once`. Setup adds an
 "any" prompt first with a token-cost warning; answering `on` skips the
 label/mention prompts. Off by default.
 
-Tests: 432 passing (was 424). +10 new in `test_github_gate.py`: 4 for
+Tests: 432 passing (was 424). +8 new in `test_github_gate.py`: 4 for
 `bind()` UX (Enter accepts default, off disables, typed value overrides,
-any skips subsequent prompts), 5 for `_poll_any_activity` (issue event,
+any skips subsequent prompts), 4 for `_poll_any_activity` (issue event,
 PR event with `branch_target`, comment events with bot-self-filter, any
 overrides label/mention routing).
-
