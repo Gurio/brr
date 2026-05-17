@@ -4,8 +4,8 @@ Hub page for everything we know about brr's kb pattern: where it
 lives, what it's for, how it stays coherent, and what each surrounding
 artifact contributes.
 
-This is a *subject hub* in the sense
-[AGENTS.md → "Knowledge base shape"](../AGENTS.md) describes —
+This is a *subject hub* in the sense the
+[`AGENTS.md`](../AGENTS.md) Knowledge base section describes —
 synthesis you can read in one sitting to understand the kb without
 reconstructing it from a dozen scattered pages. Schema lives in
 AGENTS.md; the *why* of any given choice lives in
@@ -113,17 +113,19 @@ brr-specific behaviour.
 The brr daemon's role is the **safety net**:
 
 - A **deterministic preflight** ([`src/brr/kb_preflight.py`](../src/brr/kb_preflight.py))
-  scans the kb after every task: orphans missing from the index,
-  index entries pointing to deleted files, broken cross-links inside
-  kb pages. It runs every time, costs nothing, and produces
-  structured findings.
+  scans the kb after successful daemon tasks unless
+  `kb_maintenance=never`: index coverage, stale index entries, broken
+  relative links, lifecycle/status markers, oversized pages, recent-log
+  budget pressure, hub coverage, and proposal scaffolding. The findings
+  carry `error` / `warning` / `info` severity so the runner can
+  distinguish structural repair from advisory grooming.
 - A **thin LLM redundancy pass**
   ([`src/brr/prompts/kb-maintenance.md`](../src/brr/prompts/kb-maintenance.md)
   invoked from
-  [`daemon._maybe_kb_maintenance`](../src/brr/daemon.py)) only runs
-  when the preflight has findings *or* the task touched `kb/`. The
-  prompt points back at AGENTS.md → "Knowledge base shape" for the
-  rules and addresses the injected findings.
+  [`daemon._maybe_kb_maintenance`](../src/brr/daemon.py)) runs under
+  the default `auto` policy when the preflight has findings or the task
+  touched `kb/`. The prompt points back at AGENTS.md for the rules and
+  addresses the injected touched-page list, findings, and graph stats.
 
 External tools (Cursor / Codex / Claude Code) don't have brr's
 preflight, so they fall back to the AGENTS.md schema alone.
@@ -161,7 +163,7 @@ The state-first principle is now part of the schema (see
 [`AGENTS.md`](../AGENTS.md) → "State first, history in git"): pages
 describe the current shape, lineage breadcrumbs replace inline
 running diffs of past wording, and git is the deep-history layer.
-The execution plan is in
+The shipped receipt is in
 [`plan-kb-state-first-maintenance.md`](plan-kb-state-first-maintenance.md).
 
 The inline maintenance pass
@@ -210,7 +212,7 @@ A few attractive ideas that have been considered and not pursued:
 
 In priority order:
 
-1. [`AGENTS.md`](../AGENTS.md) → "Knowledge base shape" — the
+1. [`AGENTS.md`](../AGENTS.md) → "Knowledge base" — the
    universal rules every agent follows.
 2. [`decision-kb-shape.md`](decision-kb-shape.md) — why those rules,
    what triggered the rethink, what was deferred.
@@ -224,7 +226,7 @@ In priority order:
    inspiration from. Skim for context, not as a spec.
 6. [`src/brr/kb_preflight.py`](../src/brr/kb_preflight.py) and its
    tests — the deterministic side of the maintenance contract; the
-   shortest path to "what is structurally enforceable about the kb."
+   shortest path to "what is mechanically checkable about the kb."
 7. [`src/brr/prompts/kb-maintenance.md`](../src/brr/prompts/kb-maintenance.md)
    — the LLM redundancy pass; short by design.
 8. The "drop the noisy abstraction" decision trio:
