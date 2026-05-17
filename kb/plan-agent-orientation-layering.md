@@ -1,7 +1,7 @@
 # Agent orientation layering
 
 Status: active — slices 1 and 2 shipped on 2026-05-16; the first
-AGENTS.md follow-up cleanup shipped in `ddee9bd`; slice 3 was
+AGENTS.md follow-up cleanup shipped on 2026-05-16 in `ddee9bd`; slice 3 was
 **rejected on 2026-05-16** as low ROI (see
 [`research-cursor-orientation-ergonomics-followup-2026-05-16.md`](research-cursor-orientation-ergonomics-followup-2026-05-16.md)
 Finding 9). The current open runner-side follow-up is filtering
@@ -123,16 +123,17 @@ broad snapshot.
 
 ## Shipped follow-up cleanup
 
-- **AGENTS.md canonical-home first target.** Commit `ddee9bd` trimmed
-  the Project block and Build-and-run section so README.md and
+- **AGENTS.md canonical-home first target.** Commit `ddee9bd`
+  (2026-05-16) trimmed the Project block and Build-and-run section so
+  README.md and
   `pyproject.toml` remain the canonical home for product overview and
   detailed install variants. Broader canonical-home cleanup stays
   opportunistic: act when a concrete repeated fact slows a task, not
   as a blanket rewrite.
 - **Workspace-rule staleness mitigation and cold-start sanity.**
-  Commit `ddee9bd` added the top-of-file `Revision:` marker plus the
-  ad-hoc sanity-check block for stale workspace rules, stale git
-  status snapshots, and ambient terminals / surfaced skills.
+  Commit `ddee9bd` (2026-05-16) added the top-of-file `Revision:`
+  marker plus the ad-hoc sanity-check block for stale workspace rules,
+  stale git status snapshots, and ambient terminals / surfaced skills.
 
 ## Open follow-ups (not yet sliced)
 
