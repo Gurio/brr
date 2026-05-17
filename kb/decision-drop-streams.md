@@ -1,6 +1,6 @@
 ## Drop streams; conversations are routing+history, not identity
 
-Status: accepted, 2026-05-05.
+Status: accepted on 2026-05-05.
 
 Supersedes: the `Workstream ergonomics — first slice` decision implicit
 in the [2026-04-27 implementation log entry](log.md). Triggered by two

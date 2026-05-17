@@ -1,33 +1,32 @@
 # Subject: environments
 
-Hub page for how brr runs tasks in different execution contexts — the
-host checkout, a git worktree, a Docker container, an ssh-reachable
-machine, a devcontainer, or a user-supplied plugin. The implementation
+Hub page for how brr runs tasks in different execution contexts: the
+host checkout, a git worktree, or a Docker container. The implementation
 lives in [`envs/__init__.py`](../src/brr/envs/__init__.py); this page
-is the current synthesis of the protocol, the durability contract,
-and the salvage rule that hangs off it.
+is the current synthesis of the shipped protocol, the durability
+contract, and the salvage rule that hangs off it.
 
 ## Current shape
 
 Every environment implements the same three-phase `Env` Protocol:
 `prepare → invoke → finalize`. The daemon picks the env mechanically
 from `.brr/config` and event metadata (`environment=auto` resolves to
-`docker` when an image is configured, otherwise `worktree`; `host`,
-`ssh`, and `devcontainer` are explicit), then asks the env to set up
-a workspace, run the runner, and return a `FinalizeReport`. Branch
-resolution and trace handling are env-agnostic and happen above the
-protocol; everything filesystem- or transport-specific lives behind
-it.
+`docker` when an image is configured, otherwise `worktree`; `host` is
+explicit-only), then asks the env to set up a workspace, run the runner,
+and finalize scratch state. Branch resolution and trace handling are
+env-agnostic and happen above the protocol; filesystem-specific cleanup
+lives behind it.
 
-Three envs ship today — `local`, `worktree`, and `docker`. Two are
-designed but not yet implemented — `ssh` and `devcontainer`. Plugins
-ride on either Python entry points (`brr.envs`) or drop-in script
-envs in `.brr/envs/<name>/` and `~/.config/brr/envs/<name>/`; both
-dispatch paths share the protocol so neither kind is privileged.
+Three envs ship today: `host`, `worktree`, and `docker`. `ssh`,
+`devcontainer`, and plugin/script dispatch remain design material in
+[`design-env-interface.md`](design-env-interface.md); the current
+`get_env()` registry only returns the three built-ins and raises
+`UnsupportedEnvironmentError` for unknown names.
 
 ## Durability contract
 
-Tasks running in a non-`local` env run in an **ephemeral** location.
+Tasks running in an isolated env (`worktree` or `docker`) run in an
+**ephemeral** location.
 The only outputs that survive are git refs and the response file on
 the host. Trace artefacts and per-task scratch (worktree directory,
 container, remote scratch dir) are env territory and get torn down on

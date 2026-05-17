@@ -2121,3 +2121,17 @@ the two recovery surfaces do not drift.
 
 Tests: focused prompt + daemon conversation tests passed; full suite
 passed after installing the repo dev extras in the task container.
+
+## [2026-05-17] fix | Compress kb dive-in map and reconcile drift
+
+Compressed [`repo-dive-in-map.md`](repo-dive-in-map.md) from the old
+full walkthrough into a compact current-state source map after
+`kb_preflight` flagged it as oversized. The page now keeps orientation,
+source routes, invariants, and maintenance triggers without preserving
+the full historical reference inline.
+
+The same consistency pass reconciled concrete drift found during cheap
+source checks: GitHub is now a live progress-rendering gate with label,
+mention, and `any` triggers; `records_for_task()` still filters merged
+conversation records; shipped env backends are `host`, `worktree`, and
+`docker`.

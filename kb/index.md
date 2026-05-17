@@ -31,8 +31,8 @@ dive-in map) and are stable until something contradicts them.
   recommended reading paths.
 - **Hub: [daemon and process lifecycle](subject-daemon.md)** —
   synthesis of the foreground `brr up` process, gate/file-protocol
-  boundary, serial worker lifecycle, local process control, and where
-  developer reload fits without becoming broad product UX.
+  boundary, bounded worker-pool lifecycle, local process control, and
+  where developer reload fits without becoming broad product UX.
 - [Git layer rework design](design-git-layer-rework.md) — *shipped
   on 2026-05-15*. Reframes the deleted tasks-folder gate around what
   it was conflating: daemon-side freshness (pre-task fetch+ff with
@@ -54,8 +54,8 @@ dive-in map) and are stable until something contradicts them.
   Protocol (three-phase `prepare → invoke → finalize`), the durability
   contract enforced from the host, the outcome-aware salvage rule,
   decentralised fast-forward merging, and which envs ship today
-  (`local` / `worktree` / `docker`) versus designed-but-pending
-  (`ssh` / `devcontainer`).
+  (`host` / `worktree` / `docker`) versus designed-but-pending
+  (`ssh` / `devcontainer` / plugin dispatch).
 - [Env protocol design](design-env-interface.md) — *accepted on
   2026-05-06*. Full protocol, per-env mechanics, response-path split,
   plugin / script-env model, and configuration surface. Tactical

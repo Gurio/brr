@@ -89,10 +89,10 @@ Read paths:
   prompt tails do not read every line of every jsonl when only a short
   window is needed. ``limit <= 0`` falls back to a full ``read_records``
   merge (same as "give me everything").
-- `records_for_task(brr_dir, key, task_id)` benefits from the per-
-  event layout: we read just `<event-id>.jsonl` (when we can map
-  task id → event id) instead of filtering across all conversation
-  records.
+- `records_for_task(brr_dir, key, task_id)` is still the broad helper:
+  it merges records and filters by task id. `read_event_records()`
+  is the targeted single-file path when a caller already has the
+  event id.
 - `project_task` and `project_conversation_latest` in
   `run_progress.py` consume the same merged list.
 
