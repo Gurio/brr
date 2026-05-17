@@ -1,29 +1,31 @@
 # Subject: environments
 
-Hub page for how brr runs tasks in different execution contexts — the
-host checkout, a git worktree, a Docker container, an ssh-reachable
-machine, a devcontainer, or a user-supplied plugin. The implementation
-lives in [`envs/__init__.py`](../src/brr/envs/__init__.py); this page
-is the current synthesis of the protocol, the durability contract,
-and the salvage rule that hangs off it.
+Hub page for how brr runs tasks in different execution contexts: the
+shipped host checkout, git worktree, and Docker container backends,
+plus the planned ssh, devcontainer, and plugin surfaces. The
+implementation lives in
+[`envs/__init__.py`](../src/brr/envs/__init__.py); this page is the
+current synthesis of the protocol, the durability contract, and the
+salvage rule that hangs off it.
 
 ## Current shape
 
-Every environment implements the same three-phase `Env` Protocol:
-`prepare → invoke → finalize`. The daemon picks the env mechanically
-from `.brr/config` and event metadata (`environment=auto` resolves to
-`docker` when an image is configured, otherwise `worktree`; `host`,
-`ssh`, and `devcontainer` are explicit), then asks the env to set up
-a workspace, run the runner, and return a `FinalizeReport`. Branch
+Every shipped environment implements the same three-phase
+`EnvBackend` Protocol: `prepare → invoke → finalize`. The daemon picks
+the env mechanically from `.brr/config` and event metadata
+(`environment=auto` resolves to `docker` when an image is configured,
+otherwise `worktree`; `host` is explicit), then asks the env to set up
+a workspace, run the runner, and return the updated `Task`. Branch
 resolution and trace handling are env-agnostic and happen above the
 protocol; everything filesystem- or transport-specific lives behind
 it.
 
-Three envs ship today — `host`, `worktree`, and `docker`. Two are
-designed but not yet implemented — `ssh` and `devcontainer`. Plugins
-ride on either Python entry points (`brr.envs`) or drop-in script
-envs in `.brr/envs/<name>/` and `~/.config/brr/envs/<name>/`; both
-dispatch paths share the protocol so neither kind is privileged.
+Three envs ship today — `host`, `worktree`, and `docker`. `ssh`,
+`devcontainer`, Python entry-point envs, and drop-in script envs are
+accepted design targets, not runtime backends yet. `Task.resolve_env`
+accepts syntactically valid future env names so event/config data can
+round-trip, but `envs.get_env()` currently rejects anything outside
+`host` / `worktree` / `docker` with `UnsupportedEnvironmentError`.
 
 By design, `worktree` and `docker` do not start from the host checkout's
 untracked or ignored files. `host` is the explicit escape hatch for
@@ -37,24 +39,26 @@ specific local artifacts.
 Tasks running in a non-`host` env run in an **ephemeral** location.
 The only outputs that survive are git refs and the response file on
 the host. Trace artefacts and per-task scratch (worktree directory,
-container, remote scratch dir) are env territory and get torn down on
-clean completion — see the salvage rule below for the exact
-conditions.
+container, and future remote scratch dir) are env territory and get
+torn down on clean completion — see the salvage rule below for the
+exact conditions.
 
 The daemon enforces the contract from the host: after `finalize()`
-returns, it checks that the response file exists at
-`response_path_host` and the promised branch is reachable in the
-host's git. It does not inspect the env's internals. That keeps the
-protocol observable and the same shape for plugins.
+returns, branch and scratch outcomes are visible through host git refs
+and `task.meta`; the response file is produced earlier from the
+runner's validated stdout at `response_path_host`. The daemon does not
+inspect the env's internals. That keeps the protocol observable and
+ready for future plugins.
 
 ## Salvage rule
 
 Env scratch is outcome-aware. On clean `status=done` with nothing
 uncommitted left in the worktree, brr tears down the worktree,
-container, or remote scratch dir. On `status ∈ {error, conflict}`, or
-when the worktree has untracked/unstaged files, brr preserves the
-scratch state so the user can inspect or salvage. Persisted task
-metadata records the preserved location in `task.meta`.
+container, or future remote scratch dir. On
+`status ∈ {error, conflict}`, or when the worktree has
+untracked/unstaged files, brr preserves the scratch state so the user
+can inspect or salvage. Persisted task metadata records the preserved
+location in `task.meta`.
 
 Traces follow the same rule: removed on clean done, kept on
 error/conflict so the failure is debuggable.
@@ -78,12 +82,13 @@ the env's job is to apply that decision inside its workspace.
 
 ## Read next
 
-1. [`design-env-interface.md`](design-env-interface.md) for the full
-   protocol, the per-env mechanics, the response-path split, the
-   plugin / script-env model, and the configuration surface.
+1. [`design-env-interface.md`](design-env-interface.md) for the
+   shipped protocol, the per-env mechanics, the response-path split,
+   the current configuration surface, and the designed plugin /
+   script-env model.
 2. [`subject-tasks-branching.md`](subject-tasks-branching.md) for how
    the daemon resolves seed refs and auto-land targets feeding into
-   `Env.finalize`.
+   `EnvBackend.finalize`.
 3. [`plan-concurrent-worktrees.md`](plan-concurrent-worktrees.md) for
    the original "one task per worktree" reasoning that informed the
    current worktree env shape; the merge-coordinator path it sketched

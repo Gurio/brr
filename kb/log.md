@@ -2060,3 +2060,13 @@ as logs. Secrets should stay on the existing env-var / credential-mount
 lane, not ride on broad `.env` copying. Also corrected the env hub and
 index/design pages from the stale `local` label to the shipped `host`
 backend.
+
+## [2026-05-17] fix | Env kb runtime/design split
+
+Post-task kb consistency pass checked the env pages against
+`src/brr/envs/__init__.py`, `src/brr/task.py`, and `src/brr/daemon.py`.
+The shipped runtime surface is `host` / `worktree` / `docker`;
+`ssh`, `devcontainer`, Python entry-point envs, and script envs remain
+accepted design targets. Updated the env hub, design page, and index so
+cold readers see the shipped `EnvBackend` protocol and the pending
+surfaces as separate facts.
