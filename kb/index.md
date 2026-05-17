@@ -139,9 +139,15 @@ dive-in map) and are stable until something contradicts them.
   genesis rule, brr's daemon kb-maintenance reframed as a redundancy
   pass; staged execution plan.
 - [State-first kb maintenance plan](plan-kb-state-first-maintenance.md) —
-  *active*. Refine the kb shape around current-state synthesis plus
-  short breadcrumbs to git history, and replace hidden post-task LLM
-  cleanup with explicit, first-class maintenance tasks.
+  *shipped on 2026-05-13*. Refined the kb shape around current-state
+  synthesis plus short breadcrumbs to git history, added preflight
+  advisories and graph stats, and made inline maintenance commits
+  visible; the follow-up latency trade-off is in the active plan below.
+- [Low-latency kb maintenance plan](plan-kb-maintenance-latency.md) —
+  *active*. Revisit the post-task maintenance trigger: keep
+  same-branch repair for task-caused structural errors, move broad
+  warning/info grooming out of the default hot path, and consider
+  first-class idle maintenance tasks for compaction.
 - [Agent orientation layering](plan-agent-orientation-layering.md) —
   *active (slices 1+2 shipped 2026-05-16)*. Synthesis of the two
   same-day ergonomics reviews into a four-layer model (repository

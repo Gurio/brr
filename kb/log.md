@@ -2069,3 +2069,21 @@ Tests: 451 passing (was 449). +4 new in `test_envs.py`: SSH mount present
 when directory exists; GitHub token injected as key=value when task source is
 `github`; no injection for non-github tasks; key=value form absent (bare
 passthrough used instead) when `GITHUB_TOKEN` is already in daemon env.
+
+## [2026-05-17] plan | Low-latency kb maintenance
+
+Revisited the kb-maintenance shape from the task-completion latency
+angle. The current inline pass has the valuable property that repair
+commits ride on the same branch as the task, but it also conflates
+branch-local repair with broad semantic grooming. Under
+`kb_maintenance=auto`, any preflight finding triggers a second runner;
+the repo currently has a persistent `oversized-page` warning for
+`repo-dive-in-map.md`, so unrelated tasks can pay the maintenance cost.
+
+Captured the redesign in
+[`plan-kb-maintenance-latency.md`](plan-kb-maintenance-latency.md):
+keep deterministic scanning after every task, keep same-branch inline
+repair for task-caused structural errors, stop treating `kb_changed`
+or warning/info findings as default hot-path LLM triggers, and move
+global compaction into debounced, first-class maintenance tasks when
+enabled.

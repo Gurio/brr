@@ -167,11 +167,16 @@ The execution plan is in
 The inline maintenance pass
 ([`daemon._maybe_kb_maintenance`](../src/brr/daemon.py) plus
 [`prompts/kb-maintenance.md`](../src/brr/prompts/kb-maintenance.md))
-runs on the task's own branch after delivery so cleanup rides on the
-same branch as the work that triggered it. The plan also makes the
-pass commit its edits and surface a status packet so the operator
-sees that grooming happened, rather than the pass silently dropping
-edits (the current bug).
+runs on the task's own branch after delivery so cleanup can ride on
+the same branch as the work that triggered it. It commits leftover kb
+edits and emits a status packet so the operator sees that grooming
+happened.
+
+The active latency redesign is in
+[`plan-kb-maintenance-latency.md`](plan-kb-maintenance-latency.md).
+It keeps the same-branch repair property for task-caused structural
+kb errors, but moves warning/info grooming and broad compaction out
+of the default task-completion hot path.
 
 ## What was deliberately rejected
 
@@ -210,16 +215,19 @@ In priority order:
 2. [`decision-kb-shape.md`](decision-kb-shape.md) — why those rules,
    what triggered the rethink, what was deferred.
 3. [`plan-kb-state-first-maintenance.md`](plan-kb-state-first-maintenance.md)
-   — active refinement for keeping pages focused on the current shape
+   — shipped refinement for keeping pages focused on the current shape
    while using git as the deep-history layer.
-4. [`llm-wiki.md`](llm-wiki.md) — the framing the kb pattern took
+4. [`plan-kb-maintenance-latency.md`](plan-kb-maintenance-latency.md)
+   — active redesign of when the daemon should pay for an additional
+   maintenance runner.
+5. [`llm-wiki.md`](llm-wiki.md) — the framing the kb pattern took
    inspiration from. Skim for context, not as a spec.
-5. [`src/brr/kb_preflight.py`](../src/brr/kb_preflight.py) and its
+6. [`src/brr/kb_preflight.py`](../src/brr/kb_preflight.py) and its
    tests — the deterministic side of the maintenance contract; the
    shortest path to "what is structurally enforceable about the kb."
-6. [`src/brr/prompts/kb-maintenance.md`](../src/brr/prompts/kb-maintenance.md)
+7. [`src/brr/prompts/kb-maintenance.md`](../src/brr/prompts/kb-maintenance.md)
    — the LLM redundancy pass; short by design.
-7. The "drop the noisy abstraction" decision trio:
+8. The "drop the noisy abstraction" decision trio:
    [`decision-remove-triage.md`](decision-remove-triage.md) →
    [`decision-drop-streams.md`](decision-drop-streams.md) → this
    subject's triggering decision. Same pattern three times: when an

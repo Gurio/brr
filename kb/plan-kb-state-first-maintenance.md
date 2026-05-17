@@ -1,6 +1,7 @@
 # Plan: state-first kb maintenance and regular grooming
 
-Status: shipped on 2026-05-13
+Status: shipped on 2026-05-13; follow-up active in
+[`plan-kb-maintenance-latency.md`](plan-kb-maintenance-latency.md)
 
 What landed:
 
