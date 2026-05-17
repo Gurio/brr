@@ -2221,3 +2221,17 @@ fallback policy is only `preserve` or explicit `current`; conversation
 branch facts stay prompt context. The design's history was compressed
 to one lineage breadcrumb, and the index status now includes the
 2026-05-18 leased-publish amendment.
+## [2026-05-17] implement | GitHub response footer links kb result files
+
+GitHub delivery now appends direct blob links for committed `kb/*.md`
+result pages in the final response footer, next to the existing branch /
+compare links. The footer computes changed kb pages by diffing the
+task's pinned pre-run base (`seed_oid`, with fallbacks for older task
+files) against the finalized branch, filters out `kb/index.md` and
+`kb/log.md`, and stays quiet on git errors or tasks without committed kb
+articles. The runtime `.brr/responses/<event-id>.md` file remains delivery
+plumbing and is not linked.
+
+Docs updated in `subject-daemon.md` and `execution-map.md`. Tests: 453
+passing. +2 in `test_github_gate.py` cover preserved task branches and
+auto-landed branches.
