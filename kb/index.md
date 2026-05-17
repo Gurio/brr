@@ -37,10 +37,10 @@ dive-in map) and are stable until something contradicts them.
   on 2026-05-15*. Reframes the deleted tasks-folder gate around what
   it was conflating: daemon-side freshness (pre-task fetch+ff with
   the seed-ref invariant), a real GitHub gate (built-in, stdlib,
-  polling, label + mention triggers, PR-comment events carrying
-  `branch_target`), and a prompt-level mitigation for runner
-  thoughtfulness on design-loaded tasks (revisit-signal section in
-  the run prompt + a self-review bullet).
+  polling, label + mention + any-activity triggers, PR and
+  PR-comment events carrying `branch_target`), and a prompt-level
+  mitigation for runner thoughtfulness on design-loaded tasks
+  (revisit-signal section in the run prompt + a self-review bullet).
 - [Developer daemon reload design](design-daemon-dev-reload.md) —
   *shipped*. Opt-in brr self-development reload mode: editable install
   plus quiescent re-exec between tasks when brr package files change;

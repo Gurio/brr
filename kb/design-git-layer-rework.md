@@ -138,7 +138,13 @@ slack/telegram in shape: `is_configured`, `run_loop`, `setup`, `auth`,
 
 ### Triggers
 
-Two opt-in trigger types; both can run at once:
+Three trigger surfaces are configured under `triggers`: label and
+mention can run together, while `any` is the broad activity mode and
+overrides both when enabled. (The gate originally shipped with
+label/mention only; commit
+[82cd808](https://github.com/Gurio/brr/commit/82cd808) added `any`
+on 2026-05-17 so busy repos can opt into unfiltered issue, PR, and
+comment activity explicitly.)
 
 - **`label-on-issue`**: polls `GET /repos/{repo}/issues?state=open&
   labels={label}&since={cursor}`. New labelled issues become inbox
@@ -149,6 +155,12 @@ Two opt-in trigger types; both can run at once:
   since={cursor}` (returns both issue and PR comments). Comments
   containing the configured mention string become events. The bot's
   own login is filtered so a reply doesn't re-trigger itself.
+- **`any`**: polls issues/PRs and issue comments without label or
+  mention filtering. New issues become `github_kind=issue`, PRs become
+  `github_kind=pr` with `branch_target` from the PR head, comments
+  become `github_kind=issue-comment` or `pr-comment`, and bot-authored
+  comments are still filtered. This mode is token-expensive on busy
+  repos and is off by default.
 
 PR-comment events derive their `branch_target` by fetching
 `/repos/{repo}/pulls/{number}` once per unique PR per loop tick. This
@@ -174,8 +186,11 @@ work. An operator who pastes a token gets it stored under `.brr/`
 
 `bind(brr_dir)` autodetects the repo from `git remote get-url origin`
 (both HTTPS and SSH forms recognised; non-github.com hosts return
-None) and prompts for label / mention configuration with sensible
-defaults (`brr` and `@brr-bot`).
+None) and prompts for `any` first with a token-cost warning. Enabling
+`any` stores `{"any": true}` and skips narrower prompts. Otherwise it
+prompts for label / mention configuration with sensible defaults
+(`brr` and `@brr-bot`); `off` / `none` / `disable` removes a trigger,
+and Enter accepts the bracketed default.
 
 ### Response delivery
 
@@ -203,8 +218,10 @@ the token resolution chain (stored / gh CLI / env / prompt), repo
 autodetect from both HTTPS and SSH origin URLs, the label trigger
 including the PR-skip rule, the mention trigger producing
 `branch_target` for PR comments and not for issue comments, the bot
-self-filter, comments without the mention being ignored, polling
-cursor advancement, response posting, the rate-limit /
+self-filter, comments without the mention being ignored, `any`
+trigger routing for issues / PRs / comments, polling cursor
+advancement, response posting, setup prompt defaults and disable
+sentinels, the rate-limit /
 `Retry-After` / 4xx error matrix, and the no-op path when the gate
 is unconfigured. All API calls are mocked at the
 `_api_get` / `_api_post` boundary — the same pattern slack and
