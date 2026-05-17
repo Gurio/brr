@@ -3,8 +3,8 @@
 Pages are grouped by **subject area** — Environments, Tasks &
 branching, Conversations & responses, Documentation strategy, Fleet &
 overlays, KB itself, Research. The grouping is editorial: the kb is
-ultimately a graph (see [`AGENTS.md`](../AGENTS.md) → "Knowledge base
-shape" and [`decision-kb-shape.md`](decision-kb-shape.md)). The index
+ultimately a graph (see the kb rules in [`AGENTS.md`](../AGENTS.md)
+and [`decision-kb-shape.md`](decision-kb-shape.md)). The index
 is the canonical entry point; once a subject accretes a real hub
 page, link it at the top of its section.
 
@@ -31,8 +31,8 @@ dive-in map) and are stable until something contradicts them.
   recommended reading paths.
 - **Hub: [daemon and process lifecycle](subject-daemon.md)** —
   synthesis of the foreground `brr up` process, gate/file-protocol
-  boundary, serial worker lifecycle, local process control, and where
-  developer reload fits without becoming broad product UX.
+  boundary, bounded worker-pool lifecycle, local process control, and
+  where developer reload fits without becoming broad product UX.
 - [Git layer rework design](design-git-layer-rework.md) — *shipped
   on 2026-05-15*. Reframes the deleted tasks-folder gate around what
   it was conflating: daemon-side freshness (pre-task fetch+ff with
@@ -54,8 +54,8 @@ dive-in map) and are stable until something contradicts them.
   Protocol (three-phase `prepare → invoke → finalize`), the durability
   contract enforced from the host, the outcome-aware salvage rule,
   decentralised fast-forward merging, and which envs ship today
-  (`local` / `worktree` / `docker`) versus designed-but-pending
-  (`ssh` / `devcontainer`).
+  (`host` / `worktree` / `docker`) versus designed-but-pending
+  (`ssh` / `devcontainer` / plugin dispatch).
 - [Env protocol design](design-env-interface.md) — *accepted on
   2026-05-06*. Full protocol, per-env mechanics, response-path split,
   plugin / script-env model, and configuration surface. Tactical
@@ -143,11 +143,12 @@ dive-in map) and are stable until something contradicts them.
   short breadcrumbs to git history, and replace hidden post-task LLM
   cleanup with explicit, first-class maintenance tasks.
 - [Agent orientation layering](plan-agent-orientation-layering.md) —
-  *active (slices 1+2 shipped 2026-05-16)*. Synthesis of the two
-  same-day ergonomics reviews into a four-layer model (repository
-  contract / stage overlay / runtime state packet / subject
-  knowledge), with shipped, in-flight, and open follow-up slices
-  marked.
+  *active (slices 1+2, AGENTS.md cleanup, and recent-conversation
+  filtering shipped)*.
+  Synthesis of the ergonomics reviews into a four-layer model
+  (repository contract / stage overlay / runtime state packet /
+  subject knowledge), with shipped, rejected, and open prompt-noise
+  follow-ups marked.
 - [LLM Wiki framing](llm-wiki.md) — the source framing this project
   takes inspiration from for the wiki/synthesis layer.
 
@@ -160,11 +161,18 @@ dive-in map) and are stable until something contradicts them.
   log / dive-in-map. Headline recommendations absorbed into
   [`plan-agent-orientation-layering.md`](plan-agent-orientation-layering.md).
 - [Cursor orientation ergonomics — follow-up, 2026-05-16](research-cursor-orientation-ergonomics-followup-2026-05-16.md) —
-  *active*. Same-day second-pass review after slices 1+2 shipped.
-  Surfaces a Cursor workspace-rule cache that delivers a stale
-  `AGENTS.md` to the agent, confirms the user-flagged
-  README ↔ AGENTS.md elevator-pitch / Build-and-run duplication, and
-  recommends dropping the plan's slice 3 (snapshot test) as low ROI.
+  *partly shipped*. Same-day second-pass review after slices 1+2
+  shipped. Surfaced the Cursor workspace-rule cache issue and
+  README ↔ AGENTS.md duplication that drove commit `ddee9bd`; also
+  records the rejected slice-3 snapshot test and remaining
+  Cursor-side wishlist.
+- [Runner orientation ergonomics, 2026-05-17](research-runner-orientation-ergonomics-2026-05-17.md) —
+  *shipped*. Daemon-launched runner follow-up after the AGENTS.md
+  trim / drift guard: confirms the Mode block, injected
+  recent-activity block, and cold run-context contract are working;
+  identifies mechanical `Recent in this conversation` records as
+  the next high-leverage prompt-noise target and records the
+  same-day filtering implementation.
 - [Runner orientation ergonomics, 2026-05-16](research-runner-orientation-ergonomics-2026-05-16.md) —
   *shipped*. Same-day daemon-launched-runner view of the same
   problem from inside Docker: pinpoints the stage-vs-environment

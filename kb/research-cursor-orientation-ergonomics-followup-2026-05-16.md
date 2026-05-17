@@ -1,8 +1,9 @@
 # Cursor orientation ergonomics — follow-up, 2026-05-16
 
-Status: active — recommendations queued on
-[`plan-agent-orientation-layering.md`](plan-agent-orientation-layering.md);
-no AGENTS.md / kb edits applied yet pending operator selection.
+Status: partly shipped — AGENTS.md trim / workspace-rule drift guard
+landed in commit `ddee9bd`; remaining value is the Cursor-side
+wishlist and historical context for
+[`plan-agent-orientation-layering.md`](plan-agent-orientation-layering.md).
 
 Second-pass external Cursor session view, taken after slices 1 and 2
 of the agent-orientation layering plan landed earlier the same day.
@@ -343,34 +344,23 @@ Recorded for future reviewers; not brr's to ship.
 | Make AGENTS.md mode-aware up front | **Shipped** in slice 2 (`9f0fd9e`). Working when read fresh; partly invisible when delivered as a stale workspace rule (Finding 1). |
 | Trim `kb/log.md` reading cost (cheap option) | **Shipped** in slice 2 — Orientation gives the tail-fetch recipe. |
 | Slim or split the dive-in-map | **Cheap polish shipped**; deeper split rated low-priority by Finding 8. |
-| Make redundant facts authoritative in one place each | **Open**. Finding 2 is the most concrete instance and the user explicitly named it. |
-| Add explicit external-mode hints | **Shipped** in slice 2 ("How to read this playbook" stage block). Finding 6 proposes a small extension for runtime sanity checks. |
+| Make redundant facts authoritative in one place each | **Partly shipped** in `ddee9bd`: the AGENTS.md Project / Build-and-run duplication was trimmed. Broader canonical-home cleanup is opportunistic and tracked by the plan. |
+| Add explicit external-mode hints | **Shipped** in slice 2 ("How to read this playbook" stage block); the runtime sanity-check extension from Finding 6 landed in `ddee9bd`. |
 | Cursor-side wishlist | **Open** (not brr's). Reproduced; one new item appended (Finding 10). |
 
-## Suggested next moves
+## Current follow-up state
 
-In rough order of leverage. None of these are large; all four AGENTS.md
-edits could land in one commit on `main`.
+The brr-owned recommendations from this review have either shipped,
+been rejected, or moved into
+[`plan-agent-orientation-layering.md`](plan-agent-orientation-layering.md).
+Commit `ddee9bd` shipped the AGENTS.md trim, workspace-rule drift
+guard, and cold-start sanity block; the plan marks the snapshot-test
+slice rejected and now carries the active brr-owned prompt-noise queue.
 
-1. **AGENTS.md trim** — Findings 2 (project + build-and-run), 3
-   (move the new code-guideline bullet into Stewardship + fix typo),
-   5 (compress self-review #5). One commit, ~30-line net deletion.
-2. **AGENTS.md mitigation for workspace-rule staleness** —
-   Finding 1: top-of-file `Revision:` line and a one-line note in
-   the ad-hoc-agent stage block.
-3. **AGENTS.md cold-start sanity-check block** — Finding 6: three
-   bullets in the ad-hoc stage block. Independent of (2); same
-   commit is fine.
-4. **Plan housekeeping** — mark slice 3 rejected with a breadcrumb
-   (Finding 9), downgrade the dive-in-map deep split (Finding 8),
-   note that the canonical-home cleanup follow-up has a concrete
-   first target (Finding 2 / item 1 above).
-5. **Stewardship compression** (Finding 4) — only if you want a
-   second pass; lower leverage.
-
-If the operator wants only the user-flagged item addressed, that
-is item 1 of (1) alone — strip the elevator pitch and shrink Build
-and run to a pointer.
+This page's remaining open items are Cursor-side only: timestamp or
+mark stale git-status snapshots, tag ambient terminal state, declare
+runtime mode in the system prompt, invalidate workspace-rule caches
+when the file changes, and filter surfaced skills by task domain.
 
 ## Out of scope (recorded so future passes don't re-derive)
 
