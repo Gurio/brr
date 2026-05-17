@@ -1,8 +1,9 @@
 # Cursor orientation ergonomics — follow-up, 2026-05-16
 
-Status: active — recommendations queued on
-[`plan-agent-orientation-layering.md`](plan-agent-orientation-layering.md);
-no AGENTS.md / kb edits applied yet pending operator selection.
+Status: partly shipped — AGENTS.md trim / workspace-rule drift guard
+landed in commit `ddee9bd`; remaining value is the Cursor-side
+wishlist and historical context for
+[`plan-agent-orientation-layering.md`](plan-agent-orientation-layering.md).
 
 Second-pass external Cursor session view, taken after slices 1 and 2
 of the agent-orientation layering plan landed earlier the same day.
@@ -348,6 +349,12 @@ Recorded for future reviewers; not brr's to ship.
 | Cursor-side wishlist | **Open** (not brr's). Reproduced; one new item appended (Finding 10). |
 
 ## Suggested next moves
+
+Current-state note: the AGENTS.md trim, workspace-rule drift guard,
+cold-start sanity block, and plan housekeeping below have since landed
+or been folded into
+[`plan-agent-orientation-layering.md`](plan-agent-orientation-layering.md).
+Use that plan, not this historical list, for the current open queue.
 
 In rough order of leverage. None of these are large; all four AGENTS.md
 edits could land in one commit on `main`.

@@ -1,14 +1,16 @@
 # Agent orientation layering
 
-Status: active — slices 1 and 2 shipped on 2026-05-16; slice 3 was
+Status: active — slices 1 and 2 shipped on 2026-05-16; the first
+AGENTS.md follow-up cleanup shipped in `ddee9bd`; slice 3 was
 **rejected on 2026-05-16** as low ROI (see
 [`research-cursor-orientation-ergonomics-followup-2026-05-16.md`](research-cursor-orientation-ergonomics-followup-2026-05-16.md)
-Finding 9); follow-up redundancy cleanups still open and now have a
-concrete first target.
+Finding 9). The current open runner-side follow-up is filtering
+mechanical conversation records out of ordinary daemon prompts.
 
 Synthesis of two same-day ergonomics reviews that converged
 independently on the same diagnosis and direction, plus a same-day
-follow-up review taken after slices 1+2 shipped:
+follow-up review taken after slices 1+2 shipped, plus a 2026-05-17
+daemon-runner review after the first AGENTS.md cleanup landed:
 
 - [`research-runner-orientation-ergonomics-2026-05-16.md`](research-runner-orientation-ergonomics-2026-05-16.md) —
   daemon-launched runner view, Docker env, brr/<task-id> branch.
@@ -17,6 +19,11 @@ follow-up review taken after slices 1+2 shipped:
 - [`research-cursor-orientation-ergonomics-followup-2026-05-16.md`](research-cursor-orientation-ergonomics-followup-2026-05-16.md) —
   second-pass Cursor view after slices 1+2 shipped: workspace-rule
   cache staleness, README ↔ AGENTS.md duplication, slice-3 ROI.
+- [`research-runner-orientation-ergonomics-2026-05-17.md`](research-runner-orientation-ergonomics-2026-05-17.md) —
+  daemon-runner follow-up after AGENTS.md trim / drift guard:
+  confirms the Mode block and cold run-context contract are working,
+  and identifies mechanical `Recent in this conversation` records as
+  the next prompt-noise target.
 
 Plan supersedes the relevant parts of the older
 [`plan-branch-modes.md`](plan-branch-modes.md) note about "AGENTS.md
@@ -114,33 +121,34 @@ If new duplication classes appear later that the guardrail tests
 miss, prefer extending those tests with targeted assertions over a
 broad snapshot.
 
+## Shipped follow-up cleanup
+
+- **AGENTS.md canonical-home first target.** Commit `ddee9bd` trimmed
+  the Project block and Build-and-run section so README.md and
+  `pyproject.toml` remain the canonical home for product overview and
+  detailed install variants. Broader canonical-home cleanup stays
+  opportunistic: act when a concrete repeated fact slows a task, not
+  as a blanket rewrite.
+- **Workspace-rule staleness mitigation and cold-start sanity.**
+  Commit `ddee9bd` added the top-of-file `Revision:` marker plus the
+  ad-hoc sanity-check block for stale workspace rules, stale git
+  status snapshots, and ambient terminals / surfaced skills.
+
 ## Open follow-ups (not yet sliced)
 
-- **Canonical-home cleanup.** Pick one authoritative home per
-  repeated fact (environment policy → `subject-envs.md`; "no
-  triage" → `decision-remove-triage.md`; KB four-layer model →
-  AGENTS.md) and shrink restatements elsewhere to pointers. Both
-  pre-ship reviews flagged this. The
-  [follow-up review](research-cursor-orientation-ergonomics-followup-2026-05-16.md)
-  surfaced the **first concrete target the user explicitly named**:
-  the `# Project` block and `## Build and run` section of
-  `AGENTS.md` restate material that lives canonically in `README.md`
-  and `pyproject.toml`. Trim those to a one-liner pointer; ~25
-  lines saved per session × every adopter.
-- **Workspace-rule staleness mitigation** (new). Cursor (and
-  potentially other hosts) inject `AGENTS.md` as a cached workspace
-  rule that lags the on-disk file across structural revisions. Cheap
-  brr-side mitigation: a top-of-file `Revision:` marker plus a
-  one-line "trust the on-disk file when in doubt" rule in the
-  ad-hoc-agent stage block. Detail in
-  [`research-cursor-orientation-ergonomics-followup-2026-05-16.md`](research-cursor-orientation-ergonomics-followup-2026-05-16.md)
-  Finding 1.
-- **Cold-start sanity-check block** (new). Three-bullet block in
-  AGENTS.md → "How to read this playbook" → ad-hoc-agent stage that
-  names the recurring host frictions (stale workspace rule, stale
-  git status, ambient terminals/skills) so an agent treats them as
-  expected rather than as silent context. Detail in the same
-  follow-up review, Finding 6.
+- **Recent-conversation filtering.** The 2026-05-17 daemon-runner
+  review found the bundle's `Recent in this conversation` block
+  mostly carried mechanical lifecycle records: heartbeat, response
+  artifact path, kb-maintenance, finalizing, done, push-started, and
+  push-done. Ordinary daemon prompts should preserve semantic user
+  events, prior final summaries / branch / commit facts, and omit the
+  section entirely when only lifecycle chatter remains. Keep a
+  diagnostic path for daemon-debugging tasks.
+- **Daemon delivery de-duplication.** Lower priority. Delivery and
+  remote path hygiene are load-bearing, so some repetition is useful;
+  the next possible trim is making the Task Context Bundle the single
+  full daemon delivery contract and shortening the generic run
+  preamble only when a bundle is present.
 - **Dive-in-map orientation prominence.** The cheap two-halves
   declaration shipped with slice 2 is paying for itself —
   [Finding 8 of the follow-up review](research-cursor-orientation-ergonomics-followup-2026-05-16.md)

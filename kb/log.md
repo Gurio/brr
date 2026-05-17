@@ -2069,3 +2069,35 @@ Tests: 451 passing (was 449). +4 new in `test_envs.py`: SSH mount present
 when directory exists; GitHub token injected as key=value when task source is
 `github`; no injection for non-github tasks; key=value form absent (bare
 passthrough used instead) when `GITHUB_TOKEN` is already in daemon env.
+
+## [2026-05-17] review | Runner orientation ergonomics follow-up
+
+Filed
+[`kb/research-runner-orientation-ergonomics-2026-05-17.md`](research-runner-orientation-ergonomics-2026-05-17.md)
+as the current daemon-runner ergonomics review after the Mode block,
+run-context-as-recovery framing, AGENTS.md trim, and workspace-rule
+drift guard had all landed.
+
+Findings:
+
+- **The hot path is working.** The Task Context Bundle answered
+  stage/source/environment/delivery/branch/recovery before any tool
+  call. The runner did not need the generated run context file and did
+  not read the full log during startup; the injected Recent Activity
+  block covered the AGENTS.md log-read requirement until a targeted
+  older log slice was needed for contradiction resolution.
+- **The next prompt-noise target is `Recent in this conversation`.**
+  The live bundle mostly carried mechanical records (heartbeat,
+  artifact path, kb-maintenance, finalizing, done, push-started,
+  push-done). Ordinary daemon prompts should preserve semantic user
+  events, prior final summaries / branch / commit facts, and omit the
+  section when only lifecycle chatter remains.
+- **AGENTS.md re-read remains a safe cost.** The host had already
+  injected a current AGENTS.md copy, so reading the root file was
+  redundant in this run, but still justified until hosts provide a
+  trustworthy freshness signal; the prior Cursor stale-rule finding
+  makes unconditional skipping unsafe.
+- **Plan drift cleaned up.** `plan-agent-orientation-layering.md` and
+  `kb/index.md` now reflect that the first AGENTS.md cleanup and
+  workspace-rule drift guard shipped in `ddee9bd`; the old Cursor
+  follow-up page is marked partly shipped with a current-state note.
