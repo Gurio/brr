@@ -19,15 +19,22 @@ resolution and trace handling are env-agnostic and happen above the
 protocol; everything filesystem- or transport-specific lives behind
 it.
 
-Three envs ship today — `local`, `worktree`, and `docker`. Two are
+Three envs ship today — `host`, `worktree`, and `docker`. Two are
 designed but not yet implemented — `ssh` and `devcontainer`. Plugins
 ride on either Python entry points (`brr.envs`) or drop-in script
 envs in `.brr/envs/<name>/` and `~/.config/brr/envs/<name>/`; both
 dispatch paths share the protocol so neither kind is privileged.
 
+By design, `worktree` and `docker` do not start from the host checkout's
+untracked or ignored files. `host` is the explicit escape hatch for
+tasks that should see the whole local checkout; the active proposal in
+[`plan-runner-untracked-inputs.md`](plan-runner-untracked-inputs.md)
+keeps that default isolation while adding a bounded input mechanism for
+specific local artifacts.
+
 ## Durability contract
 
-Tasks running in a non-`local` env run in an **ephemeral** location.
+Tasks running in a non-`host` env run in an **ephemeral** location.
 The only outputs that survive are git refs and the response file on
 the host. Trace artefacts and per-task scratch (worktree directory,
 container, remote scratch dir) are env territory and get torn down on
@@ -84,6 +91,9 @@ the env's job is to apply that decision inside its workspace.
 4. [`src/brr/docs/envs.md`](../src/brr/docs/envs.md) for the
    user-facing reference: when to pick each env, configuration keys,
    troubleshooting.
-5. [`notes-pondering-fleet.md`](notes-pondering-fleet.md) §10 for the
+5. [`plan-runner-untracked-inputs.md`](plan-runner-untracked-inputs.md)
+   for the active proposal on explicit untracked host inputs for
+   isolated runners.
+6. [`notes-pondering-fleet.md`](notes-pondering-fleet.md) §10 for the
    plugin candidates (Daytona, Firecracker, E2B) that ride on the
    entry-point mechanism but ship outside brr core.

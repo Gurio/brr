@@ -2044,3 +2044,19 @@ any skips subsequent prompts), 5 for `_poll_any_activity` (issue event,
 PR event with `branch_target`, comment events with bot-self-filter, any
 overrides label/mention routing).
 
+## [2026-05-17] plan | Explicit untracked host inputs for runners
+
+Revisited whether isolated daemon runners should see untracked host
+checkout files. Current code/docs confirm `host` still ships and sees
+the main checkout plus inherited daemon environment, while `worktree`
+and `docker` start from a git seed ref and therefore do not expose
+pre-existing untracked/ignored files in the runner cwd.
+
+Proposal recorded in `plan-runner-untracked-inputs.md`: keep ambient
+untracked-file access off by default, keep `host` as the explicit
+whole-checkout escape hatch, and add `runner.inputs` as a bounded,
+prompt-visible snapshot mechanism for named repo-local artifacts such
+as logs. Secrets should stay on the existing env-var / credential-mount
+lane, not ride on broad `.env` copying. Also corrected the env hub and
+index/design pages from the stale `local` label to the shipped `host`
+backend.

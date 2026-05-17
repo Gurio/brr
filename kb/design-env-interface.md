@@ -16,8 +16,9 @@ third-party plugin candidates) live in
 ## Scope
 
 The design covers a single three-phase abstraction (`prepare → invoke
-→ finalize`) used by five built-in envs (`local`, `worktree`,
-`docker`, `ssh`, `devcontainer`), an explicit durability contract the
+→ finalize`) for the built-in env family (`host`, `worktree`, and
+`docker` shipped; `ssh` and `devcontainer` designed), an explicit
+durability contract the
 daemon enforces from the host, the decentralised branch-and-PR merge
 model that replaced an earlier merge-coordinator sketch, and a dual
 plugin point — Python entry points under `brr.envs` and drop-in
@@ -57,7 +58,7 @@ class FinalizeReport:
     notes: str = ""            # free-form, persisted for diagnostics
 
 class Env(Protocol):
-    name: str                  # "local" | "worktree" | "docker" | …
+    name: str                  # "host" | "worktree" | "docker" | …
 
     def validate(self, cfg: dict) -> None: ...
     def prepare(self, task: Task, repo_root: Path, cfg: dict) -> RunContext: ...
@@ -80,7 +81,7 @@ the transfer.
 
 | Env            | `response_path_env`                            | `response_path_host`                           | Equal? |
 |----------------|------------------------------------------------|------------------------------------------------|--------|
-| `local`        | `repo_root/.brr/responses/<id>.md`             | same                                           | yes    |
+| `host`         | `repo_root/.brr/responses/<id>.md`             | same                                           | yes    |
 | `worktree`     | `repo_root/.brr/responses/<id>.md`             | same (worktree shares `.brr/`)                 | yes    |
 | `docker`       | `/work/.brr/responses/<id>.md` (bind-mount)    | `repo_root/.brr/responses/<id>.md`             | yes (same inode via mount) |
 | `ssh`          | `<scratch>/<task-id>/.brr/responses/<id>.md`   | `repo_root/.brr/responses/<id>.md`             | **no** — `finalize` scp's it back |
@@ -104,7 +105,7 @@ Two dispatch modes, one protocol. Resolution order in `get_env(name)`:
 ```python
 # src/brr/envs/__init__.py
 _BUILTIN: dict[str, type[Env]] = {
-    "local":        LocalEnv,
+    "host":         HostEnv,
     "worktree":     WorktreeEnv,
     "docker":       DockerEnv,
     "ssh":          SshEnv,
@@ -190,7 +191,7 @@ scaffolding" section further down.
 
 ## The durability contract
 
-> Every task that runs in a non-`local` env runs in an **ephemeral**
+> Every task that runs in a non-`host` env runs in an **ephemeral**
 > location. Containers exit. Worktrees are removed. ssh scratch dirs are
 > rsync'd over. **The only outputs that survive are git refs and the
 > response file.** Everything else is lost on `finalize()`.
@@ -242,14 +243,14 @@ filesystem inspection inside the env's territory. The contract is
 
 ## The five built-ins
 
-### `local`
+### `host`
 
 - **prepare** → `RunContext(cwd=repo_root, branch=None or current, …)`
 - **invoke** → `runner.invoke_runner(...)` directly.
 - **finalize** → no-op besides building the report (`branch_pushed=True`
   trivially because the agent ran in the host repo).
 
-This is the current `branch: current` path, refactored into the protocol.
+This is the explicit main-checkout path, refactored into the protocol.
 
 ### `worktree`
 
@@ -452,7 +453,7 @@ shape replaced the earlier LLM triage idea.
 `.brr/config` keys added in this PR:
 
 ```ini
-default_env=worktree           # currently local; change with the env work
+environment=auto               # docker when configured, otherwise worktree
 docker.image=brr/runner:py311  # default if env=docker is picked
 docker.network=bridge
 ssh.host=                      # required if env=ssh is ever picked

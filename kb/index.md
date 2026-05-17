@@ -54,12 +54,16 @@ dive-in map) and are stable until something contradicts them.
   Protocol (three-phase `prepare → invoke → finalize`), the durability
   contract enforced from the host, the outcome-aware salvage rule,
   decentralised fast-forward merging, and which envs ship today
-  (`local` / `worktree` / `docker`) versus designed-but-pending
+  (`host` / `worktree` / `docker`) versus designed-but-pending
   (`ssh` / `devcontainer`).
 - [Env protocol design](design-env-interface.md) — *accepted on
   2026-05-06*. Full protocol, per-env mechanics, response-path split,
   plugin / script-env model, and configuration surface. Tactical
   companion to the env slice of the fleet deck.
+- [Explicit runner access to untracked host inputs](plan-runner-untracked-inputs.md) —
+  *active*. Proposal to keep isolated runners closed by default while
+  adding prompt-visible, bounded snapshots of named local artifacts for
+  worktree and Docker tasks.
 - [Concurrent Worktrees Plan](plan-concurrent-worktrees.md) —
   *superseded on 2026-05-16 by*
   [`design-concurrent-execution.md`](design-concurrent-execution.md).
