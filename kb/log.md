@@ -2110,3 +2110,12 @@ Tests: 454 passing (was 451). +3 in `test_branching.py`: event branch
 seeds from `origin/<branch>` when the local copy has diverged from the
 remote ref; falls back to the local branch when no remote ref exists;
 `fallback:current` ignores the remote (self-development mode).
+
+## [2026-05-18] fix | KB maintenance: compress repo dive-in map
+
+Post-task kb consistency pass addressed the `oversized-page` warning on
+`kb/repo-dive-in-map.md` by compressing it from a full file-by-file
+scrapbook into a compact current-state navigator. Reality checks against
+`branching.py`, `task.py`, `envs/__init__.py`, `updates.py`, and
+`gates/github.py` confirmed the remote-seed branch plan, environment
+backend list, and current GitHub progress-comment rendering surface.
