@@ -77,6 +77,9 @@ Gates may decorate delivery after the branch is finalized. The GitHub
 gate appends a branch / compare footer to pushed tasks, and when the
 task changed durable `kb/*.md` result pages it adds direct blob links
 for those pages (excluding `kb/index.md` and `kb/log.md`). The
+result-file diff avoids upstream kb changes after a rebase by falling
+back to the host-context branch when the task seed is no longer an
+ancestor of the finalized branch. The
 `.brr/responses/<event-id>.md` file itself is runtime plumbing, not a
 committed result artifact.
 

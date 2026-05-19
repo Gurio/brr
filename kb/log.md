@@ -2072,6 +2072,24 @@ when directory exists; GitHub token injected as key=value when task source is
 `github`; no injection for non-github tasks; key=value form absent (bare
 passthrough used instead) when `GITHUB_TOKEN` is already in daemon env.
 
+## [2026-05-17] implement | GitHub response footer links kb result files
+
+GitHub delivery now appends direct blob links for committed `kb/*.md`
+result pages in the final response footer, next to the existing branch /
+compare links. The footer computes changed kb pages by diffing the
+task's pinned pre-run base (`seed_oid`, with fallbacks for older task
+files) against the finalized branch. If a rebase means that old seed is
+no longer an ancestor, it compares against the host-context branch
+instead, so upstream kb changes are not linked as task results. It
+filters out `kb/index.md` and `kb/log.md`, and stays quiet on git errors
+or tasks without committed kb articles. The runtime
+`.brr/responses/<event-id>.md` file remains delivery plumbing and is not
+linked.
+
+Docs updated in `subject-daemon.md` and `execution-map.md`. Tests: 453
+passing. +2 in `test_github_gate.py` cover preserved task branches and
+auto-landed branches.
+
 ## [2026-05-18] fix | Branch plan: event branches seed from remote ref
 
 PR #14's second run produced a tangled branch — the daemon's pre-task ff
@@ -2221,17 +2239,3 @@ fallback policy is only `preserve` or explicit `current`; conversation
 branch facts stay prompt context. The design's history was compressed
 to one lineage breadcrumb, and the index status now includes the
 2026-05-18 leased-publish amendment.
-## [2026-05-17] implement | GitHub response footer links kb result files
-
-GitHub delivery now appends direct blob links for committed `kb/*.md`
-result pages in the final response footer, next to the existing branch /
-compare links. The footer computes changed kb pages by diffing the
-task's pinned pre-run base (`seed_oid`, with fallbacks for older task
-files) against the finalized branch, filters out `kb/index.md` and
-`kb/log.md`, and stays quiet on git errors or tasks without committed kb
-articles. The runtime `.brr/responses/<event-id>.md` file remains delivery
-plumbing and is not linked.
-
-Docs updated in `subject-daemon.md` and `execution-map.md`. Tests: 453
-passing. +2 in `test_github_gate.py` cover preserved task branches and
-auto-landed branches.

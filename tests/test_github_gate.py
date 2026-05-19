@@ -1096,6 +1096,58 @@ def test_branch_footer_links_changed_kb_result_pages(tmp_path):
     assert "noise.py" not in footer
 
 
+def test_branch_footer_uses_host_context_for_rebased_result_pages(tmp_path):
+    init_git_repo(tmp_path)
+    commit_files(
+        tmp_path,
+        {
+            "kb/index.md": "# Index\n",
+            "kb/log.md": "# Log\n",
+            "README.md": "# Repo\n",
+        },
+    )
+    subprocess.run(
+        ["git", "switch", "-c", "feature/results"],
+        cwd=tmp_path, check=True, capture_output=True,
+    )
+    old_feature_head = commit_files(
+        tmp_path,
+        {"kb/research-result-links.md": "# Result links\n"},
+        message="add result",
+    )
+    subprocess.run(
+        ["git", "switch", "main"],
+        cwd=tmp_path, check=True, capture_output=True,
+    )
+    commit_files(
+        tmp_path,
+        {"kb/upstream-main.md": "# Upstream\n"},
+        message="advance main",
+    )
+    subprocess.run(
+        ["git", "switch", "-c", "feature/rebased"],
+        cwd=tmp_path, check=True, capture_output=True,
+    )
+    commit_files(
+        tmp_path,
+        {"kb/research-result-links.md": "# Result links\n"},
+        message="replay result",
+    )
+    task = Task(
+        id="t", event_id="e", body="b", source="github",
+        meta={
+            "changed_branch": "feature/rebased",
+            "seed_oid": old_feature_head,
+            "host_context_branch": "main",
+        },
+    )
+
+    footer = github._branch_footer("owner/repo", task, tmp_path)
+
+    assert "research-result-links.md" in footer
+    assert "upstream-main.md" not in footer
+
+
 def test_branch_footer_shows_landed_when_auto_merged():
     task = Task(
         id="t", event_id="e", body="b", source="github",
