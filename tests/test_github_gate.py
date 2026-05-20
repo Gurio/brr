@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -11,6 +12,7 @@ from brr import protocol
 from brr.gates import github
 from brr import run_progress
 from brr.task import Task
+from _helpers import commit_files, init_git_repo
 
 
 # ── parse_origin_url ─────────────────────────────────────────────────
@@ -1039,6 +1041,113 @@ def test_branch_footer_includes_tree_and_compare_links():
     assert "Compare & open PR" in footer
 
 
+def test_branch_footer_links_changed_kb_result_pages(tmp_path):
+    init_git_repo(tmp_path)
+    seed_oid = commit_files(
+        tmp_path,
+        {
+            "kb/index.md": "# Index\n",
+            "kb/log.md": "# Log\n",
+            "README.md": "# Repo\n",
+        },
+    )
+    subprocess.run(
+        ["git", "switch", "-c", "brr/research-links"],
+        cwd=tmp_path, check=True, capture_output=True,
+    )
+    commit_files(
+        tmp_path,
+        {
+            "kb/index.md": "# Index\n\n- research\n",
+            "kb/log.md": "# Log\n\n## [2026-05-17] research | result\n",
+            "kb/research-result-links.md": "# Result links\n",
+            "src/noise.py": "print('not a kb result')\n",
+        },
+        message="research",
+    )
+    subprocess.run(
+        ["git", "switch", "main"],
+        cwd=tmp_path, check=True, capture_output=True,
+    )
+    commit_files(
+        tmp_path,
+        {"kb/research-result-links.md": "# Result links\n"},
+        message="advance main after task split",
+    )
+    task = Task(
+        id="t", event_id="e", body="b", source="github",
+        meta={
+            "changed_branch": "brr/research-links",
+            "seed_ref": "main",
+            "seed_oid": seed_oid,
+        },
+    )
+
+    footer = github._branch_footer("owner/repo", task, tmp_path)
+
+    assert "Result file:" in footer
+    assert (
+        "[`research-result-links.md`]"
+        "(https://github.com/owner/repo/blob/"
+        "brr/research-links/kb/research-result-links.md)"
+    ) in footer
+    assert "index.md" not in footer
+    assert "log.md" not in footer
+    assert "noise.py" not in footer
+
+
+def test_branch_footer_uses_host_context_for_rebased_result_pages(tmp_path):
+    init_git_repo(tmp_path)
+    commit_files(
+        tmp_path,
+        {
+            "kb/index.md": "# Index\n",
+            "kb/log.md": "# Log\n",
+            "README.md": "# Repo\n",
+        },
+    )
+    subprocess.run(
+        ["git", "switch", "-c", "feature/results"],
+        cwd=tmp_path, check=True, capture_output=True,
+    )
+    old_feature_head = commit_files(
+        tmp_path,
+        {"kb/research-result-links.md": "# Result links\n"},
+        message="add result",
+    )
+    subprocess.run(
+        ["git", "switch", "main"],
+        cwd=tmp_path, check=True, capture_output=True,
+    )
+    commit_files(
+        tmp_path,
+        {"kb/upstream-main.md": "# Upstream\n"},
+        message="advance main",
+    )
+    subprocess.run(
+        ["git", "switch", "-c", "feature/rebased"],
+        cwd=tmp_path, check=True, capture_output=True,
+    )
+    commit_files(
+        tmp_path,
+        {"kb/research-result-links.md": "# Result links\n"},
+        message="replay result",
+    )
+    task = Task(
+        id="t", event_id="e", body="b", source="github",
+        meta={
+            "changed_branch": "feature/rebased",
+            "seed_oid": old_feature_head,
+            "host_context_branch": "main",
+        },
+    )
+
+    footer = github._branch_footer("owner/repo", task, tmp_path)
+
+    assert "research-result-links.md" in footer
+    assert "upstream-main.md" not in footer
+
+
 def test_branch_footer_shows_landed_when_auto_merged():
     task = Task(
         id="t", event_id="e", body="b", source="github",
@@ -1047,6 +1156,33 @@ def test_branch_footer_shows_landed_when_auto_merged():
     footer = github._branch_footer("owner/repo", task)
     assert "landed on `main`" in footer
     assert "expand=1" not in footer
+
+
+def test_branch_footer_uses_pre_land_oid_for_landed_result_pages(tmp_path):
+    init_git_repo(tmp_path)
+    before = commit_files(
+        tmp_path,
+        {"kb/index.md": "# Index\n", "kb/log.md": "# Log\n"},
+    )
+    commit_files(
+        tmp_path,
+        {"kb/design-landed-result.md": "# Landed result\n"},
+        message="land result",
+    )
+    task = Task(
+        id="t", event_id="e", body="b", source="github",
+        meta={
+            "changed_branch": "main",
+            "landed_branch": "main",
+            "seed_ref": "main",
+            "auto_land_old_oid": before,
+        },
+    )
+
+    footer = github._branch_footer("owner/repo", task, tmp_path)
+
+    assert "landed on `main`" in footer
+    assert "blob/main/kb/design-landed-result.md" in footer
 
 
 def test_find_task_for_event(tmp_path):
