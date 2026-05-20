@@ -36,18 +36,18 @@ inside the container.
 
 ## Durability contract
 
-Tasks running in an isolated env run in an **ephemeral** location.
+Tasks running in a non-`host` env run in an **ephemeral** location.
 The only outputs that survive are git refs and the response file on
 the host. Trace artefacts and per-task scratch (worktree directory,
 container, remote scratch dir) are env territory and get torn down on
 clean completion — see the salvage rule below for the exact
 conditions.
 
-The daemon enforces the contract from the host: after `finalize()`
-returns, it checks that the response file exists at
-`response_path_host` and the promised branch is reachable in the
-host's git. It does not inspect the env's internals. That keeps the
-protocol observable and the same shape for plugins.
+The daemon enforces the contract from the host: the response path it
+validates is `response_path_host`, and branch/scratch outcomes are
+recorded as task metadata by `finalize()`. It does not inspect the
+env's internals. That keeps the protocol observable and the same shape
+for plugins.
 
 ## Salvage rule
 
@@ -82,17 +82,23 @@ the env's job is to apply that decision inside its workspace.
 
 1. [`design-env-interface.md`](design-env-interface.md) for the full
    protocol, the per-env mechanics, the response-path split, the
-   plugin / script-env model, and the configuration surface.
-2. [`subject-tasks-branching.md`](subject-tasks-branching.md) for how
+   accepted-but-pending plugin / script-env model, and the
+   configuration surface.
+2. [`research-stdlib-dependency-policy-2026-05-16.md`](research-stdlib-dependency-policy-2026-05-16.md)
+   for the current dependency-policy review: keep core dependency-free
+   by default, allow explicit edge/plugin dependencies when they delete
+   real complexity, and reconcile the env plugin promise with the
+   shipped `get_env` implementation.
+3. [`subject-tasks-branching.md`](subject-tasks-branching.md) for how
    the daemon resolves seed refs and auto-land targets feeding into
    `Env.finalize`.
-3. [`plan-concurrent-worktrees.md`](plan-concurrent-worktrees.md) for
+4. [`plan-concurrent-worktrees.md`](plan-concurrent-worktrees.md) for
    the original "one task per worktree" reasoning that informed the
    current worktree env shape; the merge-coordinator path it sketched
    was abandoned in favour of the decentralised model above.
-4. [`src/brr/docs/envs.md`](../src/brr/docs/envs.md) for the
+5. [`src/brr/docs/envs.md`](../src/brr/docs/envs.md) for the
    user-facing reference: when to pick each env, configuration keys,
    troubleshooting.
-5. [`notes-pondering-fleet.md`](notes-pondering-fleet.md) §10 for the
-   plugin candidates (Daytona, Firecracker, E2B) that would ride on
-   the entry-point mechanism once the registry surface is wired.
+6. [`notes-pondering-fleet.md`](notes-pondering-fleet.md) §10 for the
+   plugin candidates (Daytona, Firecracker, E2B) intended to ride on
+   the registry surface once it is wired.
