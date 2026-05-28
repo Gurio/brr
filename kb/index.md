@@ -124,6 +124,21 @@ dive-in map) and are stable until something contradicts them.
 - [Conversations bundled doc](../src/brr/docs/conversations.md) —
   package documentation for the per-gate-thread conversation log.
 
+## Reviews
+
+- [diffense — kb-first PR review experience](design-diffense.md) —
+  *proposed 2026-05-28*. Opens the review-surface area: the runner
+  emits a language-agnostic JSON **pack** that a **substrate** (Textual
+  proposed, validation pending) renders to parallel CLI/web targets,
+  with the PR body as the v0 surface. Inspect mode is a navigable graph
+  of typed cards with always-vs-conditional axes and two-axis lore;
+  **walkthrough** cards (cross-cutting stories) and **uncertainty**
+  cards (the agent's honest assumptions / concerns / dilemmas /
+  out-of-scope flags, read first) are first-class kinds. A six-clamp
+  discipline — sharp / helpful / honest / non-prescriptive /
+  emit-iff-honest / substrate-honest — governs what gets emitted. The
+  human-side counterpart to the gate's `pr-review` event handling.
+
 ## Documentation strategy
 
 - [Bundled Docs Location](decision-bundled-docs.md) — why tool-level
