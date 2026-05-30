@@ -5128,3 +5128,16 @@ server, and runner/publish wiring are not in it. With the read model
 validated, [`design-diffense.md`](design-diffense.md) flips to
 **accepted** (both gates — prototype pack + renderer — now met) and the
 in-tree `src/brr/diffense/` boundary is settled (zero runtime deps).
+
+## [2026-05-30] fix | diffense kb consistency — compress accepted design to current state
+
+Post-task kb lint compressed [`design-diffense.md`](design-diffense.md)
+from a pass-by-pass design journal into the accepted current shape:
+renderer spike and prototype pack are shipped evidence; generator,
+`brr review`, `--check`, transport, and flag actions remain pending
+implementation work. The Reviews index now says the same thing, the
+prototype companion drops stale "future spike" wording, and the Fleet
+index entries for protocol / pricing / billing were shortened so
+`index.md` is back under the oversized-page threshold. Two older broken
+links were repaired (`src/brnrd/` is intentionally not linked until it
+exists; the GitHub gate research now points at the current package path).

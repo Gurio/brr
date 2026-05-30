@@ -6,8 +6,8 @@ before that schema is locked. Not a runner emission; hand-authored from
 the repo and [PR #64](https://github.com/Gurio/brr/pull/64).
 
 The pack itself is [`diffense-prototype-pr64-pack.json`](diffense-prototype-pr64-pack.json)
-(the contract instance the future web renderer / spike consumes; runtime
-home would be `.brr/diffense/64/pack.json`). This page is the
+(the contract instance the renderer spike consumes; runtime home would be
+`.brr/diffense/64/pack.json`). This page is the
 human-readable companion: the cards **rendered** (so you can look at the
 shape without a renderer), then the **pressure-test findings** — what the
 schema expressed well, what it could not, and the concrete schema changes
@@ -277,7 +277,7 @@ reviewer cold with `id` / `tension` / `where:polling.py:283`.
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## Reshaped this pass (pass 8, from review of the render)
+## Schema refinements folded back into the design
 
 The cards above already incorporate a round of feedback on the *shape*,
 folded back into [`design-diffense.md`](design-diffense.md):
@@ -331,7 +331,7 @@ JSON schema."
    before/after file count, a *surface-preserved* invariant (the
    `__all__` list), and the split rationale. It generalizes the existing
    `kb-page-split`. A sibling `code-move` (a symbol relocated unchanged)
-   is implied by    the same PR. **Update (pass 8):** promoted to a core kind in the
+   is implied by the same PR. Promoted to a core kind in the
    design. The lesson is bigger than one kind — the taxonomy should be an
    **open core**: the agent can declare a `custom` kind and is expected to
    **raise the gap as a meta uncertainty card** ("I used `custom:X`
