@@ -11,9 +11,9 @@ keep co-existing post-launch:
 - The **OSS gate** ([`src/brr/gates/github/`](../src/brr/gates/github/)),
   a polling adapter that turns GitHub activity into inbox events on a
   laptop-resident `brr` daemon. PAT-authenticated, single-repo, byo-setup.
-- The **managed GitHub App**, hosted by brnrd ([`src/brnrd/`](../src/brnrd/)
+- The **managed GitHub App**, hosted by brnrd (planned under `src/brnrd/`
   per [`plan-managed-gates-launch.md`](plan-managed-gates-launch.md) Slice 1
-  — not started). Webhook-driven, multi-tenant, installation-scoped,
+  and not started). Webhook-driven, multi-tenant, installation-scoped,
   one-click setup via OAuth + App install.
 
 They are not redundant. Different identity model, different setup cost,

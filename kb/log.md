@@ -5128,3 +5128,13 @@ server, and runner/publish wiring are not in it. With the read model
 validated, [`design-diffense.md`](design-diffense.md) flips to
 **accepted** (both gates — prototype pack + renderer — now met) and the
 in-tree `src/brr/diffense/` boundary is settled (zero runtime deps).
+
+## [2026-05-30] fix | kb lint — compress diffense design and repair links
+
+Post-task kb maintenance compressed [`design-diffense.md`](design-diffense.md)
+from a pass-by-pass design diary into an accepted current-state synthesis
+with one lineage breadcrumb, updated the Reviews index entries to match,
+and kept the prototype page as a linked artifact while removing "this
+pass" scaffolding. Fixed stale source links created by the GitHub gate
+monolith-to-package refactor and by the planned-but-not-yet-present
+`src/brnrd/` tree.

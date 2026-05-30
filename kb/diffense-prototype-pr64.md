@@ -2,12 +2,13 @@
 
 Status: prototype artifact (2026-05-29) — validates the
 [`design-diffense.md`](design-diffense.md) card schema against a real PR
-before that schema is locked. Not a runner emission; hand-authored from
-the repo and [PR #64](https://github.com/Gurio/brr/pull/64).
+fixture before that schema is locked. Not a runner emission;
+hand-authored from the repo and
+[PR #64](https://github.com/Gurio/brr/pull/64).
 
 The pack itself is [`diffense-prototype-pr64-pack.json`](diffense-prototype-pr64-pack.json)
-(the contract instance the future web renderer / spike consumes; runtime
-home would be `.brr/diffense/64/pack.json`). This page is the
+(the contract instance consumed by the renderer spike; runtime home
+would be `.brr/diffense/64/pack.json`). This page is the
 human-readable companion: the cards **rendered** (so you can look at the
 shape without a renderer), then the **pressure-test findings** — what the
 schema expressed well, what it could not, and the concrete schema changes
@@ -33,11 +34,11 @@ pack is a *story*, not a diff.
 
 ## The pack, rendered (reading order — summary, then concerns, then the change)
 
-This render reflects the pass-8 refinements: a **summary card opens the
+This render is the current prototype shape: a **summary card opens the
 pack** (orientation before scrutiny), and every **uncertainty card leads
-with the worry in one plain sentence** — the tension, the locator, the
-`[-_SEEN_CAP:]` mechanics all descend *below* it, instead of greeting the
-reviewer cold with `id` / `tension` / `where:polling.py:283`.
+with the worry in one plain sentence** — the tension, the locator, and
+the `[-_SEEN_CAP:]` mechanics all descend *below* it instead of greeting
+the reviewer cold with `id` / `tension` / `where:polling.py:283`.
 
 ### 0. `summary` — the on-ramp (renders first)
 
@@ -277,10 +278,10 @@ reviewer cold with `id` / `tension` / `where:polling.py:283`.
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## Reshaped this pass (pass 8, from review of the render)
+## Findings folded into the design
 
-The cards above already incorporate a round of feedback on the *shape*,
-folded back into [`design-diffense.md`](design-diffense.md):
+The cards above already incorporate the shape findings folded back into
+[`design-diffense.md`](design-diffense.md):
 
 - **A summary card opens the pack** — the "there should be a header here"
   and "PR stats, but contextless" instincts resolved to one on-ramp card:
@@ -315,11 +316,11 @@ folded back into [`design-diffense.md`](design-diffense.md):
   0 → 6" stat is precisely the review signal a raw diff hides, and it is
   mechanically computable from the kb graph.
 
-## Pressure-test findings (proposed schema changes)
+## Pressure-test findings
 
-The point of the exercise: what the schema needs *before* it is locked.
-Feeds [`design-diffense.md`](design-diffense.md) → "Open questions → Pack
-JSON schema."
+The point of the exercise: what the schema needs before it is locked.
+Feeds [`design-diffense.md`](design-diffense.md) → "Open implementation
+work."
 
 1. **Add a `code-module-split` / `code-restructure` item kind (and a
    `code-move`).** The single most important change in #64 — `github.py`
@@ -331,8 +332,8 @@ JSON schema."
    before/after file count, a *surface-preserved* invariant (the
    `__all__` list), and the split rationale. It generalizes the existing
    `kb-page-split`. A sibling `code-move` (a symbol relocated unchanged)
-   is implied by    the same PR. **Update (pass 8):** promoted to a core kind in the
-   design. The lesson is bigger than one kind — the taxonomy should be an
+   is implied by the same PR. **Current design status:** promoted to a
+   core kind. The lesson is bigger than one kind — the taxonomy should be an
    **open core**: the agent can declare a `custom` kind and is expected to
    **raise the gap as a meta uncertainty card** ("I used `custom:X`
    because no core kind fit — consider promoting it"), so the *next*
@@ -384,7 +385,7 @@ JSON schema."
    card to the message where the agent decided it — the richest, most
    diffense-specific provenance. **Next prototype should run on a
    brr-*produced* PR** to pressure-test that field and the uncertainty
-   cards' honesty under real run-state. **Caveat surfaced this round:**
+   cards' honesty under real run-state. **Current caveat:**
    brr currently publishes a *branch*, not a PR, and doesn't yet thread
    the originating issue / Telegram message through — so even a
    brr-authored PR (e.g. [#36](https://github.com/Gurio/brr/pull/36) from
@@ -421,7 +422,7 @@ guard that keeps invented symbols out of a pack.
 ## Read next
 
 - [`design-diffense.md`](design-diffense.md) — the design this validates;
-  see "The card model" and "Open questions → Pack JSON schema."
+  see "Card model" and "Open implementation work."
 - [`diffense-prototype-pr64-pack.json`](diffense-prototype-pr64-pack.json)
   — the pack itself (the contract instance).
 - [`design-github-gate-vs-brnrd-app.md`](design-github-gate-vs-brnrd-app.md)
