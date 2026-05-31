@@ -533,8 +533,14 @@ dive-in map) and are stable until something contradicts them.
 
 ## Reviews
 
+- **Hub: [reviews](subject-reviews.md)** — synthesis of diffense, the
+  current review-surface family: accepted kb-first PR review design,
+  render-only web spike in `src/brr/diffense/`, PR #64 prototype pack as
+  schema receipt, and the implementation surfaces still not shipped
+  (`brr review` server/check, pack generation/transport, runner wiring,
+  feedback action).
 - [diffense — kb-first PR review experience](design-diffense.md) —
-  *accepted 2026-05-29 (passes 6–9)*. The review
+  *accepted 2026-05-29; render-only spike landed*. The review
   surface for brr-generated PRs, built around the half-of-a-brr-PR-is-kb
   pain. Inspect-mode model: reviews are a **zoomable graph of cards**
   (item / walkthrough / uncertainty kinds) with two navigation axes —
@@ -542,8 +548,9 @@ dive-in map) and are stable until something contradicts them.
   leaves are the real diff/file/rendered-page and summaries are
   clamp-gated). Two-axis lore (what-it-is + what-it-enables), per-kind
   stat blocks, code **locators**, and tests-grounded demos. A JSON
-  **review pack** (generated at publish time, `brr review --check`'d) is
-  the contract. Build is **web-first**: one light, brnrd-independent
+  **review pack** is the contract; publish-time generation and
+  `brr review --check` are still implementation work. Build is
+  **web-first**: one light, brnrd-independent
   responsive-web renderer with a terminal aesthetic (ascii-looking cards;
   opening a nested card collapses its parent to a heading bar, nesting
   into a breadcrumb stack), built before brnrd for the self-hosting
@@ -555,10 +562,10 @@ dive-in map) and are stable until something contradicts them.
   "entertaining" goal is framed as removing *accidental* burden, not
   gamification. Folds with the [ergo proxy](design-agent-ergonomics.md)
   as shared-source / split-audience. A **renderer spike**
-  ([src/brr/diffense/](../src/brr/diffense)) validated the read model and
+  ([src/brr/diffense/](../src/brr/diffense)) validates the read model and
   resolved the two interaction questions — lateral nav and zoom-drills
   share one breadcrumb stack; a code leaf is jump-to-forge. Open: pack
-  schema lock, transport, runner wiring.
+  schema lock, transport, runner wiring, local server, feedback action.
 - [diffense prototype — hand-authored pack for PR #64](diffense-prototype-pr64.md)
   — *2026-05-29*. The first concrete pack
   ([JSON](diffense-prototype-pr64-pack.json)), rendered as cards, that

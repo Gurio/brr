@@ -318,7 +318,7 @@ folded back into [`design-diffense.md`](design-diffense.md):
 ## Pressure-test findings (proposed schema changes)
 
 The point of the exercise: what the schema needs *before* it is locked.
-Feeds [`design-diffense.md`](design-diffense.md) → "Open questions → Pack
+Feeds [`design-diffense.md`](design-diffense.md) → "Implementation follow-ups → Pack
 JSON schema."
 
 1. **Add a `code-module-split` / `code-restructure` item kind (and a
@@ -421,7 +421,7 @@ guard that keeps invented symbols out of a pack.
 ## Read next
 
 - [`design-diffense.md`](design-diffense.md) — the design this validates;
-  see "The card model" and "Open questions → Pack JSON schema."
+  see "The card model" and "Implementation follow-ups → Pack JSON schema."
 - [`diffense-prototype-pr64-pack.json`](diffense-prototype-pr64-pack.json)
   — the pack itself (the contract instance).
 - [`design-github-gate-vs-brnrd-app.md`](design-github-gate-vs-brnrd-app.md)

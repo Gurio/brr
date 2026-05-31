@@ -5128,3 +5128,13 @@ server, and runner/publish wiring are not in it. With the read model
 validated, [`design-diffense.md`](design-diffense.md) flips to
 **accepted** (both gates — prototype pack + renderer — now met) and the
 in-tree `src/brr/diffense/` boundary is settled (zero runtime deps).
+
+## [2026-05-31] fix | kb consistency after diffense renderer spike
+
+Reconciled the accepted diffense design with the renderer spike's actual
+scope: `src/brr/diffense/` is render-only today, while pack generation,
+`brr review --check`, the local server, transport, runner wiring, and card
+feedback remain implementation work. Compressed the multi-pass lineage to
+a current-state breadcrumb, added a Reviews hub so the accepted design has
+a short current-state entry point, and repaired stale links to the planned
+brnrd app path and the split GitHub gate package.

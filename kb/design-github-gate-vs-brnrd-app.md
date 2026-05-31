@@ -11,10 +11,10 @@ keep co-existing post-launch:
 - The **OSS gate** ([`src/brr/gates/github/`](../src/brr/gates/github/)),
   a polling adapter that turns GitHub activity into inbox events on a
   laptop-resident `brr` daemon. PAT-authenticated, single-repo, byo-setup.
-- The **managed GitHub App**, hosted by brnrd ([`src/brnrd/`](../src/brnrd/)
+- The **managed GitHub App**, hosted by brnrd (planned for `src/brnrd/`
   per [`plan-managed-gates-launch.md`](plan-managed-gates-launch.md) Slice 1
-  — not started). Webhook-driven, multi-tenant, installation-scoped,
-  one-click setup via OAuth + App install.
+  — not started in this repo yet). Webhook-driven, multi-tenant,
+  installation-scoped, one-click setup via OAuth + App install.
 
 They are not redundant. Different identity model, different setup cost,
 different latency, different blast radius — see "Why both survive launch."
@@ -67,9 +67,9 @@ without per-PR scans that would explode the API budget).
 
 ## What brnrd owns exclusively
 
-Lives at `src/brnrd/` per
-[`decision-monorepo-structure.md`](decision-monorepo-structure.md).
-None of the surfaces below land in `src/brr/`:
+When built, this lives at `src/brnrd/` per
+[`decision-monorepo-structure.md`](decision-monorepo-structure.md);
+none of the surfaces below land in `src/brr/`:
 
 - **GitHub App registration + JWT minting + installation-token refresh.**
   brnrd holds the GH App private key in its credential vault (separate

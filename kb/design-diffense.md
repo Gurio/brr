@@ -1,11 +1,12 @@
 # Design: diffense — kb-first PR review experience
 
-Status: accepted on 2026-05-29 — the card / zoom / navigation model is
+Status: accepted on 2026-05-29. The card / zoom / navigation model is
 validated by a working renderer spike
 ([`src/brr/diffense/`](../src/brr/diffense), rendered against the
-[PR #64 pack](diffense-prototype-pr64.md)). Remaining work (pack schema
-lock, transport, runner wiring) is implementation-plan detail, not
-design-blocking. (Drafted 2026-05-28; reshaped 2026-05-29, passes 6–9.)
+[PR #64 pack](diffense-prototype-pr64.md)); the shipped slice is
+render-only. Pack schema lock, transport, runner publish wiring, the
+local `brr review` server, and card feedback actions remain
+implementation work, not design blockers.
 
 diffense (a working name: *diff* + *sense*, the surface that helps a
 reviewer make sense of a diff; and *diff* + *defense*, what guards the
@@ -15,17 +16,19 @@ generic forge diff view is hostile to the way brr actually works,
 because roughly half of a typical brr PR's value lives in `kb/` changes
 that read poorly as raw diff and well as rendered, cross-linked Markdown.
 
-This page is a design with research-flavoured sections inside. The
-cornerstones below are settled enough to design against. A hand-authored
-prototype (the [PR #64 pack](diffense-prototype-pr64.md)) and a working
-renderer spike ([`src/brr/diffense/`](../src/brr/diffense)) have since
-validated the shape and closed two formerly-open dimensions —
-inter-card navigation and code-rendering-at-a-locator (see "Rendering the
-zoom"). What remains open (pack schema lock, transport, aesthetic
-locking) is marked as such and deferred to an implementation plan.
+The accepted design is a zoomable graph of review cards over a structured
+pack. A hand-authored prototype (the
+[PR #64 pack](diffense-prototype-pr64.md)) and a working renderer spike
+([`src/brr/diffense/`](../src/brr/diffense)) validate the read model:
+lateral navigation and zoom-drills share one breadcrumb stack, and code
+leaves open commit-pinned forge permalinks at v0. The page names the
+remaining implementation surfaces without treating them as shipped.
 
 Companion to:
 
+- [`subject-reviews.md`](subject-reviews.md) — the current-state hub for
+  the review-surface family; use it for orientation before the full
+  design.
 - [`subject-kb.md`](subject-kb.md) — the kb pattern diffense reads from;
   the lifecycle markers, subject hubs, and decision/design/plan
   separation are diffense's richest structured input.
@@ -94,7 +97,7 @@ to a solo dogfooder and to a small team sharing a brr-managed repo —
 team size does not change the shape of the surface, only how many people
 open it.
 
-## Alternatives briefly considered
+## Rejected alternatives
 
 The research dimension of this design: shapes weighed and set aside.
 
@@ -220,16 +223,10 @@ is a later consumer of the same pack.
 
 ## Renderers: one web surface now, CLI/TUI and hosted later
 
-The plan went through a Textual-substrate phase (one component model
-serving a TUI and a `textual serve` web target). The mobile requirement
-already weakened it — `textual serve` is a terminal emulator in the
-browser, the wrong surface on a phone — and the decision is now cleaner:
-**drop the near-term TUI entirely and build a single responsive web
-renderer.** A CLI/TUI is a follow-up over the same pack once the web
-shape is proven.
-
-This *resolves* the substrate-split tension rather than carrying it.
-Consequences:
+The near-term surface is a single responsive web renderer. The CLI/TUI is
+a follow-up over the same pack once the web shape is proven; `textual
+serve` is not the substrate because it behaves like a terminal emulator
+in the browser, which is the wrong phone-review surface. Consequences:
 
 - **One renderer to build:** responsive HTML, mobile-friendly, no app
   to install (a PWA at most — explicitly *not* a native app). Served
@@ -309,10 +306,8 @@ properties fall out and matter:
   `code-restructure`, `code-move`, `kb-page-edit`, `kb-page-new`,
   `kb-page-split`, `lifecycle-flip`, `test-add`, `dep-add`, and so on.
   The kind is a discriminator; the schema differs per kind. (The
-  `code-module-split` / `code-move` kinds were added after the
-  [PR #64 prototype](diffense-prototype-pr64.md) showed a 1052-line
-  file → 12-module split had no honest home among the per-function
-  kinds — a delete-plus-twelve-new would lie about what happened.)
+  `code-module-split` / `code-move` are separate kinds so large file
+  splits are not flattened into a misleading delete-plus-many-new story.)
 - **Walkthrough cards** — a **composite card**: its gloss is a
   `setup → action → outcome` story; zooming reveals its *ordered member
   cards*. This is "a card containing a group of cards" — the zoom axis
@@ -424,8 +419,8 @@ a click back up a level, so depth never loses your place. This keeps the
 glance/dive rhythm physical: one bar = one level of context held, the
 focused card gets the room.
 
-The renderer spike ([`src/brr/diffense/`](../src/brr/diffense)) resolved
-the two interaction questions that were left open here:
+The renderer spike ([`src/brr/diffense/`](../src/brr/diffense)) fixes
+the v0 interaction model:
 
 - **Inter-card / graph navigation — resolved: one breadcrumb stack for
   both axes.** Lateral moves (clicking an edge chip, or opening a
@@ -802,7 +797,7 @@ The live agent is only *half* useful if it can answer but not act; the
 durable half is this loop, where a flagged card becomes real follow-up
 work through machinery that already exists. **Open:** pack versioning
 across iterations (a PR accrues successive packs) and a "what changed
-since I last reviewed" pack-diff view — named in Open questions.
+since I last reviewed" pack-diff view — named in Implementation follow-ups.
 
 ## The pack validation / render tool
 
@@ -1027,7 +1022,7 @@ leanings (decided in the implementation plan, not locked here):
 
 ## Surfaces and what to build first
 
-Settled this pass: **web-first, no TUI in the first cut, built before
+Current build order: **web-first, no TUI in the first cut, built before
 brnrd.** The constraints — phone review is first-class, no native app,
 low friction, must work for the self-hosting story today — point away
 from both "text-first" and "TUI-first."
@@ -1070,7 +1065,7 @@ gloss → zoom tree → ground-truth leaf and a resolvable locator; surface
 uncertainty cards (assumption / concern / dilemma / out-of-scope /
 follow-up) with their tension references when they arose; use existing
 and new tests as grounding evidence; then `--check` the pack before
-publish.* No code in this commit.
+publish.*
 
 ## Adjacencies that ship-or-shipped already
 
@@ -1108,7 +1103,7 @@ for later, once the pack format and the web renderer have earned their
 keep here. Noted so the option isn't forgotten, explicitly deferred so it
 doesn't pull focus.
 
-## Open questions
+## Implementation follow-ups
 
 - **Pack JSON schema.** A discriminated union over item kinds +
   walkthroughs + uncertainty subkinds, each with its zoom-tree and
@@ -1122,10 +1117,6 @@ doesn't pull focus.
   them; and re-run the prototype on a brr-*produced* PR to exercise
   `provenance.conversation_msg`, the one field a hand-authored pack
   can't. Finalized in the implementation plan.
-- **Graph / inter-card navigation + code rendering at a locator —
-  resolved by the spike.** Lateral edges and zoom-drills share one
-  breadcrumb heading-bar stack; a code leaf is jump-to-forge at v0
-  (`path:line` inline, inline-diff deferred). See "Rendering the zoom."
 - **Pack transport.** Body-embedded marker block vs git note vs
   `refs/diffense/*`, and the size threshold that switches between them.
 - **Pack versioning across iterations.** A PR accrues successive packs as
@@ -1173,74 +1164,12 @@ doesn't pull focus.
 
 ## Lineage
 
-Drafted 2026-05-28, reshaped 2026-05-29, out of a conversation across
-2026-05-27 – 2026-05-29 that converged the shape over nine refinement
-passes:
-
-1. **Audience + generation.** Generic power-user persona; LLM-driven
-   generation by the agent that did the work.
-2. **Inspect-mode + the Souls-menu-hangout hypothesis.** Reviews as a
-   navigable graph of inspection cards; curiosity-driven, not
-   gamification.
-3. **Perceived gain + the sharp/honest/non-prescriptive clamps.** The
-   two-axis lore; discipline against the wall-of-text relapse.
-4. **Tests-as-grounding + walkthrough kind + parallel CLI/web rendering +
-   promotion to design.**
-5. **Small-team audience + the helpful clamp + the `diffense` name +
-   uncertainty cards as first-class.**
-6. **The zoomable graph + locators + feedback loop + web-first reversal.**
-   Cards gain a zoom axis (gloss → detail → ground-truth leaf), unifying
-   the kb summary-tree and walkthrough-as-card-group ideas; identity
-   gains a resolvable locator; the feedback loop closes through the
-   shipped `pr-review-comment` gate; the `follow-up` uncertainty subkind
-   and explicit tension references land; a pack validation/render tool
-   (`brr review --check`) and a packs-live-in-`.brr`-and-travel-with-the-PR
-   transport are specified; mobile + no-app + low-friction reverse the
-   surface ordering to web-first (responsive HTML renderer distinct from
-   the Textual TUI), demoting the PR body to a lossy fallback; and the
-   ergo proxy folds in as a shared-source / split-audience sibling.
-7. **TUI dropped near-term + web renderer locked in.** The Textual TUI
-   leaves the first cut (a CLI/TUI is a follow-up), which *resolves* the
-   substrate-split tension rather than carrying it: one light,
-   brnrd-independent responsive-web renderer, built before brnrd for the
-   self-hosting story, with the terminal aesthetic expressed in the web
-   medium. The concrete zoom interaction lands — ascii-looking cards
-   where opening a nested card collapses its parent to a full-width
-   heading bar, nesting indefinitely into a breadcrumb stack (lateral
-   graph navigation and code-leaf rendering left explicitly open). The
-   "make review entertaining" goal is framed as removing *accidental*
-   burden (not gamification), gated on trust and with the aesthetic as a
-   multiplier. `diffuse` considered and rejected on meaning.
-8. **First prototype + ease-in reshaping.** A pack was hand-authored
-   against [PR #64](diffense-prototype-pr64.md), validating the schema and
-   surfacing fixes folded back here: an **open card-kind taxonomy** (the
-   agent declares a `custom` kind and raises the gap as a *meta*
-   uncertainty card; recurring kinds get promoted — `code-module-split`
-   was the first); a **summary card** opening every pack, reconciling the
-   "uncertainty-first" rule into orient → surface-concerns → explore (and
-   absorbing the "header / PR-stats-with-context" want); a **gloss-first**
-   convention (uncertainty cards lead with the worry in one plain
-   sentence, specifics descend); `--check` rejecting unresolvable locators
-   as a *blocking* failure (it would have caught the design's own invented
-   `cache.get_with_etag`); and a noted-not-chased **productization** path
-   (the code-change cards generalize beyond brr's kb). A code gap also
-   surfaced (brr publishes a branch, not a PR, so origin context isn't
-   threaded — issue #68); no design change.
-9. **Renderer spike + two open questions closed.** A generic,
-   dependency-free web renderer ([`src/brr/diffense/`](../src/brr/diffense):
-   `template.html` + `render.py`) was built and run against the PR #64
-   pack, validating the card / zoom / navigation model end to end and
-   resolving the two interaction questions pass 7 left open: lateral edges
-   and zoom-drills **share one breadcrumb heading-bar stack** (no separate
-   graph view at v0), and a **code leaf is jump-to-forge** (the
-   commit-pinned permalink, `path:line` inline; inline-diff deferred). The
-   terminal aesthetic was confirmed to carry to the web and reflow to a
-   phone. Render-only — the flag-a-card action, the local server, and
-   runner wiring remain to build.
-
-Accepted 2026-05-29: both gates are met — the hand-authored prototype
-([`diffense-prototype-pr64.md`](diffense-prototype-pr64.md)) and the
-renderer spike ([`src/brr/diffense/`](../src/brr/diffense)) validated the
-pack shape and the read model. Implementation (pack generation in the
-runner, the `brr review` local server, schema lock, transport) follows in
-an implementation plan.
+Drafted 2026-05-28 and accepted 2026-05-29 after two gates were met: the
+hand-authored [PR #64 prototype](diffense-prototype-pr64.md) validated
+the pack shape, and the renderer spike
+([`src/brr/diffense/`](../src/brr/diffense)) validated the read model.
+Earlier revisions explored a near-term Textual/TUI substrate and a
+separate graph-navigation view; the accepted shape drops both because a
+responsive web renderer plus one breadcrumb stack covers the self-hosted
+and phone-review path with less surface area. The full refinement
+chronicle lives in [`kb/log.md`](log.md) and git history.
