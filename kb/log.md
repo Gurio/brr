@@ -1584,10 +1584,10 @@ each lands.
 
 ## [2026-05-15] implement | GitHub gate (Phase 2 of git-layer rework)
 
-Phase 2 of the git layer rework. New built-in gate
-[`gates/github.py`](../src/brr/gates/github.py) — stdlib `urllib`
-against `https://api.github.com`, mirroring the slack/telegram
-shape. Two configurable triggers, both opt-in:
+Phase 2 of the git layer rework. New built-in gate `gates/github.py`
+(now split under [`gates/github/`](../src/brr/gates/github/)) —
+stdlib `urllib` against `https://api.github.com`, mirroring the
+slack/telegram shape. Two configurable triggers, both opt-in:
 
 - `label-on-issue`: polls `/issues?labels={label}` and emits one
   inbox event per newly-labelled issue. PRs returned by the same
@@ -1870,7 +1870,8 @@ work follows.
   was already threaded — this fixes the existing inconsistency where
   the card lived in-thread while the response posted at channel
   level, splitting the conversation in half.
-- **GitHub** ([`gates/github.py`](../src/brr/gates/github.py)):
+- **GitHub** (`gates/github.py`, now
+  [`gates/github/`](../src/brr/gates/github/)):
   mention-trigger replies now prepend `> Replying to [@author's
   comment](url)` (or a no-handle variant for deleted users). Issue and
   PR comment endpoints have no first-class reply primitive, so a
@@ -5128,3 +5129,19 @@ server, and runner/publish wiring are not in it. With the read model
 validated, [`design-diffense.md`](design-diffense.md) flips to
 **accepted** (both gates — prototype pack + renderer — now met) and the
 in-tree `src/brr/diffense/` boundary is settled (zero runtime deps).
+
+## [2026-05-31] fix | kb consistency after diffense renderer spike
+
+Compressed [`design-diffense.md`](design-diffense.md) from a pass-by-pass
+design chronicle into current-state synthesis: accepted card / zoom /
+navigation model, explicit built-vs-designed boundary, open
+implementation decisions, rejected shapes, and one lineage breadcrumb.
+Trimmed the matching index entry and a few over-detailed managed-mode
+index blurbs so [`kb/index.md`](index.md) drops below the oversized-page
+threshold.
+
+Fixed stale links caused by source reshapes: the historical GitHub gate
+references now point at the current `src/brr/gates/github/` package, the
+runtime-deps research records that `requests` has landed, and the brnrd
+GitHub App design no longer links to nonexistent future `src/brnrd/`
+code.

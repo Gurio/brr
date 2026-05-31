@@ -145,27 +145,26 @@ path.
 
 #### `requests` → [`src/brr/gates/*.py`](../src/brr/gates/)
 
-**Verdict: take, once the deps stance is settled.**
+**Verdict: accepted and landed after the deps stance settled.** The
+current gate clients use `requests`; this section records the rationale
+for that migration.
 
-- **LOC saved.** Across the three gates, an audit of the `urllib`
+- **LOC saved.** Across the three gates, the pre-migration audit of `urllib`
   glue (request construction, JSON encode, header juggling, the
   `_read_error_payload` / `_api_call` dance in
   [`src/brr/gates/telegram.py`](../src/brr/gates/telegram.py) and
-  [`src/brr/gates/github.py`](../src/brr/gates/github.py)) suggests
-  80-100 LOC removable. That's not transformative on a 9k-LOC
+  [`src/brr/gates/github/client.py`](../src/brr/gates/github/client.py))
+  found 80-100 LOC removable. That's not transformative on a 9k-LOC
   codebase, but it's a clean reduction.
-- **Better failure stderr.** The github gate has a custom
-  `GitHubAPIError` class that hand-decodes `HTTPError.read()` to
-  surface API messages; with `requests` this is `response.json()`.
-  Telegram has a `_TelegramNotModified` exception that exists
-  partially because `urllib.error.HTTPError` doesn't carry the parsed
-  body cleanly. Both shrink.
-- **Real cost.** Adds one dep, ~500 KB on disk, ~2 MB in deps tree
+- **Better failure stderr.** The old github gate hand-decoded
+  `HTTPError.read()` to surface API messages; with `requests`, the
+  current client reads `response.json()`. Telegram's error path shrank
+  for the same reason.
+- **Real cost.** Adds one dep family, ~500 KB on disk, ~2 MB in deps tree
   (urllib3, charset_normalizer, idna, certifi). Audience does not
   care; install time still dominated by Python interpreter cold start.
-- **Migration scope.** Mechanical and bounded — three files, well-
-  tested via mocks at the API boundary already. Estimated half a day
-  of work including tests.
+- **Migration scope.** Mechanical and bounded — three gate clients,
+  already tested via mocks at the API boundary.
 
 #### Per-forge SDKs (PyGithub / githubkit / python-telegram-bot / slack_sdk)
 
@@ -173,9 +172,9 @@ path.
 
 The LOC math is more interesting here than for `requests`:
 
-| Gate | Current LOC | Estimated post-SDK | Notes |
+| Gate | Baseline LOC | Estimated post-SDK | Notes |
 |------|-------------|---------------------|-------|
-| [`gates/github.py`](../src/brr/gates/github.py) | 1044 | ~600-700 | githubkit or PyGithub absorb pagination, rate-limit headers, comment posting. The trigger logic stays brr-specific. |
+| [`gates/github/`](../src/brr/gates/github/) | 1044 in the 2026-05-21 single-file audit; now split under `src/brr/gates/github/` | ~600-700 | githubkit or PyGithub absorb pagination, rate-limit headers, comment posting. The trigger logic stays brr-specific. |
 | [`gates/telegram.py`](../src/brr/gates/telegram.py) | 593 | ~400-450 | python-telegram-bot owns getUpdates, sendMessage, editMessageText, parse_mode handling, HTTP retries. |
 | [`gates/slack.py`](../src/brr/gates/slack.py) | 359 | ~250-300 | slack_sdk handles auth, conversations.history, chat.postMessage / chat.update. |
 

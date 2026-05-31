@@ -155,106 +155,31 @@ dive-in map) and are stable until something contradicts them.
   2026-05-22, then locked on 2026-05-26 after pricing, BYO,
   naming, monorepo, and dashboard decisions converged.
 - [brnrd protocol design](design-brnrd-protocol.md) —
-  *accepted 2026-05-26*. The wire format between brr daemons and `brnrd`.
-  Covers gates (managed-gates path), failover dispatch (decision
-  tree with `docker login` step for private images AND a BYO
-  branch on `cloud-platform` credential presence), generalised
-  credential vault — three domains (AI-runner with api-key +
-  dir-tarball shapes; docker-registry credentials; and
-  `cloud-platform` credentials for BYO compute, subscriber-
-  gated), subscription endpoints
-  (`/v1/accounts/subscription[/checkout|cancel|resume|portal]`,
-  with state values `tier=subscribed|subscribed_past_due|free`
-  and plan codes `monthly|annual`), multi-project routing,
-  permission-prompt API, data minimization principle,
-  conversation context for failover and dashboard (metadata
-  graph + git trailer + on-demand fetch + TG ring buffer), and
-  Upsun deployment notes. Originally `design-managed-gates.md`;
-  renamed to `design-brr-run-protocol.md` on 2026-05-22 when
-  spawn-compute joined the protocol; renamed to
-  `design-brnrd-protocol.md` on 2026-05-25 with the
-  brnrd-naming-keep decision.
+  *accepted 2026-05-26*. Wire format between brr daemons and `brnrd`:
+  managed gates, failover dispatch, credential vault domains
+  (AI-runner, docker-registry, subscriber-gated cloud-platform),
+  subscription endpoints, multi-project routing, permission prompts,
+  data minimization, and conversation context. Lineage: renamed through
+  the managed-gates / brr-run protocol drafts as spawn-compute and brnrd
+  naming converged.
 - [Pricing shape decision](decision-pricing-shape.md) —
-  *accepted 2026-05-26*. **Subscription for the platform + metered credits
-  for compute.** Two tiers at launch: Free (3 projects, 100
-  events/month, **10 spawn-credit one-time signup bonus
-  (30-day expiry)**, basic dashboard with allowance gauges,
-  7-day audit, managed-compute-only) + Subscribed (**$5/month
-  for the first 200 supporters → $7/month for the public
-  cohort afterward**; or $50 / $70 annual; **25 projects
-  (unlimited after $10 of cumulative top-ups)**, 10K
-  events/month, 300 spawn-credits/month included, full
-  dashboard, 90-day audit, email support, **BYO compute
-  opt-in for cloud envs we ship managed**). Subscription tier
-  deliberately unnamed (no "Plus" / "Pro" branding). Metered
-  compute top-ups on either tier ($0.01/credit, Stripe
-  Checkout one-shot, no card-on-file except opt-in auto-topup).
-  **Credit buckets formalised** with per-source expiry:
-  `free_signup_bonus` one-time on Free signup with 30-day
-  expiry, `subscriber_monthly` use-it-or-lose-it end-of-cycle,
-  `purchased` never expires (account-dormancy-bounded at
-  24mo pause / 36mo prompt; deletion only on explicit request
-  or GDPR), `promotional` future-proofed. **Multi-account
-  abuse mitigation via binding uniqueness** (one repo / chat
-  bindable to one account at a time — needed for routing
-  correctness anyway). **Dashboard nudges + transparency**
-  policy: honest banners on threshold-crossing, never modal,
-  always-signposted throttling, gate-side one-line subscribe
-  footer on throttle / cap / out-of-credit events. Self-
-  hosted brnrd stays always-free with full feature parity;
-  per-seat team tier is deferred to v-next. Lineage:
-  2026-05-25 replaced the credits-only model because it could
-  not sustainably carry the platform; 2026-05-26 locked the
-  supporter/public price step, BYO-for-subscribers rule,
-  per-source credit expiry, one-time Free signup bonus, and
-  soft-throttle event overage defaults.
+  *accepted 2026-05-26*. Launch pricing is subscription for the platform
+  plus metered compute credits. Free gets 3 projects, 100 events/month,
+  and a 10-credit one-time signup bonus; Subscribed is $5/month for the
+  first 200 supporters then $7/month public, with 25 projects until a
+  $10 cumulative top-up unlock, 300 included credits, full dashboard,
+  and BYO compute opt-in for managed cloud envs. Credit buckets
+  (`free_signup_bonus`, `subscriber_monthly`, `purchased`,
+  `promotional`) carry explicit expiry rules; honest dashboard/gate
+  nudges replace modal upsell pressure. Self-hosted brnrd remains
+  free with full feature parity.
 - [Billing design](design-billing.md) — *accepted 2026-05-26*. **Two
-  billing legs**: subscription (Stripe recurring,
-  monthly/annual, Customer Portal for self-service) and credit
-  wallet (one-shot Stripe Checkout top-ups). Subscription
-  mechanics: $5/month, prorated start, cancel-at-period-end,
-  subscriber credit grant (300/month) vs Free's **10-credit
-  one-time signup bonus (30-day expiry)**. Wallet mechanics:
-  top-up flow, debit-at-finalize, zero-balance UX with
-  enqueue + gate notify, opt-in auto-topup, pro-rata refund
-  policy. **Credit bucket ledger** with per-source expiry:
-  `free_signup_bonus` one-time on Free signup (30-day expiry
-  OR full consumption), `subscriber_monthly` use-it-or-lose-it
-  end-of-cycle, `purchased` never expires (account-dormancy
-  bounded), `promotional` future-proofed. Debit priority is
-  grants first, purchased last (FIFO within bucket). **BYO
-  compute bypasses the wallet** for subscribers (subscribers
-  who BYO contribute pure subscription revenue; `spawn_byo`
-  audit op replaces `debit_spawn`). **Cumulative purchase
-  tracking** drives the subscriber project cap unlock
-  (`cumulative_purchased_usd_lifetime >= 10` → `project_cap_unlocked
-  = true`, permanent on the account). **Account dormancy
-  policy** bounds the "purchased never expires" tail (24mo
-  pause / 36mo prompt; deletion only on explicit user
-  request or GDPR). **Deferred-revenue accounting** framing
-  for the implementer + accountant: purchased credits +
-  subscription fees are deferred revenue under French GAAP /
-  IFRS (Stripe Revenue Recognition automates the daily
-  proration); grants are NOT deferred revenue (they're
-  operational COGS); HugiMuni SAS chart-of-accounts sketch
-  included; bank-account separation called out as treasury
-  hygiene at ≥€10K MRR, not a legal requirement. Audit log
-  entries cover every billing operation including the new
-  promotional / dormancy / project-cap-unlock ops. Stripe
-  integration shape (HugiMuni SAS + Stripe France + Qonto
-  payouts + Stripe Tax for EU VAT + OSS scheme + SCA via
-  Checkout) applies to both legs under one Stripe account.
-  **Locking pass IV (2026-05-26)** added the **overdraft
-  envelope**: spawn-start gate is `current_balance >= 0` AND
-  `estimated_spawn_cost <= current_balance + max_overdraft_credits`;
-  per-account `max_overdraft_credits` setting (default 0;
-  Subscribed can raise within
-  `BRNRD_SUBSCRIBER_MAX_OVERDRAFT_CREDITS` = 500 credits = $5
-  default cap). The last spawn of the cycle can dip the
-  balance negative within the envelope; next spawn waits for
-  a top-up to clear back to ≥ 0. Three new audit ops
-  (`overdraft_settings_changed`, `overdraft_consumed`,
-  `overdraft_cleared`).
+  billing legs**: Stripe subscription plus credit wallet. The design
+  covers recurring subscription lifecycle, one-shot Checkout top-ups,
+  credit-bucket expiry and debit priority, BYO wallet bypass for
+  subscribers, the $10 cumulative top-up project-cap unlock, account
+  dormancy bounds, audit ops, France/Stripe/VAT accounting notes, and
+  an optional subscriber overdraft envelope capped by config.
 - [CLI shape decision](decision-cli-shape.md) — *accepted 2026-05-26*.
   Seven top-level verbs (`init` / `run` / `daemon` / `gate` /
   `brnrd` / `config` / `kb`) with subcommands. Collapses today's
@@ -534,31 +459,17 @@ dive-in map) and are stable until something contradicts them.
 ## Reviews
 
 - [diffense — kb-first PR review experience](design-diffense.md) —
-  *accepted 2026-05-29 (passes 6–9)*. The review
-  surface for brr-generated PRs, built around the half-of-a-brr-PR-is-kb
-  pain. Inspect-mode model: reviews are a **zoomable graph of cards**
-  (item / walkthrough / uncertainty kinds) with two navigation axes —
-  lateral edges and zoom (gloss → detail → ground-truth leaf, where
-  leaves are the real diff/file/rendered-page and summaries are
-  clamp-gated). Two-axis lore (what-it-is + what-it-enables), per-kind
-  stat blocks, code **locators**, and tests-grounded demos. A JSON
-  **review pack** (generated at publish time, `brr review --check`'d) is
-  the contract. Build is **web-first**: one light, brnrd-independent
-  responsive-web renderer with a terminal aesthetic (ascii-looking cards;
-  opening a nested card collapses its parent to a heading bar, nesting
-  into a breadcrumb stack), built before brnrd for the self-hosting
-  story; CLI/TUI and hosted brnrd are follow-ups, the PR-body a lossy
-  fallback. The **feedback loop** closes through the shipped
-  `pr-review-comment` gate (flag a card → anchored comment → task →
-  re-pack). Six discipline clamps keep cards sharp; agent **uncertainty
-  cards** (incl. `follow-up` + tension references) read first; the
-  "entertaining" goal is framed as removing *accidental* burden, not
-  gamification. Folds with the [ergo proxy](design-agent-ergonomics.md)
-  as shared-source / split-audience. A **renderer spike**
-  ([src/brr/diffense/](../src/brr/diffense)) validated the read model and
-  resolved the two interaction questions — lateral nav and zoom-drills
-  share one breadcrumb stack; a code leaf is jump-to-forge. Open: pack
-  schema lock, transport, runner wiring.
+  *accepted 2026-05-29*. Pack-first review surface for brr-generated PRs:
+  a JSON **review pack** of summary, item, walkthrough, and uncertainty
+  cards with lateral edges, zoom trees, and resolvable locators into real
+  code / kb / diff artifacts. The first renderer is web-first and
+  brnrd-independent. The checked-in
+  [renderer spike](../src/brr/diffense) validates the read model: lateral
+  edges and walkthrough drills share one breadcrumb stack, and code leaves
+  jump to commit-pinned forge URLs at v0. Current implementation is still
+  spike-only; pack generation, schema lock, `brr review` serving,
+  PR-body projection, transport, flag-a-card feedback, and runner/publish
+  wiring remain follow-up slices.
 - [diffense prototype — hand-authored pack for PR #64](diffense-prototype-pr64.md)
   — *2026-05-29*. The first concrete pack
   ([JSON](diffense-prototype-pr64-pack.json)), rendered as cards, that
@@ -571,8 +482,7 @@ dive-in map) and are stable until something contradicts them.
   *shape* back into the design: a **summary / on-ramp card**, an **open
   card-kind taxonomy** (agent declares `custom` + raises a meta concern;
   `code-module-split` promoted), and **gloss-first** uncertainty cards.
-  Now rendered live by the [renderer spike](../src/brr/diffense)
-  (`render.py` inlines this pack into a self-contained HTML page).
+  Now rendered by the [renderer spike](../src/brr/diffense).
 
 ## Research
 
