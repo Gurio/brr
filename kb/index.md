@@ -557,9 +557,10 @@ dive-in map) and are stable until something contradicts them.
   as shared-source / split-audience. A **renderer spike**
   ([src/brr/diffense/](../src/brr/diffense)) validated the read model and
   resolved the two interaction questions — lateral nav and zoom-drills
-  share one breadcrumb stack; a code leaf is jump-to-forge. A later pass
-  added the **state / data / invariant** triad: an **invariant** axis (the
-  conserved frame; a *threatened* invariant is what a tension points at), a
+  share one breadcrumb stack; a code leaf is jump-to-forge. The current
+  format also includes the **state / data / invariant** triad: an
+  **invariant** axis (the conserved frame; a *threatened* invariant is what
+  a tension points at), a
   **data-shape delta** distinct from the signature, **entry stats as
   visual rolled-up distributions** (bars / meters / heat, size demoted),
   **data-trace** walkthroughs (follow the datum, steppable so animation is
@@ -575,14 +576,14 @@ dive-in map) and are stable until something contradicts them.
   schema before it locks: a missing `code-module-split` kind, `--check`
   must resolve locators (it would have caught the design's invented
   `cache.get_with_etag`), edges need `{card|locator}` targets,
-  uncertainty needs an `honest_nuance` slot. A second pass folded the
-  *shape* back into the design: a **summary / on-ramp card**, an **open
-  card-kind taxonomy** (agent declares `custom` + raises a meta concern;
+  uncertainty needs an `honest_nuance` slot. The design now uses a
+  **summary / on-ramp card**, an **open card-kind taxonomy** (agent
+  declares `custom` + raises a meta concern;
   `code-module-split` promoted), and **gloss-first** uncertainty cards.
   Now rendered live by the [renderer spike](../src/brr/diffense)
-  (`render.py` inlines this pack into a self-contained HTML page); pass 10
-  extended the pack to demonstrate the visual entry-stat distributions,
-  the invariant axis, the data-trace walkthrough, and kb-native axes.
+  (`render.py` inlines this pack into a self-contained HTML page); the
+  JSON pack also demonstrates the visual entry-stat distributions, the
+  invariant axis, the data-trace walkthrough, and kb-native axes.
 
 ## Research
 

@@ -1585,7 +1585,7 @@ each lands.
 ## [2026-05-15] implement | GitHub gate (Phase 2 of git-layer rework)
 
 Phase 2 of the git layer rework. New built-in gate
-[`gates/github.py`](../src/brr/gates/github.py) — stdlib `urllib`
+[`gates/github/`](../src/brr/gates/github/) — stdlib `urllib`
 against `https://api.github.com`, mirroring the slack/telegram
 shape. Two configurable triggers, both opt-in:
 
@@ -1870,9 +1870,10 @@ work follows.
   was already threaded — this fixes the existing inconsistency where
   the card lived in-thread while the response posted at channel
   level, splitting the conversation in half.
-- **GitHub** ([`gates/github.py`](../src/brr/gates/github.py)):
-  mention-trigger replies now prepend `> Replying to [@author's
-  comment](url)` (or a no-handle variant for deleted users). Issue and
+- **GitHub** ([`gates/github/`](../src/brr/gates/github/)):
+  mention-trigger replies now prepend
+  `> Replying to [@author's comment](url)` as a literal quote-pointer
+  shape (or a no-handle variant for deleted users). Issue and
   PR comment endpoints have no first-class reply primitive, so a
   blockquote pointer is the closest visible anchor (matches what the
   GitHub UI's "Quote reply" button generates). Label-trigger replies
@@ -5173,3 +5174,12 @@ data-trace stage view with `↓` flow connectors (`[data-stage]` hooks for
 future animation), and kb-axis rendering; verified via CDP screenshots
 (desktop summary panel, data-trace, threatened invariant, kb card, 390px
 mobile). 510 tests still green.
+
+## [2026-06-01] fix | kb consistency cleanup after diffense pass 10
+
+Post-task kb lint fixed two stale source links (`src/brnrd/` before that
+tree exists, and the pre-refactor `src/brr/gates/github.py` path),
+compressed the diffense design's pass-by-pass chronology into a single
+current-state lineage breadcrumb, and reconciled the diffense prototype /
+index wording so they describe the current renderer-spike and pack-schema
+status instead of carrying pass chronology as primary prose.

@@ -8,21 +8,13 @@ the repo and [PR #64](https://github.com/Gurio/brr/pull/64).
 The pack itself is [`diffense-prototype-pr64-pack.json`](diffense-prototype-pr64-pack.json)
 (the contract instance the web renderer consumes; runtime home would be
 `.brr/diffense/<task-id>/pack.json` — keyed by task, not PR, since brr
-publishes a branch). This page is the human-readable companion: the cards
-**rendered** (so you can look at the shape without a renderer), then the
-**pressure-test findings** — what the schema expressed well, what it could
-not, and the concrete schema changes this exercise surfaced.
-
-> **Pass 10 (2026-05-31) extended the pack** with the conceptual axes
-> folded into the design after the renderer spike: the summary card's
-> **entry stats became rolled-up visual distributions** (bars / meters /
-> heat, raw size demoted), code cards gained an **invariant** axis
-> (held / threatened, the threatened one linking the concern), the
-> walkthrough became an explicit **data-trace** (the datum's shape at each
-> hop), and the kb card gained **kb-native axes** (claim / graph-position /
-> lifecycle). The canonical look at these is now the **live renderer**
-> ([`src/brr/diffense/`](../src/brr/diffense)), not the static markdown
-> renders below — those predate pass 10 and show the earlier shape.
+publishes a branch). It is the canonical prototype artifact and includes
+the 2026-05-31 axes folded into the design: rolled-up visual entry stats,
+code-card invariants, a data-trace walkthrough, and kb-native axes. The
+live renderer ([`src/brr/diffense/`](../src/brr/diffense)) is the
+canonical visual check. The static card render below is retained as a
+readable snapshot of the earlier prototype shape, followed by the schema
+findings this exercise surfaced.
 
 ## Why PR #64
 
@@ -32,7 +24,7 @@ braided into one PR — the **fix** (review comments live on
 `/pulls/comments`, were invisible), a **monolith→package refactor**
 (`github.py` 1052 lines → 12 modules), and a **feature** (conditional
 polling + review-summary events) — plus a **new kb design page** with
-cross-link wiring. That braid is the stress I wanted: it tests whether
+cross-link wiring. That braid is the stress case: it tests whether
 curated cards + a walkthrough can untangle the stories instead of
 mirroring 3863 diff lines, and the big refactor probes whether the schema
 even *has* the right card kind for a module split (spoiler: it does not —
@@ -44,11 +36,12 @@ pack is a *story*, not a diff.
 
 ## The pack, rendered (reading order — summary, then concerns, then the change)
 
-This render reflects the pass-8 refinements: a **summary card opens the
-pack** (orientation before scrutiny), and every **uncertainty card leads
-with the worry in one plain sentence** — the tension, the locator, the
-`[-_SEEN_CAP:]` mechanics all descend *below* it, instead of greeting the
-reviewer cold with `id` / `tension` / `where:polling.py:283`.
+This static render shows the summary-first, gloss-first snapshot: a
+**summary card opens the pack** (orientation before scrutiny), and every
+**uncertainty card leads with the worry in one plain sentence** — the
+tension, the locator, the `[-_SEEN_CAP:]` mechanics all descend *below*
+it, instead of greeting the reviewer cold with `id` / `tension` /
+`where:polling.py:283`.
 
 ### 0. `summary` — the on-ramp (renders first)
 
@@ -288,7 +281,7 @@ reviewer cold with `id` / `tension` / `where:polling.py:283`.
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## Reshaped this pass (pass 8, from review of the render)
+## Shape refinements captured here
 
 The cards above already incorporate a round of feedback on the *shape*,
 folded back into [`design-diffense.md`](design-diffense.md):
@@ -326,11 +319,11 @@ folded back into [`design-diffense.md`](design-diffense.md):
   0 → 6" stat is precisely the review signal a raw diff hides, and it is
   mechanically computable from the kb graph.
 
-## Pressure-test findings (proposed schema changes)
+## Schema findings
 
 The point of the exercise: what the schema needs *before* it is locked.
-Feeds [`design-diffense.md`](design-diffense.md) → "Open questions → Pack
-JSON schema."
+Feeds [`design-diffense.md`](design-diffense.md) → "Implementation
+questions → Pack JSON schema."
 
 1. **Add a `code-module-split` / `code-restructure` item kind (and a
    `code-move`).** The single most important change in #64 — `github.py`
@@ -342,14 +335,12 @@ JSON schema."
    before/after file count, a *surface-preserved* invariant (the
    `__all__` list), and the split rationale. It generalizes the existing
    `kb-page-split`. A sibling `code-move` (a symbol relocated unchanged)
-   is implied by    the same PR. **Update (pass 8):** promoted to a core kind in the
-   design. The lesson is bigger than one kind — the taxonomy should be an
-   **open core**: the agent can declare a `custom` kind and is expected to
-   **raise the gap as a meta uncertainty card** ("I used `custom:X`
-   because no core kind fit — consider promoting it"), so the *next*
-   missing kind surfaces itself instead of being silently forced into an
-   ill-fitting one. `code-module-split` is just the first to make the
-   round trip.
+   is implied by the same PR. The design now promotes `code-module-split`
+   to a core kind and keeps the taxonomy as an **open core**: the agent can
+   declare a `custom` kind and is expected to **raise the gap as a meta
+   uncertainty card** ("I used `custom:X` because no core kind fit —
+   consider promoting it"), so the *next* missing kind surfaces itself
+   instead of being silently forced into an ill-fitting one.
 
 2. **`--check` must resolve locators — and an unresolvable one blocks
    publish.** The validator stand-in (`python3`, below) passed only
@@ -432,7 +423,7 @@ guard that keeps invented symbols out of a pack.
 ## Read next
 
 - [`design-diffense.md`](design-diffense.md) — the design this validates;
-  see "The card model" and "Open questions → Pack JSON schema."
+  see "The card model" and "Implementation questions → Pack JSON schema."
 - [`diffense-prototype-pr64-pack.json`](diffense-prototype-pr64-pack.json)
   — the pack itself (the contract instance).
 - [`design-github-gate-vs-brnrd-app.md`](design-github-gate-vs-brnrd-app.md)
