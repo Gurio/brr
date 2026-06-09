@@ -67,6 +67,7 @@ def test_path_builders_match_documented_endpoints():
     assert paths.repo_issues("o/r") == "/repos/o/r/issues"
     assert paths.repo_issue_comments("o/r") == "/repos/o/r/issues/comments"
     assert paths.repo_pulls_comments("o/r") == "/repos/o/r/pulls/comments"
+    assert paths.repo_pulls("o/r") == "/repos/o/r/pulls"
     assert paths.pull("o/r", 62) == "/repos/o/r/pulls/62"
     assert paths.issue_comments("o/r", 7) == "/repos/o/r/issues/7/comments"
     assert paths.issue_comment("o/r", 555) == "/repos/o/r/issues/comments/555"
@@ -369,7 +370,7 @@ def test_autodetect_repo_returns_none_for_non_github(tmp_path, monkeypatch):
 # ── is_configured ────────────────────────────────────────────────────
 
 
-def test_is_configured_requires_repo_triggers_and_token(tmp_path, monkeypatch):
+def test_is_configured_requires_repo_and_token(tmp_path, monkeypatch):
     monkeypatch.setattr(state, "_gh_cli_token", lambda: None)
     monkeypatch.delenv("GITHUB_TOKEN", raising=False)
     monkeypatch.delenv("GH_TOKEN", raising=False)
@@ -382,9 +383,9 @@ def test_is_configured_requires_repo_triggers_and_token(tmp_path, monkeypatch):
     state._save_state(brr_dir, {"token": "x"})
     assert github.is_configured(brr_dir) is False
 
-    # Token + repo, no triggers — still not configured.
+    # Token + repo, no triggers — configured for delivery-only use.
     state._save_state(brr_dir, {"token": "x", "repo": "o/r"})
-    assert github.is_configured(brr_dir) is False
+    assert github.is_configured(brr_dir) is True
 
     # Token + repo + at least one trigger — configured.
     state._save_state(brr_dir, {
@@ -1184,6 +1185,31 @@ def test_loop_once_noop_when_unconfigured(tmp_path):
     assert protocol.list_pending(inbox) == []
 
 
+def test_loop_once_delivers_without_polling_triggers(tmp_path, monkeypatch):
+    brr_dir = tmp_path / ".brr"
+    inbox = brr_dir / "inbox"
+    responses = brr_dir / "responses"
+    state._save_state(brr_dir, {"token": "tok", "repo": "o/r"})
+    delivered: list[tuple[str, str]] = []
+    monkeypatch.setattr(
+        delivery,
+        "_deliver_responses",
+        lambda _b, _i, _r, token, *, default_repo=None: delivered.append(
+            (token, default_repo),
+        ),
+    )
+    monkeypatch.setattr(
+        polling,
+        "_poll_any_activity",
+        lambda *_a, **_kw: (_ for _ in ()).throw(AssertionError("no poll")),
+    )
+
+    sleep_for = loop._loop_once(brr_dir, inbox, responses)
+
+    assert sleep_for == constants._POLL_INTERVAL
+    assert delivered == [("tok", "o/r")]
+
+
 def test_extract_issue_number():
     assert parse._extract_issue_number(
         "https://api.github.com/repos/o/r/issues/42",
@@ -1646,3 +1672,166 @@ def test_deliver_responses_appends_branch_footer(tmp_path, monkeypatch):
     assert "The work is done." in body_text
     assert "brr/task-deliver" in body_text
     assert "compare/brr/task-deliver?expand=1" in body_text
+
+
+def test_pull_request_delivery_creates_pr(tmp_path, monkeypatch):
+    brr_dir = tmp_path / ".brr"
+    inbox = brr_dir / "inbox"
+    responses = brr_dir / "responses"
+    path = protocol.create_event(
+        inbox,
+        source="github",
+        body="",
+        status="done",
+        github_delivery="pull-request",
+        base="main",
+        head="brr/feat-x",
+        title="feat: x",
+    )
+    eid = path.stem
+    protocol.write_response(responses, eid, "## Summary\n\nbody\n")
+
+    gets: list[tuple[str, dict | None]] = []
+    posts: list[tuple[str, dict]] = []
+
+    def fake_get(_token, path, params=None, **_kwargs):
+        gets.append((path, params))
+        return []
+
+    def fake_post(_token, path, body):
+        posts.append((path, body))
+        return {"html_url": "https://github.com/o/r/pull/7"}
+
+    monkeypatch.setattr(client, "_api_get", fake_get)
+    monkeypatch.setattr(client, "_api_post", fake_post)
+
+    delivery._deliver_responses(
+        brr_dir, inbox, responses, "tok", default_repo="o/r",
+    )
+
+    assert gets == [
+        (
+            "/repos/o/r/pulls",
+            {"state": "open", "head": "o:brr/feat-x", "per_page": 1},
+        )
+    ]
+    assert posts == [
+        (
+            "/repos/o/r/pulls",
+            {
+                "base": "main",
+                "head": "brr/feat-x",
+                "title": "feat: x",
+                "body": "## Summary\n\nbody",
+            },
+        )
+    ]
+    assert protocol.list_done(inbox, "github") == []
+    assert not protocol.response_path(responses, eid).exists()
+
+
+def test_pull_request_delivery_refreshes_existing_pr(tmp_path, monkeypatch):
+    brr_dir = tmp_path / ".brr"
+    inbox = brr_dir / "inbox"
+    responses = brr_dir / "responses"
+    path = protocol.create_event(
+        inbox,
+        source="github",
+        body="",
+        status="done",
+        github_delivery="pull-request",
+        github_repo="o/r",
+        base="main",
+        head="team:branch",
+        title="feat: refreshed",
+    )
+    eid = path.stem
+    protocol.write_response(responses, eid, "body\n")
+
+    patches: list[tuple[str, dict]] = []
+    monkeypatch.setattr(
+        client,
+        "_api_get",
+        lambda _token, path, params=None, **_kw: [
+            {"number": 12, "html_url": "https://github.com/o/r/pull/12"}
+        ],
+    )
+    monkeypatch.setattr(
+        client,
+        "_api_patch",
+        lambda _token, path, body: patches.append((path, body))
+        or {"html_url": "https://github.com/o/r/pull/12"},
+    )
+    posts: list = []
+    monkeypatch.setattr(client, "_api_post", lambda *args, **_kw: posts.append(args))
+
+    delivery._deliver_responses(brr_dir, inbox, responses, "tok")
+
+    assert patches == [
+        (
+            "/repos/o/r/pulls/12",
+            {"title": "feat: refreshed", "body": "body"},
+        )
+    ]
+    assert posts == []
+    assert protocol.list_done(inbox, "github") == []
+
+
+def test_pull_request_delivery_retries_when_github_rejects_head(tmp_path, monkeypatch):
+    brr_dir = tmp_path / ".brr"
+    inbox = brr_dir / "inbox"
+    responses = brr_dir / "responses"
+    path = protocol.create_event(
+        inbox,
+        source="github",
+        body="",
+        status="done",
+        github_delivery="pull-request",
+        base="main",
+        head="brr/not-pushed-yet",
+        title="feat: later",
+    )
+    eid = path.stem
+    protocol.write_response(responses, eid, "body\n")
+
+    monkeypatch.setattr(client, "_api_get", lambda *_a, **_kw: [])
+
+    def rejected(*_args, **_kwargs):
+        raise client.GitHubAPIError(422, "Head sha can't be blank")
+
+    monkeypatch.setattr(client, "_api_post", rejected)
+
+    delivery._deliver_responses(
+        brr_dir, inbox, responses, "tok", default_repo="o/r",
+    )
+
+    # Delivery errors keep the done event and response queued for the next
+    # gate loop, which covers the outbox-drained-before-push ordering.
+    assert [ev["id"] for ev in protocol.list_done(inbox, "github")] == [eid]
+    assert protocol.read_response(responses, eid) == "body"
+
+
+def test_pull_request_delivery_drops_malformed_event(tmp_path, monkeypatch):
+    brr_dir = tmp_path / ".brr"
+    inbox = brr_dir / "inbox"
+    responses = brr_dir / "responses"
+    path = protocol.create_event(
+        inbox,
+        source="github",
+        body="",
+        status="done",
+        github_delivery="pull-request",
+        base="main",
+        title="missing head",
+    )
+    eid = path.stem
+    protocol.write_response(responses, eid, "body\n")
+    calls: list = []
+    monkeypatch.setattr(client, "_api_get", lambda *args, **_kw: calls.append(args))
+
+    delivery._deliver_responses(
+        brr_dir, inbox, responses, "tok", default_repo="o/r",
+    )
+
+    assert calls == []
+    assert protocol.list_done(inbox, "github") == []

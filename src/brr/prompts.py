@@ -284,6 +284,7 @@ def _join_prompt_parts(
     *,
     task_text: str | None = None,
     diffense: bool = False,
+    diffense_pr: bool = False,
 ) -> str:
     """Stitch preamble, optional recent-context block, and trailer."""
     parts = [preamble]
@@ -304,6 +305,10 @@ def _join_prompt_parts(
         pack_step = read_prompt("diffense.md", repo_root)
         if pack_step:
             parts.append(pack_step)
+        if diffense_pr:
+            publish_step = read_prompt("diffense_publish.md", repo_root)
+            if publish_step:
+                parts.append(publish_step)
     # Last framing before the task: invite the resident to look at the whole
     # shape it has just read (opt-in dev mode). Placed here so it can refer to
     # everything above and sit fresh against the task bundle.
@@ -317,24 +322,26 @@ def _join_prompt_parts(
 def diffense_emit_enabled(cfg: dict[str, Any] | None) -> bool:
     """Return whether runner prompts should ask for a diffense review pack.
 
-    On by default now that the consuming surface ships: the publish kernel
-    projects the pack into the PR body (``diffense_create_pr_enabled``), so
-    a review-worthy change produces a richer PR for free. Opt out per repo
-    with ``diffense.emit_pack=false`` in ``.brr/config``. (Default was off
-    through slices 1–2, before the projection consumed the pack.)
+    On by default now that the consuming surface ships: the resident can
+    project the pack into a PR body and address the forge gate
+    (``diffense_create_pr_enabled``), so a review-worthy change produces a
+    richer PR for free. Opt out per repo with ``diffense.emit_pack=false``
+    in ``.brr/config``. (Default was off through slices 1–2, before the
+    projection consumed the pack.)
     """
     cfg = cfg or {}
     return bool(cfg.get("diffense.emit_pack", cfg.get("diffense_emit_pack", True)))
 
 
 def diffense_create_pr_enabled(cfg: dict[str, Any] | None) -> bool:
-    """Return whether the publish kernel should open/refresh a forge PR.
+    """Return whether the prompt should ask the resident to publish a PR.
 
-    On by default (GitHub only for now): when a run leaves a review-worthy
-    pack, brr opens a PR whose body *is* the pack projection. It no-ops
-    naturally when no pack was emitted, so ``diffense.emit_pack=false``
-    also turns PR creation off. Opt out independently with
-    ``diffense.create_pr=false`` to keep packs local (review by hand).
+    On by default (GitHub only for now): when a run leaves a
+    review-worthy pack, the resident projects it and writes a
+    gate-addressed forge message. It no-ops naturally when no pack was
+    emitted, so ``diffense.emit_pack=false`` also turns PR creation off.
+    Opt out independently with ``diffense.create_pr=false`` to keep packs
+    local (review by hand).
     """
     cfg = cfg or {}
     return bool(cfg.get("diffense.create_pr", cfg.get("diffense_create_pr", True)))
@@ -386,6 +393,7 @@ def build_daemon_prompt(
     event_body: str | None = None,
     budget_seconds: int | None = None,
     diffense: bool = False,
+    diffense_pr: bool = False,
 ) -> str:
     """Build the prompt for daemon-originated tasks.
 
@@ -414,6 +422,7 @@ def build_daemon_prompt(
         present=present,
         event_body=event_body,
         diffense=diffense,
+        diffense_pr=diffense_pr,
     )
     trailer = bundle.rstrip()
     if (event_body or "").strip() != task.strip():
@@ -422,7 +431,12 @@ def build_daemon_prompt(
     # triggers the resident recorded tend to echo how a request is phrased.
     pitfall_text = "\n".join(t for t in (task, event_body) if t)
     return _join_prompt_parts(
-        preamble, repo_root, trailer, task_text=pitfall_text, diffense=diffense,
+        preamble,
+        repo_root,
+        trailer,
+        task_text=pitfall_text,
+        diffense=diffense,
+        diffense_pr=diffense_pr,
     )
 
 
@@ -456,6 +470,7 @@ def _build_task_context_bundle(
     present: list[dict[str, Any]] | None = None,
     event_body: str | None,
     diffense: bool = False,
+    diffense_pr: bool = False,
 ) -> str:
     """Assemble the human-readable Task Context Bundle for the daemon prompt.
 
@@ -520,6 +535,10 @@ def _build_task_context_bundle(
         base = Path(runtime_dir) if runtime_dir else gitops.shared_brr_dir(repo_root)
         pack_path = base / "diffense" / task_id / "pack.json"
         sections.append(f"- Review pack path: {pack_path}")
+        sections.append(
+            "- Review pack publishing: "
+            + ("enabled via the github/forge outbox gate" if diffense_pr else "disabled")
+        )
     if context_path:
         sections.append(f"- Run context file: {context_path}")
 

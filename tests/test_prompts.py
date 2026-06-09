@@ -181,7 +181,7 @@ class TestPromptBuilding:
         assert "kb health" not in prompt
 
     def test_diffense_emit_enabled_defaults_on(self):
-        # On by default now that the publish kernel consumes the pack;
+        # On by default now that the resident-owned PR flow consumes the pack;
         # opt out explicitly.
         assert diffense_emit_enabled({})
         assert diffense_emit_enabled(None)
@@ -205,9 +205,25 @@ class TestPromptBuilding:
         )
         assert "Review pack (diffense)" in prompt
         assert "brr review --check" in prompt
+        assert "github_delivery: pull-request" not in prompt
         # The pack path is explicit and absolute in the shared runtime dir
         # so it survives worktree teardown.
         assert "Review pack path: /repo/.brr/diffense/task-9/pack.json" in prompt
+        assert "Review pack publishing: disabled" in prompt
+
+    def test_daemon_prompt_includes_diffense_publish_when_enabled(self, tmp_path):
+        prompt = build_daemon_prompt(
+            "ship it", "evt-1", "/tmp/resp.md", tmp_path,
+            outbox_path="/repo/.brr/outbox/evt-1",
+            task_id="task-9",
+            runtime_dir="/repo/.brr",
+            diffense=True,
+            diffense_pr=True,
+        )
+        assert "Publishing your change" in prompt
+        assert "Review pack publishing: enabled via the github/forge outbox gate" in prompt
+        assert "github_delivery: pull-request" in prompt
+        assert "brr review <Review pack path> --pr-body --relay" in prompt
 
     def test_daemon_prompt_omits_diffense_pack_when_not_requested(self, tmp_path):
         prompt = build_daemon_prompt(

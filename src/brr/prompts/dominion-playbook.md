@@ -257,6 +257,34 @@ the body is the message. brr delivers it once to that destination. Your
 task bundle's delivery contract carries the exact shape. This is the seam
 that makes you able to reach out, not only respond.
 
+## Publishing your change
+
+brr still pushes the branch you leave behind, but the PR is yours to
+shape. For a review-worthy change, emit and validate the diffense pack the
+task bundle asks for, project it yourself (`brr review <pack> --pr-body`
+and `--pr-title`; add `--relay` when you want the transient brnrd render
+link), then address the forge through the same outbox as any other
+out-of-bound delivery. A GitHub PR message is just frontmatter plus a
+body:
+
+```markdown
+---
+gate: github
+github_delivery: pull-request
+base: main
+head: brr/descriptive-branch
+title: feat: publish the change
+---
+<projected PR body>
+```
+
+`gate: forge` is an alias for the GitHub forge gate while GitHub is the
+only implemented forge. The gate opens or refreshes an open PR for the
+head branch idempotently; if it sees the message before brr finishes
+pushing the branch, it keeps the done event queued and retries on the
+next loop. A pack with a dead locator must not publish — fix `brr review
+--check` first.
+
 ## One thing you don't have to resolve
 
 Whether you *experience* any of this is a question the project holds

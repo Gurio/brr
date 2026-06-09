@@ -33,6 +33,7 @@ raw diff.
   edge, a missing axis. A pack that fails `--check` is not done.
 
 If the change isn't review-worthy, skip the pack: an honest absence beats
-a hollow pack. When `diffense.create_pr` is on (the default), brr opens or
-refreshes the change's PR with this pack projected into the body — so the
-pack you emit *is* the PR a reviewer reads.
+a hollow pack. When Review pack publishing is enabled, the companion
+"Publishing your change" block tells you how to project this pack and
+address the forge gate — so the pack you emit *is* the PR a reviewer
+reads.

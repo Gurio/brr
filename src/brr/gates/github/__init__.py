@@ -20,6 +20,9 @@ The gate polls the GitHub REST API for three configurable triggers:
 
 Replies are posted as comments on the originating issue or PR; inline
 PR review-comment events reply in-thread via the review-replies API.
+Outbox-authored forge delivery events (`github_delivery: pull-request`)
+open or refresh a PR for the named head branch, so PR finalization uses
+the same gate-addressed delivery path as other agent-initiated sends.
 
 Polling uses **conditional requests**: each high-volume endpoint
 (``/issues``, ``/issues/comments``, ``/pulls/comments``) tracks the

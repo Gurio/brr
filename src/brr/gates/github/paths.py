@@ -34,6 +34,11 @@ def repo_pulls_comments(repo: str) -> str:
     return f"/repos/{repo}/pulls/comments"
 
 
+def repo_pulls(repo: str) -> str:
+    """``GET/POST /repos/{repo}/pulls`` — list or create pull requests."""
+    return f"/repos/{repo}/pulls"
+
+
 def pull(repo: str, number: int) -> str:
     """``GET /repos/{repo}/pulls/{number}`` — single PR metadata."""
     return f"/repos/{repo}/pulls/{number}"

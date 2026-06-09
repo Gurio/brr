@@ -121,19 +121,20 @@ A failed push flips `publish_status` to `conflict` and emits the
 
 ### Riders on the publish outcome
 
-Two steps hang off a *successful* push, keyed only on `publish_status`,
-never re-deriving git state:
+One daemon step hangs off a *successful* push, keyed only on
+`publish_status`, never re-deriving git state:
 
 - **Forge view link.** `_forge_view_url` builds the branch URL for the
   `push_done` card.
-- **diffense PR step.** `_maybe_open_pr` opens or refreshes the change's
-  PR with the review-pack projection as the body (see
-  [`design-diffense.md`](design-diffense.md) → "Where the runner /
-  publish kernel wire in"). It runs only after a clean push, so the
-  remote head equals our commits — which is *why* create-vs-refresh needs
-  no conflict logic of its own: an open PR on that head genuinely contains
-  our work (refresh it); a diverged push never gets here (it was rejected
-  → `conflict`). The PR URL replaces the branch URL on the card.
+
+diffense PR finalization used to be a second daemon rider
+(`_maybe_open_pr`, shipped 2026-06-01). It moved on 2026-06-09 to
+resident-owned forge delivery: the resident validates/projects the pack
+and writes a `gate: github` / `github_delivery: pull-request` outbox
+message; the GitHub gate opens or refreshes the PR. The publish kernel
+still decides whether the branch exists remotely. A diverged push becomes
+`conflict`; the forge delivery event naturally retries or keeps failing
+until that branch problem is resolved.
 
 ### Possible: auto-fork on conflict (not built)
 

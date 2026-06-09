@@ -1,5 +1,7 @@
 """Tests for CLI dispatch."""
 
+import json
+
 import pytest
 
 from brr.cli import main
@@ -154,3 +156,60 @@ def test_setup_falls_back_to_auth_then_bind(monkeypatch, tmp_path):
         ("auth", tmp_path / ".brr"),
         ("bind", tmp_path / ".brr"),
     ]
+
+
+def _write_review_pack(path):
+    path.write_text(
+        json.dumps(
+            {
+                "schema_version": "0.1-test",
+                "metadata": {"pr": {"title": "feat: from pack"}},
+                "cards": [
+                    {
+                        "id": "summary:x",
+                        "kind": "summary",
+                        "identity": {"label": "summary label"},
+                        "lore": {"descriptive": "A concise change."},
+                        "provenance": {},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+def test_review_pr_title_projects_pack_title(tmp_path, capsys):
+    pack = tmp_path / "pack.json"
+    _write_review_pack(pack)
+
+    assert main(["review", str(pack), "--pr-title", "--fallback-title", "brr/fallback"]) == 0
+
+    assert capsys.readouterr().out.strip() == "feat: from pack"
+
+
+def test_review_pr_body_projects_pack_body(tmp_path, capsys):
+    pack = tmp_path / "pack.json"
+    _write_review_pack(pack)
+
+    assert main(["review", str(pack), "--pr-body", "--no-embed-pack"]) == 0
+
+    out = capsys.readouterr().out
+    assert "## Summary" in out
+    assert "A concise change." in out
+    assert "diffense:pack:v1" not in out
+
+
+def test_review_pr_body_can_relay_render_url(tmp_path, monkeypatch, capsys):
+    pack = tmp_path / "pack.json"
+    _write_review_pack(pack)
+    monkeypatch.setattr("brr.cli._brr_dir", lambda: tmp_path / ".brr")
+    monkeypatch.setattr("brr.gates.cloud.is_configured", lambda _b: True)
+    monkeypatch.setattr(
+        "brr.gates.cloud.relay_pack",
+        lambda _b, _p: "https://brnrd.example/r/abc",
+    )
+
+    assert main(["review", str(pack), "--pr-body", "--relay", "--no-embed-pack"]) == 0
+
+    assert "https://brnrd.example/r/abc" in capsys.readouterr().out

@@ -30,6 +30,18 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("pack", help="path to a review pack JSON file")
     p.add_argument("--check", action="store_true",
                    help="validate the pack's schema, card graph, and locators")
+    p.add_argument("--pr-body", action="store_true",
+                   help="render the pack as the Markdown PR body")
+    p.add_argument("--pr-title", action="store_true",
+                   help="print the PR title derived from the pack")
+    p.add_argument("--fallback-title", default="",
+                   help="fallback title when the pack has no PR title")
+    p.add_argument("--render-url", default=None,
+                   help="interactive diffense render URL to include in --pr-body")
+    p.add_argument("--relay", action="store_true",
+                   help="best-effort relay the pack to brnrd and include its render URL")
+    p.add_argument("--no-embed-pack", action="store_true",
+                   help="omit the embedded pack marker from --pr-body")
     p.add_argument("--json", action="store_true",
                    help="emit machine-readable JSON instead of text")
     p.set_defaults(func=cmd_review)
@@ -180,6 +192,7 @@ def cmd_review(args):
     import json as _json
 
     from .diffense import pack as pack_mod
+    from .diffense import prbody
 
     path = Path(args.pack)
     try:
@@ -191,9 +204,38 @@ def cmd_review(args):
             print(f"[brr review] {e}")
         return 2
 
+    modes = [bool(args.check), bool(args.pr_body), bool(args.pr_title)]
+    if sum(1 for m in modes if m) > 1:
+        print("[brr review] choose one of --check, --pr-body, or --pr-title")
+        return 2
+
+    if args.pr_title:
+        print(prbody.pr_title(loaded, fallback=args.fallback_title))
+        return 0
+
+    if args.pr_body:
+        render_url = args.render_url
+        if args.relay and not render_url:
+            try:
+                from .gates import cloud
+
+                brr_dir = _brr_dir()
+                if cloud.is_configured(brr_dir):
+                    render_url = cloud.relay_pack(brr_dir, loaded)
+            except Exception:
+                render_url = None
+        print(
+            prbody.project_pr_body(
+                loaded,
+                render_url=render_url,
+                embed_pack=not args.no_embed_pack,
+            ),
+            end="",
+        )
+        return 0
+
     if not args.check:
-        print("[brr review] only `--check` is implemented today; pass --check "
-              "(the local render/serve surface is a follow-up)")
+        print("[brr review] pass --check, --pr-body, or --pr-title")
         return 0
 
     repo_root = _maybe_repo_root()

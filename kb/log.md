@@ -6125,3 +6125,28 @@ the now-15.5 KiB seed with headroom for the resident's own pins) and added a
 guard test that fails if the seed outgrows the cap again, forcing a deliberate
 bump over silent loss. Recorded as a lineage breadcrumb in
 `design-agent-dominion.md`. Full suite green (773 passed; +1 guard).
+
+## [2026-06-09] implement | Agent-owned PR delivery and diffense forge fold
+
+Moved diffense PR finalization out of daemon publish and into
+resident-authored forge delivery. The daemon still pushes the branch and
+emits a branch view URL, but no longer reads
+`.brr/diffense/<task-id>/pack.json`, projects PR bodies, or runs `gh pr`
+after publish.
+
+The GitHub gate now consumes done outbox events with
+`github_delivery: pull-request`, opening a PR for `{base, head, title,
+body}` or refreshing the existing open PR for that head. `gate: forge`
+aliases to the GitHub gate while GitHub is the only forge; delivery-only
+GitHub config now needs repo+token but no polling triggers. If the gate
+sees the PR request before the branch push lands, GitHub's rejection leaves
+the done event queued for retry.
+
+The resident gets the missing tools and orientation: `brr review` now
+prints `--pr-title` and `--pr-body`, with `--relay` preserving the
+transient brnrd render link, and the diffense prompt/playbook describe the
+outbox publishing shape. Updated `design-diffense.md`,
+`design-multi-response.md`, `design-publish-kernel.md`, and
+`review-daemon-coherence-2026-06.md` to the new state, and linked the
+coherence review from `index.md`. Full suite green (775 passed; one
+pre-existing FastAPI/starlette deprecation warning).

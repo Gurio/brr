@@ -130,6 +130,31 @@ class TestDrainOutbox:
         assert protocol.list_pending(inbox) == []
         assert not (outbox / "ping.md").exists()
 
+    def test_gate_addressed_forge_alias_queues_github_event(self, tmp_path, monkeypatch):
+        brr_dir = tmp_path / ".brr"
+        responses = brr_dir / "responses"
+        inbox = brr_dir / "inbox"
+        inbox.mkdir(parents=True)
+        outbox = brr_dir / "outbox" / "evt-A"
+        outbox.mkdir(parents=True)
+        (outbox / "pr.md").write_text(
+            "---\ngate: forge\ngithub_delivery: pull-request\n"
+            "base: main\nhead: brr/feat\ntitle: feat: x\n---\nbody\n")
+        monkeypatch.setattr(daemon, "_gate_can_deliver", lambda brr, gate: True)
+        monkeypatch.setattr(daemon.updates, "emit", lambda brr, pkt: None)
+        emit = daemon._WorkerEmit(
+            brr_dir=brr_dir, conversation_key="", event_id="evt-A")
+        task = types.SimpleNamespace(id="task-A")
+
+        n = daemon._drain_outbox(emit, task, responses, "evt-A", outbox, inbox)
+
+        assert n == 1
+        assert protocol.list_done(inbox, "forge") == []
+        done = protocol.list_done(inbox, "github")
+        assert len(done) == 1
+        assert done[0]["github_delivery"] == "pull-request"
+        assert protocol.read_response(responses, done[0]["id"]) == "body"
+
     def test_missing_outbox_is_noop(self, tmp_path):
         brr_dir = tmp_path / ".brr"
         emit = daemon._WorkerEmit(

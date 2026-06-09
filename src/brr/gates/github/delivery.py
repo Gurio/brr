@@ -14,6 +14,7 @@ Three reply shapes:
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 from requests.utils import quote
 
@@ -22,7 +23,7 @@ from ...task import Task
 from .. import runtime
 from . import client
 from .constants import _COMMENT_KINDS
-from .paths import issue_comments, pull_comment_replies
+from .paths import issue_comments, pull, pull_comment_replies, repo_pulls
 
 
 def _coerce_int(value: object) -> int | None:
@@ -120,16 +121,120 @@ def _post_comment(token: str, event: dict, body: str) -> None:
     client._api_post(token, post_path, body={"body": threaded_body})
 
 
+def _is_pull_request_delivery(event: dict) -> bool:
+    kind = str(
+        event.get("github_delivery")
+        or event.get("forge_delivery")
+        or event.get("delivery")
+        or ""
+    ).strip()
+    return kind in {"pull-request", "pull_request", "pr"}
+
+
+def _event_repo(event: dict, default_repo: str | None) -> str | None:
+    repo = str(event.get("github_repo") or event.get("repo") or "").strip()
+    return repo or default_repo
+
+
+def _head_query(repo: str, head: str) -> str:
+    """Return GitHub's owner:branch head selector for same-repo branches."""
+    if ":" in head:
+        return head
+    owner, _, _name = repo.partition("/")
+    return f"{owner}:{head}" if owner else head
+
+
+def _existing_open_pr(token: str, repo: str, head: str) -> dict | None:
+    """Return the first open PR for *head*, or ``None`` if absent."""
+    payload = client._api_get(
+        token,
+        repo_pulls(repo),
+        params={"state": "open", "head": _head_query(repo, head), "per_page": 1},
+    )
+    if isinstance(payload, list) and payload and isinstance(payload[0], dict):
+        return payload[0]
+    return None
+
+
+def _pr_number(pr: dict | None) -> int | None:
+    if not pr:
+        return None
+    raw = pr.get("number")
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return None
+
+
+def _pr_url(payload: Any, fallback: dict | None = None) -> str | None:
+    if isinstance(payload, dict) and isinstance(payload.get("html_url"), str):
+        return payload["html_url"]
+    if isinstance(fallback, dict) and isinstance(fallback.get("html_url"), str):
+        return fallback["html_url"]
+    return None
+
+
+def _deliver_pull_request(
+    token: str,
+    event: dict,
+    body: str,
+    *,
+    default_repo: str | None = None,
+) -> None:
+    """Open or refresh a PR described by a gate-addressed delivery event.
+
+    The resident owns the review pack and Markdown projection; this gate
+    only performs the forge delivery. Missing required fields are treated
+    as a malformed message and dropped by returning normally. GitHub API
+    errors are left to bubble so ``runtime.deliver_stream`` retries the
+    done event on the next gate loop — important when the outbox message
+    is drained before the daemon finishes pushing the head branch.
+    """
+    repo = _event_repo(event, default_repo)
+    base = str(event.get("base") or event.get("github_base") or "").strip()
+    head = str(event.get("head") or event.get("github_head") or "").strip()
+    title = str(event.get("title") or event.get("github_title") or "").strip()
+    if not (repo and base and head and title and body):
+        print("[brr:github] PR delivery missing repo/base/head/title/body; dropping")
+        return
+    if base == head:
+        print(f"[brr:github] PR delivery head matches base ({head}); skipping")
+        return
+
+    existing = _existing_open_pr(token, repo, head)
+    number = _pr_number(existing)
+    if number is not None:
+        payload = client._api_patch(
+            token,
+            pull(repo, number),
+            body={"title": title, "body": body},
+        )
+        print(f"[brr:github] PR refreshed -> {_pr_url(payload, existing) or head}")
+        return
+
+    payload = client._api_post(
+        token,
+        repo_pulls(repo),
+        body={"base": base, "head": head, "title": title, "body": body},
+    )
+    print(f"[brr:github] PR opened -> {_pr_url(payload) or head}")
+
+
 def _deliver_responses(
     brr_dir: Path,
     inbox_dir: Path,
     responses_dir: Path,
     token: str,
+    *,
+    default_repo: str | None = None,
 ) -> None:
     def deliver_partial(event: dict, body: str) -> None:
         _post_comment(token, event, body)
 
     def deliver_terminal(event: dict, body: str) -> None:
+        if _is_pull_request_delivery(event):
+            _deliver_pull_request(token, event, body, default_repo=default_repo)
+            return
         # The branch footer (committed SHA + compare link) is the
         # thread's closing context, so it rides only the terminal reply.
         repo = event.get("github_repo")

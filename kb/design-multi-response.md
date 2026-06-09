@@ -5,10 +5,11 @@ of the resident-agent reshape
 ([`design-agent-dominion.md`](design-agent-dominion.md) §4);
 **gate-addressed out-of-bound delivery** added 2026-06-09 (coherence
 review §3). The streaming-delivery foundation, the agent outbox + daemon
-drain, cross-event interleaving, and gate-addressed sends are live; two
-follow-ons are **deliberately deferred** (see "Deferred follow-ons"
-below): folding the diffense pack into this drain, and a finer
-*silence-based* idle-kill. This page is the protocol contract;
+drain, cross-event interleaving, and gate-addressed sends are live; the
+finer *silence-based* idle-kill remains deliberately deferred (see
+"Follow-ons" below). The diffense fold was resolved on 2026-06-09 at the
+forge-delivery layer, not by streaming packs through the chat drain. This
+page is the protocol contract;
 [`subject-daemon.md`](subject-daemon.md) carries the daemon-pipeline
 synthesis and [`brr-internals.md`](../src/brr/docs/brr-internals.md)
 → Multi-response the user-facing reference.
@@ -143,13 +144,9 @@ and the first concrete step toward the agent-owned delivery flow weighed
 in [`review-daemon-coherence-2026-06.md`](review-daemon-coherence-2026-06.md)
 §4.
 
-## Deferred follow-ons
+## Follow-ons
 
-Two items were scoped into slice 4 and then deliberately deferred — the
-core (interim + interleaved delivery) ships without them because each
-buys little today and carries real risk.
-
-### Diffense fold — deferred
+### Diffense fold — resolved at forge delivery
 
 The diffense review pack is also an "agent writes a known shared path,
 daemon picks up" artifact (`.brr/diffense/<task-id>/pack.json`), so the
@@ -166,7 +163,15 @@ Folding it in would mean reshaping it into a chat-reply at the exact
 moment it's least chat-shaped, to share a code path it doesn't actually
 want. The genuine commonality — "agent writes, daemon picks up" — is
 already the shared *pattern*; collapsing them into one *mechanism* is
-cosmetic and risks the load-bearing PR-body flow. Left as-is.
+cosmetic and risks the load-bearing PR-body flow.
+
+The 2026-06-09 ownership slice keeps that distinction and folds diffense
+from the other side: the resident validates/projects the pack, then writes
+a forge-addressed outbox file (`gate: github` or `gate: forge`,
+`github_delivery: pull-request`) whose body is already the PR body. The
+outbox drain still carries a ready-to-send message, not the structured
+pack; the GitHub gate owns open-or-refresh and retries if it sees the PR
+request before the daemon has pushed the head branch.
 
 ### Finer idle-liveness timeout — deferred
 
