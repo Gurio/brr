@@ -21,3 +21,13 @@
 # Fetch and reconcile the brr-home branch: pull, resolve any conflicts
 # with the remote, and push. Then skim pitfalls.md and self-inject for
 # anything stale.
+
+## compact business kb before launch
+at: 2026-06-12T10:00:00Z
+Compact the launch-critical business kb pages before they become preflight
+wallpaper. Start with `kb/decision-pricing-shape.md` and `kb/design-billing.md`;
+if time remains, inspect `kb/subject-managed-mode.md` for duplicated pricing /
+billing prose. Preserve current-state synthesis, move history into short lineage
+breadcrumbs, keep accepted lifecycle markers, update inbound links if a split is
+needed, run the kb health check, add a focused `kb/log.md` entry, and commit the
+repo changes. Do not turn this into a broad kb cleanup wake.
