@@ -43,3 +43,17 @@ your change. Run the rest with `--ignore=tests/test_gate_setup.py
 --ignore=tests/test_telegram_gate.py --ignore=tests/test_telegram_render_update.py`
 (or `pip install requests` if network is up). Confirm pre-existing by stashing your
 diff and re-collecting one gate test. Seen on task-260614-1644 (#131).
+
+## Editing the host checkout instead of the task worktree
+trigger: Edit absolute path, /home/gurio/src/misc/brr/src, wrong branch, worktree, execution root
+The bundle's Execution root is a *worktree* at
+`/home/gurio/src/misc/brr/.brr/worktrees/<task-id>/`, but the obvious repo path
+`/home/gurio/src/misc/brr/src/...` is the **host checkout** (on `main`), a different
+tree. Read/Edit calls with that host absolute path silently land in the host
+checkout, not your task branch — your worktree stays clean and the work is on the
+wrong tree (and mixed with whatever the host had uncommitted). Either `cd` into the
+worktree and use relative paths, or build absolute paths under
+`.brr/worktrees/<task-id>/`. Recovery if you already edited the host tree:
+`git -C <host> diff -- <your files> > /tmp/p.patch && git -C <host> checkout -- <your files>`,
+then `git apply /tmp/p.patch` inside the worktree (exclude any pre-existing host
+changes you didn't make). Seen on task-260614-1903 (#115).
