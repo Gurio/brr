@@ -31,3 +31,15 @@ pack JSON in a `<!-- diffense:pack:v1 ... -->` HTML comment, which is the render
 fallback when no gist URL exists. Then push the branch and publish via a `gate: forge`
 outbox file (`head`/`base`/`title` frontmatter, body = the projected PR body). The
 `--pr-title` projection works without network. Validated on #128 (task-260614-1637).
+
+## Full pytest run shows 5 collection ERRORs for gate tests (requests missing)
+trigger: pytest, ModuleNotFoundError requests, collection error, telegram_gate, github_gate
+`requests` is absent in the sandbox, and `src/brr/gates/{telegram,github,slack}.py`
+import it at module load. A bare `python -m pytest` aborts collection with 5 errors
+(test_gate_setup, test_github_gate, test_slack_render_update, test_telegram_gate,
+test_telegram_render_update) — *before running anything*. This is env friction, not
+your change. Run the rest with `--ignore=tests/test_gate_setup.py
+--ignore=tests/test_github_gate.py --ignore=tests/test_slack_render_update.py
+--ignore=tests/test_telegram_gate.py --ignore=tests/test_telegram_render_update.py`
+(or `pip install requests` if network is up). Confirm pre-existing by stashing your
+diff and re-collecting one gate test. Seen on task-260614-1644 (#131).
