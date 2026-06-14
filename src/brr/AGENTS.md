@@ -194,6 +194,44 @@ so a reader can pick up the thread. Match depth to size — a one-line
 tracking issue earns a sentence, not three headings; a cross-cutting
 proposal earns the full shape.
 
+**Link the PR to the issue it serves.** When a task came from a
+tracked issue, name it in the PR body with a forge auto-link keyword so
+the graph stays wired and merging the PR closes the loop automatically:
+
+- `Closes #N` (or `Fixes #N` / `Resolves #N`) when the PR is the whole
+  fix for the issue. Merge auto-closes the issue.
+- `Part of #N` / `Refs #N` when the PR is one slice of a larger issue
+  that should stay open. The link is recorded without closing.
+
+Title-only references (`feat: foo (#N)`) read for humans but don't fire
+GitHub's close-on-merge. Use the keyword in the body when the intent is
+to close.
+
+**Carve out what doesn't fit.** When a task's scope splits during the
+work — a leftover that's too big for this PR, or material that doesn't
+belong together with the shipping change — **file the leftover as its
+own issue and cross-link** rather than letting it disappear into a
+deferred-in-body bullet. The failure mode this prevents is the planned
+work that quietly evaporates when the PR merges. Concretely:
+
+- **Default: carve and link, don't ask.** Open the follow-up issue,
+  reference the parent, and mention it in the shipping PR's body
+  (`Part of #parent; follow-up tracked at #child`). One round-trip with
+  the operator on every spillover is too much friction; the parent
+  issue + the new child + the kb design page form the trail.
+- **Ask first only when the leftover is large or ambiguous** — a
+  carve-out big enough to want a direction call from the operator
+  (rename the parent, supersede it, change approach) before filing.
+  When in doubt, prefer filing over asking; a too-small issue is
+  cheaper than a lost one.
+- **Label the carve-out** so it's distinguishable in the issue list.
+  This repo doesn't yet have a dedicated `follow-up` label; until it
+  does, the originating-milestone label (e.g. `co-maintainer`) plus a
+  `(§N follow-up of #parent)` suffix in the title is the convention.
+- **Update the design / plan page** that named the work, if there is
+  one, so the shipped half and the open half are both visible there.
+  The page is the canonical state; the issues are the work tracker.
+
 ### Pushing, rebasing, and open PRs
 
 When you've pushed work on a feature branch and the branch has an
@@ -499,7 +537,11 @@ answers and short summaries go directly in the response.
 a multi-file refactor. A question does not need a prototype.
 
 **Scope drift.** If work expands beyond the original task, pause and note
-what you found. Do not silently take on unbounded scope.
+what you found. Do not silently take on unbounded scope. When scope
+*splits* instead — part of the task ships cleanly, part doesn't fit this
+PR — carve the leftover into its own issue rather than burying it in a
+"deferred" bullet (see Workflow → Issue and PR descriptions →
+*Carve out what doesn't fit*).
 
 **Dead ends.** Two failed attempts at the same approach — stop and report
 what you tried rather than retrying. Suggest alternatives.

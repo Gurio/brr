@@ -414,7 +414,15 @@ sequence (each maps to a milestone issue):
    (§4.2, #110) — shipped 2026-06-14 for the structured wake snapshot,
    grouped run-directory JSONL history files, and dominion thread-of-record
    prompt/context hint.
-6. **Card re-alignment + agent-owned composition** (§8, #114) — needs #111.
+6. **Agent-owned composition** (§8 composition half, #114) — shipped
+   2026-06-14 in #125: `.card` control file → `card_composed` packet →
+   `view.agent_card_text` → `note:` render tail.
+6b. **Card re-alignment to success signal** (§8 re-alignment half, #126)
+    — depends on #111 (shipped). Bind the lifecycle "success / delivered
+    / done" to the events/commit/noop signal instead of stdout-non-empty,
+    surface operational failure as a distinct terminal state, reflect
+    multi-thread delivery on the card. Carved out of #114 after the
+    composition seam landed.
 7. **Forge-awareness in the snapshot** (§5, #113) + **forge grooming**
    (§5, #117) — need #110 and PR #106's metadata.
 8. **Daemon responsiveness** (§9, #115) and **faithful context view**

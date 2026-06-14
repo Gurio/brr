@@ -6524,3 +6524,30 @@ Bundle and run context also point at the resident-owned dominion
 
 Validation: `PYTHONPATH=src python -m pytest` passed (840 tests, with the
 existing Starlette/FastAPI TestClient deprecation warning).
+
+## [2026-06-14] plan | Playbook nudge: carve scope-spillover into its own issue, link PRs with closing keywords
+
+Closed a small but recurring ergonomic gap on top of the #114 carve-out. Issue
+#125 ships the composition half of §8 but its body never used a `Closes #N`
+keyword, so the auto-link on merge wouldn't fire; the deferred re-alignment half
+was at risk of evaporating into a "deferred" bullet rather than a tracked ticket.
+Filed the carve-out as **#126** (depends on #111, shipped) and edited #125's body
+to add `Closes #114` plus a pointer to #126.
+
+Added a `### Issue and PR descriptions` expansion to `src/brr/AGENTS.md`:
+
+- "Link the PR to the issue it serves" — name `Closes #N` / `Fixes #N` /
+  `Resolves #N` for whole fixes, `Part of #N` / `Refs #N` for slices. Title-only
+  references don't fire GitHub's auto-close.
+- "Carve out what doesn't fit" — default to file + cross-link without asking
+  ("a too-small issue is cheaper than a lost one"); ask first only when the
+  leftover is large enough to want a direction call; label by originating
+  milestone and suffix the title `(§N follow-up of #parent)` until the repo has
+  a dedicated `follow-up` label; update the canonical design / plan page.
+- Cross-linked from `Operating rules → Scope drift` so the two surfaces agree.
+
+Also reshaped `kb/design-co-maintainer.md` §11 item 6 into 6 (composition,
+shipped #125) and 6b (re-alignment, tracked at #126).
+
+Validation: `PYTHONPATH=src python -m pytest` (excluding 5 modules whose env is
+missing `requests`) passed 666/666.
