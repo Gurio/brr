@@ -45,7 +45,7 @@ your change. Run the rest with `--ignore=tests/test_gate_setup.py
 diff and re-collecting one gate test. Seen on task-260614-1644 (#131).
 
 ## Editing the host checkout instead of the task worktree
-trigger: Edit absolute path, /home/gurio/src/misc/brr/src, wrong branch, worktree, execution root
+trigger: Edit absolute path, /home/gurio/src/misc/brr/src, /home/gurio/src/misc/brr/kb, wrong branch, worktree, execution root, host checkout
 The bundle's Execution root is a *worktree* at
 `/home/gurio/src/misc/brr/.brr/worktrees/<task-id>/`, but the obvious repo path
 `/home/gurio/src/misc/brr/src/...` is the **host checkout** (on `main`), a different
@@ -56,4 +56,11 @@ worktree and use relative paths, or build absolute paths under
 `.brr/worktrees/<task-id>/`. Recovery if you already edited the host tree:
 `git -C <host> diff -- <your files> > /tmp/p.patch && git -C <host> checkout -- <your files>`,
 then `git apply /tmp/p.patch` inside the worktree (exclude any pre-existing host
-changes you didn't make). Seen on task-260614-1903 (#115).
+changes you didn't make). Seen on task-260614-1903 (#115). **Recurred
+task-260616-2151** editing `kb/` (not just `src/`) — and the trigger model
+*missed it*: the failure is structural to **every** worktree task that edits
+files, but this pitfall only injects when the task body happens to mention the
+trigger words, which a "discuss the cockpit" task never will. That's the gap:
+the right fix is a forcing function (the Edit tool / runner refusing absolute
+paths outside the worktree, or the wake context not advertising the host path),
+not a memory I trip over by luck. Surfaced to the maintainer 2026-06-16.
