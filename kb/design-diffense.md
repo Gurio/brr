@@ -1251,9 +1251,11 @@ open-or-refresh send.
 
 **Producer B — runner emission — ships** (2026-06-01) as a gated prompt
 fragment ([`src/brr/prompts/diffense.md`](../src/brr/prompts/diffense.md)),
-appended to the daemon run prompt by `diffense_emit_enabled` (on by
-default since slice 3 wired the consumer; opt out with
-`diffense.emit_pack=false`). It instructs: *produce the pack for a
+appended to the daemon run prompt by `diffense_emit_enabled` when
+`diffense.emit_pack=true`. It defaulted on once slice 3 wired the
+consumer, then defaulted off again on 2026-06-17 when the
+cost-aware-cockpit steer made review/PR ceremony explicitly situational
+instead of a token-ignorant default. It instructs: *produce the pack for a
 review-worthy committed change under the six clamps; give each card its
 gloss → ground-truth-leaf locator; open with a summary, surface
 uncertainty cards (assumption / concern / dilemma / out-of-scope /
@@ -1286,10 +1288,10 @@ already the projected PR body. `_deliver_out_of_bound` maps `forge` to
 the GitHub gate, and the GitHub delivery loop opens or refreshes the PR
 idempotently through the REST API. Policy:
 
-- **On by default** only when both `diffense.emit_pack` and
-  `diffense.create_pr` are enabled. Disabling emission removes the prompt
-  path that asks for a pack; disabling creation makes the GitHub delivery
-  closure refuse the PR send.
+- **Off by default; opt in with both `diffense.emit_pack=true` and
+  `diffense.create_pr=true`.** Disabling or omitting emission removes the
+  prompt path that asks for a pack; disabling or omitting creation makes
+  the GitHub delivery closure refuse the PR send.
 - **Create-if-absent, else refresh** keys off the PR head branch. The
   resident sends `head`, `base`, and `title`; the gate lists open PRs for
   that head, creates when absent, and updates title/body when present.

@@ -1,8 +1,9 @@
 # Plan: the resident's cockpit — runner control & a dwelling that feels live
 
 Status: active on 2026-06-17 (G4 firehose cut + G5 shipped; G1.1 medium
-surfacing shipped via the cost braid; G1.2–G3 and the G4 dwelling habits
-still proposed). The cost/notification braid is split out into
+surfacing, opt-in diffense defaults, and repo-level conversational
+dwelling framing shipped via the cost braid; G1.2–G3 and the dominion-side
+G4 dwelling habits still proposed). The cost/notification braid is split out into
 [`plan-cost-aware-cockpit.md`](plan-cost-aware-cockpit.md).
 
 > This page began on 2026-06-16 from a tight, token-budgeted wake that
@@ -73,8 +74,9 @@ object.
 
 **Smallest fix (convention-light, no heavy machinery):**
 - A recognized **PLAN message shape** I emit to the outbox: a structured
-  proposal (decomposition, chosen media, cost estimate) the human can
-  approve with a short reply.
+  proposal (decomposition, chosen media, historical cost pre-analysis
+  from comparable past runs, never a projected dollar promise) the human
+  can approve with a short reply.
 - The approval reply wakes a run **scoped to that plan** — the plan rides
   in as context so execution doesn't rebuild from zero. Mechanically this
   is the run/event model (#128) plus a marker the daemon threads from the
@@ -278,9 +280,10 @@ Next:
 3. **G2 — plan→approve loop.** Convention-light; unlocks the duo cadence
    the maintainer wants. Wants #128's run/event threading.
 4. **G3 — decomposition via child events.** Defer behind #128.
-5. **G4 dwelling habits — compose `.card`, keep a richer dominion
-   surface, and make the outbox feel like a terminal rather than a
-   convention stack.**
+5. **G4 dominion-side dwelling habits — keep a richer dominion surface
+   and trim the resident playbook's remaining protocol re-narration now
+   that repo prompts/docs frame `.card` and outbox use as normal
+   substantial-work behaviour.**
 
 ## Read next
 

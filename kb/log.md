@@ -7114,3 +7114,28 @@ no-PR-default steer — no PR, no review pack this run).
   spend off usage endpoints. Feeds the historical pre-analysis.
 
 Branch `brr/cost-aware-steer`. No code, no tests — kb-only.
+
+## [2026-06-17] implement | Cost-aware cockpit defaults and conversational prompt framing
+
+Follow-up on the cost-aware cockpit steer after the maintainer clarified
+the subscription context and the desire for live-but-not-random
+proactivity. Shipped the clear, low-risk slices:
+
+- `diffense.emit_pack` and `diffense.create_pr` now default **off**.
+  Review packs and PR publishing remain available when explicitly
+  enabled, but routine wakes no longer pay the prompt / pack / forge tax
+  by default. The GitHub gate now has a default-off regression test.
+- The daemon substrate, Task Context Bundle, and `brr docs cockpit`
+  now frame single-flight as an execution mechanic, not a one-shot reply
+  contract: substantial work should keep the live `.card` honest and use
+  mid-thought outbox replies when helpful.
+- `plan-cost-aware-cockpit.md`, `plan-resident-cockpit.md`, and
+  `design-diffense.md` now describe the current policy: historical cost
+  pre-analysis only, situational review emission, and the remaining
+  pickup work in the dominion playbook / quota probe / operator
+  notification surface.
+- Full test run exposed a stale runner profile/test mismatch; restored
+  the generic `claude-bare-api-only` alias alongside the model-specific
+  aliases so existing configs keep working.
+
+Tests: `pytest -q` (860 passed, 7 skipped).
