@@ -64,3 +64,20 @@ trigger words, which a "discuss the cockpit" task never will. That's the gap:
 the right fix is a forcing function (the Edit tool / runner refusing absolute
 paths outside the worktree, or the wake context not advertising the host path),
 not a memory I trip over by luck. Surfaced to the maintainer 2026-06-16.
+
+## Emitting a diffense review pack — schema gotchas that fail `--check`
+trigger: review pack, pack.json, brr review --check, diffense emit, uncertainty card, lore.headline
+Two snags cost a re-validate cycle when hand-emitting a pack (task-260617-2104):
+(1) An **uncertainty card's gloss must be `lore.descriptive` or a *top-level*
+`headline`** — `lore.headline` is NOT read by `_gloss`, so it fails
+`card.gloss missing`. Use `lore.descriptive` for every card, uncertainty
+included. (2) **`kind` must be from `KNOWN_KINDS`**, not the id namespace — a
+card with `"id": "item:foo"` still needs a real kind like `code-fn-edit`,
+`kb-page-new`, `kb-page-edit`, `test-add`, or `custom` (prose/prompt/doc files →
+`custom`). A bare `"kind": "item"` only warns (renders generic) but is sloppy.
+The clean-pack recipe: summary card first (exactly one), every card carries
+`identity.label` + `lore.descriptive` + `provenance`; any card with
+`identity.file` needs a resolvable `locator.local` of `path:line`; uncertainty
+cards add `subkind` (assumption/concern/dilemma/out-of-scope-flag/follow-up/meta)
++ `severity` (low/med/high/blocking/blocking-for-merge); list every card id in
+`reading_order`. `brr review --check <path>` must report 0 errors AND 0 warnings.
