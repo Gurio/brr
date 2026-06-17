@@ -1,7 +1,9 @@
 # Plan: cost-aware execution & an operator-legible control loop
 
-Status: active on 2026-06-17. First slices shipping on
-`brr/cost-aware-cockpit`. This page is the **cost/notification braid**
+Status: active on 2026-06-17. First slices shipped on
+`brr/cost-aware-cockpit`; opt-in review defaults and conversational
+prompt framing shipped on `brr/cost-aware-conversation`. This page is the
+**cost/notification braid**
 of [`plan-resident-cockpit.md`](plan-resident-cockpit.md) — it does not
 replace that page's G1–G5; it threads them through one lens the
 maintainer articulated on 2026-06-17: *keep the user extremely aware of
@@ -45,8 +47,9 @@ sharpened the direction. Five points, each folded into the slices below.
    situational, decided from the run's shape and the cost frame, not done
    reflexively. More broadly the resident's cost-awareness should be
    *obvious and situational* — surfaced when it bites, not carried as
-   standing ceremony on every wake. (This run honours it: a chat-and-plan
-   task, so no PR, no review pack.)
+   standing ceremony on every wake. The prompt/config slice now defaults
+   both `diffense.emit_pack` and `diffense.create_pr` off; repos opt in
+   when the richer review surface is worth the prompt and forge work.
 
 3. **Conversational & concurrent, not one-shot.** The single-flight
    *execution* model stays — it's mechanical truth — but the *framing*
@@ -188,9 +191,12 @@ seams, all already present, under-used:
 
 - **C1 — the `.card` as a standing cost+plan dashboard.** Compose it as
   a matter of course (plan-resident-cockpit G4 dwelling habit), and
-  include the **cost frame**: which medium, rough spend-so-far / quota
-  posture (historical, not a forward promise), and what phase. The user sees a live, self-authored status instead of
-  daemon scaffolding. Cheapest, highest-frequency win.
+  include the **cost frame** when the bundle exposes one: which medium,
+  quota posture, whether the work is being chunked for cost/resilience,
+  and historical spend facts when A3 provides them. Never present a
+  projected dollar total as a promise. The user sees a live,
+  self-authored status instead of daemon scaffolding. Cheapest,
+  highest-frequency win.
 - **C2 — a plan→approve handshake (G2) with a historical cost
   pre-analysis.** Before a big or budget-risky run, emit a structured
   PLAN to the outbox: decomposition, chosen medium, **what comparable
@@ -221,8 +227,8 @@ executing under a tight budget without compromising the work:
    chunk* before starting.
 2. **Commit-early, push-early** is the resilience primitive: the diff is
    the receipt that survives a kill mid-run. A plan page committed in the
-   first minutes means the next wake picks up, not restarts. (This very
-   run is the worked example.)
+   first minutes means the next wake picks up, not restarts. The first
+   `brr/cost-aware-cockpit` slice was the worked example.
 3. **Decompose into resumable slices**, each its own commit, sequenced
    so the *most resilient / highest-leverage* lands first (durable plan
    → read-only surfacing → reversible code).
@@ -236,9 +242,9 @@ about shipping a thinner answer to beat the clock. The forcing function
 is "what would the next wake be glad to find committed," not "what's the
 least I can get away with."
 
-## What this run ships (first slices, committed incrementally)
+## Shipped slices
 
-- **This plan page** — the resumable spine (committed + pushed first).
+- **This plan page** — the resumable spine.
 - **A1** — surface the runner medium in the Mode block (read-only).
 - **Diffense de-firehose** — move the heavy *Publish-from-the-pack*
   plumbing out of the always-injected review-pack block into an
@@ -248,13 +254,22 @@ least I can get away with."
   contract still carries the full Publish-from-the-pack plumbing
   block"): it's manual-style choreography paid for on *every* diffense
   wake regardless of whether the run is review-worthy.
+- **Opt-in review defaults** — `diffense.emit_pack` and
+  `diffense.create_pr` now default off, so routine wakes do not pay the
+  prompt / pack / forge tax unless the repo deliberately enables that
+  review surface.
+- **Conversational delivery framing** — the daemon substrate, Task
+  Context Bundle, and cockpit manual now frame single-flight as an
+  execution mechanic, not a one-shot reply contract: substantial work
+  should keep the live card honest and use mid-thought replies when they
+  help.
 
 ## Sequence after this run (pickup list)
 
 1. **A2 — quota/reset probe** (vantage-rule clean; needs per-provider
    bucket parsing).
-2. **C1 — `.card` cost frame habit** (cheap; partly a dominion-playbook
-   change).
+2. **C1 — `.card` cost frame habit in resident memory** (repo prompt
+   framing shipped; the dominion playbook still needs the same trim).
 3. **C3 — operator notification + `brr docs operator` doc** (the
    user-facing acknowledge contract; the maintainer's explicit ask).
 4. **B1/B2 — fallback chain + quota deferral** (highest reliability
@@ -262,11 +277,10 @@ least I can get away with."
 5. **C2 — plan→approve with a historical cost pre-analysis** (the
    duo-loop primitive; wants #128 threading).
 6. **A3 — per-run historical spend analysis** (feeds C1/C2; coarse first).
-7. **Soften the one-shot framing** — edit the delivery-contract +
-   dwelling-habit wording (and the dominion playbook) away from "aim at
-   one task execution" toward "stay in the conversation": proactive,
-   concurrent, multi-message. The mechanical single-flight stays; only
-   the *framing* changes. (Maintainer steer point 3.)
+7. **Finish the one-shot framing cleanup in the dominion playbook** —
+   repo prompts/docs now say "stay in the conversation"; the resident's
+   own playbook still carries some older protocol re-narration and should
+   be trimmed to point at `brr docs cockpit`.
 
 ## Read next
 
