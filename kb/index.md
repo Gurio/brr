@@ -196,10 +196,10 @@ dive-in map) and are stable until something contradicts them.
   Predecessor landing-branch design (separate land + push, `BranchPlan`
   with `auto_land_branch`, metadata triple); preserved for context on
   the constraints the kernel inherits.
-- [Branch Modes Plan](plan-branch-modes.md) — *shipped, with
-  revisions*. Branch and env are run properties, the agent owns
-  branching at runtime. Triage and `needs_context` were reversed —
-  see the decision below.
+- [Branch Modes Plan](plan-branch-modes.md) — *superseded by
+  [`subject-runs-branching.md`](subject-runs-branching.md) on
+  2026-06-18*. Preserved for the older design reasoning around branch
+  and env ownership; current run-era mechanics live in the hub.
 - [Remove the triage stage](decision-remove-triage.md) — why the
   LLM-driven triage step and the frontmatter-as-stdout contract were
   removed in favour of mechanical run construction, agent-decided

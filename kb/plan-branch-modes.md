@@ -1,18 +1,20 @@
+Status: superseded by [Subject: runs and branching](subject-runs-branching.md) on 2026-06-18
+
 # Plan: Branch Modes, Execution Environments & Task Lifecycle
 
-**Status: shipped, with revisions.** What landed: branch and env are
-task properties (see [`task.py`](../src/brr/task.py)); `Task.from_event`
-constructs tasks mechanically; the agent owns branching at runtime
-inside a fresh `brr/<task-id>` branch which is fast-forwarded back if
-the agent stays on it, preserved if the agent switches off it. What
-was reversed: the LLM-driven triage stage (see
+What survives in the current shape: branch and env are run properties
+(see [`run.py`](../src/brr/run.py)); `Run.from_event` constructs runs
+mechanically; the agent owns branching at runtime inside a fresh
+`brr/<run-id>` branch which is fast-forwarded back if the agent stays
+on it, preserved if the agent switches off it. What was reversed: the
+LLM-driven triage stage (see
 [`decision-remove-triage.md`](decision-remove-triage.md)) and the
 per-task log files (see [`decision-kb-shape.md`](decision-kb-shape.md)
 and the delivery contract in [`AGENTS.md`](../AGENTS.md)). The
 `needs_context` status is gone too — the agent simply explains in its
 chat reply when more information is needed.
 
-Read [`task.py`](../src/brr/task.py) and
+Read [`run.py`](../src/brr/run.py) and
 [`envs/__init__.py`](../src/brr/envs/__init__.py) for the shipped
 behaviour; this page is kept for the design reasoning that informed
 the current shape.
@@ -452,7 +454,9 @@ def build_prompt(task: Task, env: ExecutionEnvironment, cfg: dict) -> str:
    **Resolved (2026-04-08):** Yes. Tasks are persisted to `.brr/tasks/` as
    frontmatter+body files, mirroring the event file format.  Events were
    already persisted — the Task abstraction extends this pattern.
-   Implemented in `src/brr/task.py`.
+   Implemented in `src/brr/task.py`; retired 2026-06-18 when run manifests
+   replaced task storage (current implementation:
+   [`run.py`](../src/brr/run.py)).
 
 5. **Agent branch override for `auto`:** How does the agent communicate its
    chosen branch name back? Frontmatter in response file is cleanest:

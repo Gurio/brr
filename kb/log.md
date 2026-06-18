@@ -7266,3 +7266,17 @@ escapes resident-authored `.card` notes before HTML rendering. `subject-daemon.m
 records the current invariant.
 
 Tests: `pytest -q` (943 passed, 1 warning).
+
+## [2026-06-18] fix | KB run-era orientation drops stale task links
+
+Cleaned up the deterministic kb preflight errors left by the `Task` →
+`Run` storage cut. `plan-branch-modes.md` is now formally superseded
+by `subject-runs-branching.md`, points at `run.py` as the shipped
+implementation, and keeps only a short breadcrumb for the retired
+`src/brr/task.py` path. `repo-dive-in-map.md` now describes the
+current run-manifest flow, single-flight daemon shape, run-scoped
+progress records, and `test_run.py` coverage.
+
+Check: deterministic kb preflight (broken-link findings cleared;
+pre-existing oversized-page, hub-coverage, and proposal-scaffolding
+advisories remain).

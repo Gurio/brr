@@ -11,13 +11,13 @@ tests; long design rationale belongs in the linked kb pages.
 ## Current Model
 
 `brr` turns external messages into frontmatter-backed event files,
-constructs task files mechanically, resolves branch intent and
+constructs run manifests mechanically, resolves branch intent and
 environment policy, runs a configured AI CLI, records lifecycle packets
 in a per-gate-thread conversation log, and delivers a plain-text
 response file through the originating gate.
 
 ```text
-gate -> event -> conversation -> task -> env -> runner -> response -> gate
+gate -> event -> run -> env -> runner -> response -> gate
 ```
 
 Carry these current-shape facts while reading:
@@ -26,7 +26,7 @@ Carry these current-shape facts while reading:
   `up`, and `down`.
 - Runtime state lives under `.brr/`; durable project knowledge lives
   under `kb/`; bundled tool docs live under `src/brr/docs/`.
-- Tasks are built mechanically from event files. There is no LLM
+- Runs are built mechanically from event files. There is no LLM
   triage call and no frontmatter contract on response files.
 - `environment=auto` selects `docker` when `docker.image` is
   configured, otherwise `worktree`. `host` is explicit only. The
@@ -46,10 +46,10 @@ Carry these current-shape facts while reading:
 - After response validation, `_run_worker()` marks the inbox event
   `done` before kb maintenance, env finalization, and push, so gates
   can deliver the response while post-response housekeeping continues.
-- The daemon uses a bounded worker pool (`max_workers=4` default).
-  Concurrency is safe because mutable runtime files are partitioned
-  per event, per task, or per branch; git ref updates use per-branch
-  locks.
+- The daemon is single-flight by design: one thought runs at a time,
+  while new events wait for the next plan boundary or worker spawn.
+  Runtime files remain partitioned per event, per run, or per branch;
+  git ref updates still use per-branch locks.
 - Telegram and Slack render live progress cards from `UpdatePacket`s
   through `run_progress`. GitHub delivers final issue/PR comments and
   can trigger on labels, mentions, or the token-expensive `any` mode.
@@ -154,7 +154,7 @@ Keep in mind:
 - `run_context.py` writes `.brr/runs/<run-id>/context.md` as recovery
   detail for daemon-launched agents.
 
-Tests: [task](../tests/test_task.py),
+Tests: [run](../tests/test_run.py),
 [branching](../tests/test_branching.py),
 [conversations](../tests/test_conversations.py),
 [run progress](../tests/test_run_progress.py),
@@ -254,14 +254,14 @@ Keep in mind:
 - Built-in gates are `telegram`, `slack`, and `github`.
 - Gates create event files and deliver response files; they do not own
   daemon internals.
-- Telegram and Slack opt into `render_update()` and store one progress
-  card state file per task.
+- Telegram and Slack opt into `render_update()` and render progress
+  cards from run-scoped conversation records.
 - GitHub polls with `requests`, supports label, mention, and
   `any` triggers, and posts final responses as comments. PR events and
   PR comments carry `branch_target` so the sync hook can refresh the
   PR head before the worker starts.
 - There is no local status module. Troubleshooting follows run
-  context, task metadata, conversation records, traces, response
+  context, run metadata, conversation records, traces, response
   files, and preserved worktree/container metadata.
 
 Tests: [Telegram gate](../tests/test_telegram_gate.py),
@@ -296,8 +296,8 @@ Tests: [Telegram gate](../tests/test_telegram_gate.py),
 - `adopt.py` handles `brr init` using git detection, config writing,
   prompt assembly, and runner invocation.
 - `protocol.py` is the low-level event/response/frontmatter helper
-  consumed by gates, daemon, runner profiles, and task persistence.
-- `task.py`, `branching.py`, `conversations.py`, `updates.py`,
+  consumed by gates, daemon, runner profiles, and run persistence.
+- `run.py`, `branching.py`, `conversations.py`, `updates.py`,
   `run_progress.py`, and `run_context.py` are the runtime state layer.
 - `runner.py` owns runner detection, command construction, subprocess
   execution, trace writing, and direct `brr run`.
@@ -318,7 +318,7 @@ Tests: [Telegram gate](../tests/test_telegram_gate.py),
 
 ### `.brr/` Is Runtime State
 
-Runtime files include inbox events, responses, tasks, runs,
+Runtime files include inbox events, responses, runs,
 conversations, traces, reviews, worktrees, gate state, prompt
 overrides, doc overrides, and config. Do not commit `.brr/`.
 
@@ -351,8 +351,8 @@ The source of truth is the conversation log. Gate UI should go through
 
 ### Concurrency Is Partitioned
 
-Conversation records are per event, progress card files are per task,
-worktrees/branches are per task id, and git refs are protected by
+Conversation records are per event, progress records and
+worktrees/branches are per run id, and git refs are protected by
 per-branch locks. New shared state should follow that partitioning
 model or justify a resource-specific lock.
 
