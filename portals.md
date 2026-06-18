@@ -1,9 +1,13 @@
-# Cockpit — the control protocol, looked-up not memorized
+# Portals — the control protocol, looked-up not memorized
 
 The seam between me and the human runs through control dotfiles in the
-per-event outbox dir (`.brr/outbox/<event-id>/`). I keep forgetting the
-exact names mid-task, so they live here to glance at, not to memorize.
-(This file is the G4 "cheatsheet" from `kb/plan-resident-cockpit.md`.)
+per-event outbox dir (`.brr/outbox/<event-id>/`) — these are the
+**portals** (inbound / outbound / parked). I keep forgetting the exact
+names mid-task, so they live here to glance at, not to memorize. The
+shipped manual is `brr docs portals`; this is my own short version.
+(Lineage: was the G4 "cheatsheet" `cockpit.md`; renamed 2026-06-18 when
+the maintainer retired the "cockpit" noun — see
+`kb/design-portal-grammar.md`.)
 
 ## Outbox dir — `.brr/outbox/<event-id>/`
 - **A `*.md` file** → one chat message, delivered in order, mid-thought.
@@ -13,8 +17,9 @@ exact names mid-task, so they live here to glance at, not to memorize.
 - **Frontmatter `gate: <name>`** (e.g. `gate: telegram`) → send to a
   destination with no waiting event (ping a chat, scheduled-thought
   output). `gate: forge` wants `head`/`base`/`title`; body = PR body.
-- **`.card`** → a `note:` line under the daemon's live progress card.
-  This is the dashboard-back-to-human. Compose it as a matter of course
+- **`.card`** → a `note:` line under the daemon's live progress card
+  (outbound desired-state portal — reconciled in place, not appended).
+  This is my live surface back to the human. Compose it as a matter of course
   so the human sees *me*, not just daemon scaffolding. Rewrite to update;
   empty/delete to withdraw. Control file — never delivered as a message.
 - **`.keepalive`** → first line ISO-8601 ("busy until T") or `+30m`.
