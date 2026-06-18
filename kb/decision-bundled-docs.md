@@ -52,5 +52,6 @@ overrides).
   "remove agent commands from git" CLI-surface cull, but the bundled docs
   module, this page, and `index.md` kept assuming it existed — a quiet
   drift. It was re-introduced on 2026-06-16 to serve as the inspect
-  surface for the new bundled cockpit manual (`docs/cockpit.md`), the
-  *inspected, not injected* half of `plan-resident-cockpit.md` §G5.
+  surface for the new bundled portals manual (`docs/portals.md`, renamed
+  from `docs/cockpit.md` on 2026-06-18 — see `design-portal-grammar.md`),
+  the *inspected, not injected* half of `plan-resident-cockpit.md` §G5.
