@@ -1,7 +1,11 @@
 # Design: portal grammar & the reconcile/projection layer
 
-Status: **direction settled in conversation (2026-06-18), not yet built.**
-Sequenced *after* [#148](https://github.com/Gurio/brr/issues/148) ships.
+Status: **direction settled in conversation (2026-06-18).** The naming +
+command migration shipped (`brr docs cockpit` → `brr docs portals`, the
+bundled manual reframed so the dotfile table *is* the portal grammar — see
+decision 3); the behavioral grammar (in-generation portals, parked-portal
+run mailbox) and the reconcile/projection layer naming remain sequenced
+*after* [#148](https://github.com/Gurio/brr/issues/148) ships.
 This page is the design seed for
 [#159](https://github.com/Gurio/brr/issues/159) (*cockpit output frame
 and parallel-safe run mailbox*) — written so a future wake can pick the
@@ -31,8 +35,15 @@ list of existing shapes that have to change to land them.
    own principle that outputs should *feel like the surface* rather than
    be a fixed-slot panel a human drew and the resident pours data into.
    The replacement idiom is **scrolls and portals** — the generative
-   stream and the seams in it. (Blast radius for "cockpit" is real — see
-   *Shapes to change*; this is a migration, not a find-replace.)
+   stream and the seams in it. The shipped command + manual migration
+   landed **2026-06-18** (maintainer: "ditch the cockpit … settle on
+   `brr docs portals`"): `brr docs cockpit` → `brr docs portals`, the
+   bundled manual `cockpit.md` → `portals.md` retitled and reframed so
+   the dotfile control-file table *is* the portal grammar (inbound /
+   outbound / parked), and the daemon-substrate + introspection prompts
+   follow the portal idiom. The deeper concept-prose sweep (the
+   `plan-*-cockpit.md` page titles and effort-name framing) still rides
+   the post-#148 re-skin — see *Shapes to change*.
 4. **#148 ships first, unchanged.** It is the behaviour loop
    (plan→approve→execute, child runs, dwelling habits) and runs fine on
    today's dotfile protocol. The portal grammar is a later *re-skin* that
@@ -137,16 +148,22 @@ ahead of the grammar would be the wrong receipt.
   [`plan-resident-cockpit.md`](plan-resident-cockpit.md) G4/G5 ("slots",
   "dashboard"), and the cost-card prose in
   [`plan-cost-aware-cockpit.md`](plan-cost-aware-cockpit.md).
-- **Drop "cockpit" — but mind the blast radius.** Unlike "dashboard",
-  "cockpit" is *shipped surface*, not just prose: the `brr docs cockpit`
-  CLI command, the bundled manual `src/brr/docs/cockpit.md`, the dominion
-  `cockpit.md`, and the delivery-contract prose that points at
-  `brr docs cockpit`. Renaming is a real migration with a code edge and a
-  user-facing command. Fold it into the portal re-skin deliberately; do
-  not rush a find-replace across a shipped command. (Open question for the
-  maintainer: keep `brr docs cockpit` as the command spelling for muscle
-  memory even as the *concept* becomes scrolls/portals, or migrate the
-  command too?)
+- **Drop "cockpit" — the shipped surface migrated 2026-06-18.** The open
+  question (keep `brr docs cockpit` for muscle memory, or migrate the
+  command too?) is settled: **migrate.** Done now, ahead of the rest of
+  the re-skin, because the blast radius turned out modest and the
+  maintainer was decisive. The command is `brr docs portals`; the bundled
+  manual is `src/brr/docs/portals.md` (retitled, dotfile table reframed as
+  the portal grammar); `cli.py`, `prompts.py`, `daemon-substrate.md`,
+  `introspection.md`, `review-pack.md`, and the tests follow. **Still
+  pending for the post-#148 re-skin:** the `plan-resident-cockpit.md` /
+  `plan-cost-aware-cockpit.md` page titles and "the cockpit" effort-name
+  prose, `design-runner-management.md`'s "cockpit framing" supersede note,
+  and the `index.md` cockpit prose — their literal `brr docs cockpit`
+  command mentions were updated to `brr docs portals` (no dead commands),
+  but the conceptual rename waits for the holistic re-skin so it is not
+  done piecemeal. The dominion `cockpit.md` cheatsheet → `portals.md`
+  tracks separately on `brr-home`.
 - **Retire the "messenger = append-log" mental bucket** wherever it
   recurs. It was the resident's own earlier conversational framing, not a
   fixed page; the correction is the orthogonality stated above (two

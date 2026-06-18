@@ -213,7 +213,7 @@ seams, all already present, under-used:
   (a) a short notification the gate delivers when the resident is
   waiting on the user ("plan ready — approve, edit, or redirect; reply
   to this message"), and (b) a one-screen *operator* doc (sibling to the
-  agent-facing `brr docs cockpit`) the notification points at. This is
+  agent-facing `brr docs portals`) the notification points at. This is
   what makes the control real rather than implied.
 
 ## Budget-aware chunking — the resident's own discipline
@@ -292,7 +292,7 @@ least I can get away with."
 7. **Finish the one-shot framing cleanup in the dominion playbook** —
    repo prompts/docs now say "stay in the conversation"; the resident's
    own playbook still carries some older protocol re-narration and should
-   be trimmed to point at `brr docs cockpit`.
+   be trimmed to point at `brr docs portals`.
 
 ## Read next
 

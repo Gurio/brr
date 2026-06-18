@@ -7305,3 +7305,29 @@ Surfaced one contradiction: dropping "cockpit" is heavier than dropping
 `src/brr/docs/cockpit.md`, the dominion `cockpit.md`), so it is a
 migration with a code/command edge, left as an open question on the page.
 No code yet; #148 implementation is the next-event work.
+
+## [2026-06-18] refactor | "cockpit" retired — `brr docs portals` and the dotfile table as portal grammar
+
+Resolved the open question `design-portal-grammar.md` surfaced on the
+shipped-command rename. Maintainer decided: ditch "cockpit", the dotfile
+control-file table *becomes* the portal grammar, and the command settles
+on `brr docs portals`.
+
+Migrated the user-facing surface now (ahead of the rest of the post-#148
+re-skin, because the blast radius was modest and the call was decisive):
+bundled manual `docs/cockpit.md` → `docs/portals.md`, retitled and its
+control-file table reframed as the portal grammar with an inbound /
+outbound / parked column; `cli.py` help, `prompts.py` delivery-contract
+pointer, `daemon-substrate.md`, `introspection.md` (cockpit/dashboard →
+standing-portal idiom), and `review-pack.md` follow; `test_docs.py`,
+`test_cli.py`, `test_prompts.py` repinned. `brr docs portals` works;
+`brr docs cockpit` is gone.
+
+Deliberately deferred to the holistic post-#148 re-skin: the
+`plan-*-cockpit.md` page titles and "the cockpit" effort-name prose,
+`design-runner-management.md`'s supersede note, `index.md` cockpit prose.
+Their literal `brr docs cockpit` invocations were updated to
+`brr docs portals` so no dead commands linger. The dominion `cockpit.md`
+cheatsheet → `portals.md` tracks separately on `brr-home`.
+
+Tests: `pytest -q` (943 passed, 1 warning).

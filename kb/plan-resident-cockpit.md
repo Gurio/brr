@@ -205,7 +205,7 @@ remain:
   manual must *not* ride into every wake in full; that is exactly the
   firehose G4 cuts. Instead: surface it the way tool docs already are
   (`brr docs` / a `brr agent …` view), and inject a single pointer line
-  ("the cockpit manual is at `brr docs cockpit` / `prompts/cockpit.md`;
+  ("the cockpit manual is at `brr docs portals` / `prompts/cockpit.md`;
   read it when the run's shape is unfamiliar"). Glance at the panel;
   don't memorize it. This keeps the robustness ladder honest: the *live
   state* (medium, quota, this run's branches) is injected; the *manual*
@@ -251,10 +251,10 @@ synthesis — the same principle, applied to the manual).
   and the docs module all still assumed it existed. Re-added `cmd_docs`
   (list + read a topic); the docs module needed no change.
 - **One-line pointer injected; protocol deduped.** `daemon-substrate.md`
-  now closes with a pointer to `brr docs cockpit` instead of the
+  now closes with a pointer to `brr docs portals` instead of the
   protocol being re-narrated; the Run Context Bundle's delivery contract
   was compressed to its per-run *values* + operative rules with a single
-  "full protocol lives in `brr docs cockpit`" line. The bundle stays the
+  "full protocol lives in `brr docs portals`" line. The bundle stays the
   per-run authority; the manual is the one conceptual home.
 
 Remaining third voice: the **dominion playbook** still re-narrates the
@@ -265,7 +265,7 @@ this repo branch) — trimming it to a pointer is the resident's follow-up.
 
 Shipped:
 
-- **G5 — `brr docs cockpit` + protocol dedup.** Cheap, high-leverage,
+- **G5 — `brr docs portals` + protocol dedup.** Cheap, high-leverage,
   adopter-facing: one bundled doc holds the cheatsheet + average-workflow
   choreography, inspected instead of injected.
 - **G4 firehose cut — collapse the forge-state branch dump.** Saves
