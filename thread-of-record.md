@@ -185,3 +185,28 @@ noun.
 
 Still a design conversation — no kb page / #159 comment yet; awaiting his
 nod, then that's the next-event work.
+
+### 2026-06-18 follow-up — maintainer confirmed all four; direction promoted to kb
+
+Maintainer (this event) confirmed every decision: gate stays + name the
+reconcile/projection layer above it; portal grammar = #159's output-frame;
+drop "dashboard" *and* "cockpit" (he was reaching for the shape with those
+words; scrolls/portals is truer); #148 ships first. Asked me to **note
+everything down for a future wake to pick up — the shapes I see and how
+they are to be changed.**
+
+Done: promoted the settled synthesis to `kb/design-portal-grammar.md`
+(the #159 design seed) and linked it from `kb/index.md` under Runs &
+branching. The page carries the four decisions, both named shapes
+(reconcile/projection layer; portal grammar with inbound/outbound/parked
++ dotfile mapping), the #148-first sequencing, and a "shapes to change"
+section listing the dashboard/cockpit/append-log edits to make *after*
+the re-skin — deliberately not done now.
+
+**One contradiction I surfaced to him:** dropping "cockpit" is heavier
+than dropping "dashboard" — "cockpit" is shipped surface (the `brr docs
+cockpit` command, `src/brr/docs/cockpit.md`, the dominion `cockpit.md`),
+so it's a migration with a code/command edge, not a prose swap. Left it
+as an open question on the page: keep the command spelling for muscle
+memory or migrate it too? Next-event work is the #148 implementation,
+then turning this seed into the #159 write-up after 148 is dogfooded.
