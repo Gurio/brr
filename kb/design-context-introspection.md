@@ -53,6 +53,11 @@ prompt is rote box-ticking that sees nothing. Three deliberate moves:
 - **Ends in dialogue.** What the agent sees becomes "a turn in the conversation
   the two of you are having," never a silent edit to shared scaffolding. The
   deliverable is a better-shaped context, co-authored.
+- **Cockpit candidates and pre-release bias.** While the project is still
+  pre-release, the block now asks the resident to name observations that should
+  become cockpit/dashboard affordances (sticky orientation handles, channel
+  state, runner/tool injections) and to prefer cutting obsolete code, names, and
+  compatibility shims unless they protect a real user or deliberate migration.
 
 The register channels that quality without naming its source — the no-cringe
 constraint. The text lives in a template precisely so the tone can keep being

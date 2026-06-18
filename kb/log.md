@@ -7235,3 +7235,19 @@ profile cache is keyed by source so an earlier bundled read does not hide
 a project override in the same daemon process.
 
 Tests: `pytest -q` (939 passed, 1 warning).
+
+## [2026-06-18] implement | Introspection prompt now names cockpit candidates and pre-release cuts
+
+The opt-in context introspection block now asks each wake to spot observations
+that should graduate into the resident cockpit/dashboard surface — sticky
+orientation handles, channel state, runner/tool injections, and similar live
+control material — instead of leaving them as one-off reply prose.
+
+It also carries an explicit pre-release bias: when the block is visible, the
+resident should prefer cutting obsolete code, names, compatibility shims, and
+concepts unless they protect real users or a deliberate migration. The design
+page records that stance, and the prompt test now pins both the cockpit and
+pre-release cues.
+
+Tracked the public runner-control release-readiness gap as GitHub issue #158,
+linked under #23.
