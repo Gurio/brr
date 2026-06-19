@@ -7360,3 +7360,30 @@ a CI failure, not a thing to remember. Part of the #148→#159 portal-grammar ar
 
 Tests: `pytest -q tests/test_docs.py tests/test_prompts.py tests/test_cli.py`
 (92 passed).
+## [2026-06-19] feat | #148 Tier A — the PLAN message shape (parked portal) defined
+
+Picked up the run that flaked mid-orientation on 2026-06-18 (API
+connection closed mid-response). The maintainer had chosen, in the last
+turn before the failure: "do a), then the #128 work we need for 148, with
+the portals shape in mind." Tier A is `do a)`.
+
+Shipped Tier A: `src/brr/docs/portals.md` now defines the five-part PLAN
+message under *The PLAN message — the parked portal's shape*
+(decomposition; chosen approach/medium per chunk; historical cost framing
+**never** a projected dollar promise; what parks/resumes; explicit
+approve/edit affordance), and choreography step 3 routes a build-plan to
+it. This closes the one concrete gap part 1 had on today's dotfile
+protocol — `portals.md` called PLAN→approve "the canonical parked portal"
+but never said what a PLAN looked like. No daemon machinery; independent
+of #128. `plan-resident-cockpit.md` G2 + sequence updated.
+
+**Deliberately not done this wake — surfaced to the maintainer instead:**
+the "#128 work that 148 needs" (Tier B — the daemon-threaded
+plan→execution *scoping* marker) sits on #128's behavioural slice
+(per-run claim + `defer_until`, Q1–Q4, coupled to #130 billing) and,
+per `design-portal-grammar.md` decision 4, is best designed *after* #148
+is dogfooded. Cramming a daemon-dispatch refactor into the back half of a
+60m recovery wake on a runner that just flaked is the wrong call; it
+wants its own scoped wake. Left as the maintainer's call.
+
+Check: `pytest tests/test_docs.py -q` (10 passed).
