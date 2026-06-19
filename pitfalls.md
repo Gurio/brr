@@ -81,3 +81,25 @@ The clean-pack recipe: summary card first (exactly one), every card carries
 cards add `subkind` (assumption/concern/dilemma/out-of-scope-flag/follow-up/meta)
 + `severity` (low/med/high/blocking/blocking-for-merge); list every card id in
 `reading_order`. `brr review --check <path>` must report 0 errors AND 0 warnings.
+
+## Recovery wake after a mid-flight runner failure starts cold — the failed run's reasoning evaporates
+trigger: prior run failed, connection closed mid-response, pick up your work, recovery wake, resume failed run, runner error
+When a run dies operationally (API flake, quota), the recovery wake's Run
+Context Bundle flags *that* a prior run failed but carries **nothing about
+what it was doing**. The failed run leaves no commit, no branch, no
+dominion scratch — its in-flight reasoning is gone. The ONLY durable trace
+of its mid-flight state is what it already *pushed to the user*: the
+`.card` `[update]` notes and `[artifact]` outbox messages, preserved in
+the gate-thread history JSONL (`.brr/runs/<this-run>/history/gate_thread-*.jsonl`).
+The Runtime-recovery pointer in the bundle is for *this* run's context, not
+the failed one. So to pick up: read the gate history JSONL, find the last
+`[update]`/`[artifact]` turns from the failed run, and the last user turn
+(it usually carries the decision/fork the run was acting on). The Bundle's
+"Recent turns" woven view gives short *event bodies* only — not the run's
+own emitted artifacts — so you must grep the full JSONL for the plan.
+Lesson for next time you're the one at risk: on any non-trivial run, push
+your plan/intent to a durable surface *early* (a `.card` + an outbox
+artifact, or a dominion scratch note) so a recovery wake reads it off a
+live surface instead of reconstructing from history. The daemon-side fix
+is a "prior run was working on" recovery handle in the bundle — see
+thread-of-record / the note to the maintainer 2026-06-19.

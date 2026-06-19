@@ -210,3 +210,34 @@ so it's a migration with a code/command edge, not a prose swap. Left it
 as an open question on the page: keep the command spelling for muscle
 memory or migrate it too? Next-event work is the #148 implementation,
 then turning this seed into the #159 write-up after 148 is dogfooded.
+
+### 2026-06-19 (evt 3get) — recovery wake; #148 Tier A shipped; daemon recovery-handle gap surfaced
+
+The 2026-06-18 run (evt d704) died mid-orientation on an API connection
+flake while picking up "do a), then the #128 work 148 needs, portals shape
+in mind." Maintainer asked me to retry the pickup and **note what was hard
+about resuming, to improve the daemon/orientation**.
+
+Shipped Tier A (the `do a)` half): the PLAN message shape in
+`src/brr/docs/portals.md` — committed e94a81c on `brr/plan-shape-148-tierA`.
+See kb/log 2026-06-19.
+
+Held back, surfaced to maintainer: the "#128 work 148 needs" is Tier B
+(daemon-threaded plan→execution scoping). It rides #128's behavioural
+slice (Q1–Q4, coupled to #130) and, per design-portal-grammar decision 4,
+should be designed *after* #148 is dogfooded. A daemon-dispatch refactor
+does not belong in the back half of a 60m recovery wake on a freshly-flaked
+runner — it wants its own scoped wake. Left as the maintainer's call.
+
+**What was hard picking back up (the requested improvement note):** the
+recovery wake started cold. The bundle said a prior run *failed* but
+nothing about *what it was doing*; the failed run left no commit/branch/
+scratch. I reconstructed the whole task chain (the Tier A/B plan, the
+fork, the user's choice) by grepping the gate-thread history JSONL for the
+failed run's `[update]`/`[artifact]` turns + the last user turn. Recorded
+as a pitfall (trigger: recovery wake / connection closed mid-response).
+**Daemon fix proposed to maintainer:** a "prior run was working on"
+recovery handle in the bundle — the failed run's last `.card` + emitted
+outbox artifacts (+ its run.md intent) surfaced directly, so a recovery
+wake reads in-flight state off a live surface instead of grepping JSONL.
+This is the clearest standing-portal candidate from this wake.
