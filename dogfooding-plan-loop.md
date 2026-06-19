@@ -44,3 +44,34 @@ fresh event and resumes from woven history. Clean. The five-part shape fit
 without padding; cost-framing point (#3) was the awkward one — no closely
 comparable past run for "trim two prompt files," so I framed weight in
 wakes, not dollars, per the manual's "past not quote" rule.
+
+## 2026-06-19 — burst fragments: the fold-vs-already-answered race (evt lu67)
+
+Maintainer fired five telegram fragments in ~4 min ("single-wake etc",
+"2 min no updates", "148 what's that about?", "we can test oob in the
+meantime right?", "we naturally do multistep conversation..."). Two wakes
+overlapped: the *prior* wake answered the OOB-test + 148 questions **mid-
+flight via the outbox** (one even `event:`-routed to 362x), then the next
+fragment woke me fresh — and the inbox snapshot still showed 362x/avq3/o3ts
+**pending**, because a mid-flight outbox reply doesn't reliably mark a
+sibling pending event handled (only the explicit `event:`-routed one does,
+and even that lagged the snapshot).
+
+**The seam (portal-grammar input for #159):** when fragments arrive faster
+than a wake completes, there's no clean arbiter of *which* wake owns *which*
+fragment. Result is a double-answer risk — I had to detect "already covered
+just above" from the woven thread and route one-line *markers* instead of
+re-dumping the 148 answer. That detection is manual and fragile; a fresh
+wake with a thinner thread would have re-answered.
+
+**What would fix it:** burst-coalescing at the daemon seam — closely-spaced
+fragments from one correspondent fold into one wake's inbox *before* it
+plans, rather than each racing its own wake. This is squarely #128 territory
+(event model + per-run claim + defer_until). Logging it as a concrete recur-
+ring cost: every fragment burst pays a re-orientation wake + a double-answer
+risk. Strong candidate for the "queued channel state in a standing portal"
+idea — the live inbox already half-does this; the gap is *timing* (fold
+window) not *visibility*.
+
+**Lesson placed where I'll trip over it:** the marker-not-re-dump move is
+the right reflex when the woven thread shows a sibling already answered.
