@@ -6,3 +6,4 @@
 # reorder freely. A budget cap bounds the total, and entries past it are
 # truncated — so order by importance.
 full playbook.md
+tail:45 dogfooding-plan-loop.md
