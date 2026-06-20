@@ -1,7 +1,8 @@
 # Run / event model — retire the per-event "task"
 
 Status: **active; rename slice shipped 2026-06-18, dispatch
-burst-coalescing shipped 2026-06-20**. A slice of the **Co-maintainer**
+burst-coalescing + operational-failure sibling deferral shipped
+2026-06-20**. A slice of the **Co-maintainer**
 milestone ([`design-co-maintainer.md`](design-co-maintainer.md) §6
 run↔reply decoupling, §9 responsiveness, §11 execution order) and the
 design page issue **#128**. The rename slice retired the persisted `Task`
@@ -9,12 +10,15 @@ design page issue **#128**. The rename slice retired the persisted `Task`
 `.brr/runs/<run-id>/run.md`, generated `run-*` ids, run-keyed lifecycle
 packets, and run conversation records. The burst-coalescing slice taught
 the dispatch loop to hold a forming burst (≥2 pending) until it settles, so
-the accumulated messages land in **one** wake (see *Shipped* below).
-Remaining behavioural work: per-run event claims (Q1), postpone/failure
-`defer_until` (Q2), primary response/outbox keying (Q3), and cost/consent
-policy (Q4). The page subsumes the narrower "batch pending events per
+the accumulated messages land in **one** wake; the failure-deferral slice
+then brakes sibling events after a terminal operational failure so the
+daemon doesn't immediately burn down a burst one failed lead at a time (see
+*Shipped* below). Remaining behavioural work: per-run event claims (Q1),
+resident-authored postponement / richer `defer_until` semantics (Q2),
+primary response/outbox keying (Q3), and cost/consent policy (Q4). The page
+subsumes the narrower "batch pending events per
 correspondent into one wake" idea raised on #114 — burst-coalescing is its
-first, safe realisation.
+first, safe realisation and failure deferral is the first retry brake.
 
 ## Why
 
@@ -72,10 +76,11 @@ so persisted manifests now live at `.brr/runs/<run-id>/run.md`, new ids
 have the `run-*` shape, lifecycle packets use `run_created` + `run_id`, and
 conversation rows use `kind: run`. The remaining coupling is behavioural:
 the response key (`responses/<event_id>.md`) and primary outbox still key
-off the lead event, and dispatch still chooses `pending[0]` and can't yet
-**claim / defer** the rest of the inbox — so a run that doesn't fold the
-settled burst, or fails before it can, still re-spawns per leftover event
-(Q1/Q2).
+off the lead event, and dispatch still chooses the oldest **dispatchable**
+event as lead rather than truly dispatching "against the inbox." It can now
+defer sibling events after an operational failure, but it still can't
+**claim** the rest of the inbox or let the resident mark a deliberate
+postponement (Q1/Q2).
 
 ## Want
 
@@ -143,11 +148,39 @@ Tests: [`../tests/test_daemon_burst.py`](../tests/test_daemon_burst.py).
 ship all the messages that accumulated into a fresh wake": a settled burst
 is now one wake. It does **not** by itself stop a *successful* run from
 leaving un-folded events to re-spawn (they now re-coalesce into one wake,
-not N — better, not gone), nor the **operational-failure spam** (a run that
-credit-fails before folding leaves its siblings pending; they coalesce into
-one retry wake whose lead re-fails, and so on). Killing that spam is the
-**Q1 per-run claim + Q2 failure `defer_until`** slice — the burst-window is
-the safe substrate it builds on, not a substitute.
+not N — better, not gone). The first operational-failure brake ships in the
+next slice below; burst-window is the arrival substrate it builds on, not a
+substitute.
+
+## Shipped — operational-failure sibling deferral (2026-06-20)
+
+The second behavioural slice, still intentionally short of per-run claims
+or run-keyed primary outboxes. When a run reaches a terminal operational
+failure, the **lead event** keeps the explicit failure note (so the addressed
+thread is not silent), while still-pending sibling events get:
+
+- `defer_until: <UTC timestamp>`
+- `deferred_by_run: <run-id>`
+- `defer_reason: operational_failure`
+
+The daemon dispatch loop now chooses from
+`protocol.list_dispatchable(...)`, which filters events whose
+`defer_until` is still in the future. `protocol.list_pending(...)` continues
+to return them, and the live `inbox.json` view still exposes them to any
+fresh wake, so they are **braked, not hidden**. If a new user message arrives
+before the deadline, that fresh event can still lead a wake and the deferred
+siblings appear in its inbox for the resident to fold or consciously leave.
+
+Config: `dispatch.failure_defer_seconds` (default 300); a value ≤ 0
+disables the brake.
+
+**What this does and doesn't fix.** It stops a credit / runner / env failure
+from immediately draining a queued burst one terminal failure per sibling.
+It does **not** implement Q1's per-run claim, Q2's resident-authored
+postponement contract, or Q3's run-keyed response/outbox primary key. A fresh
+event can still trigger a new run while older siblings are deferred; that is
+deliberate, because the new wake is the right moment for the resident to
+reconsider the pending scene.
 
 ## The hard questions remaining
 
@@ -195,6 +228,13 @@ postpones everything with no new ingress goes quiet until its own deadline
 — the same lever as `schedule.md`, applied to inbound events. This is the
 seam that makes "decide what to postpone" real rather than a re-spawn in
 disguise.
+
+The operational-failure slice above implements only the daemon-authored
+half of this brake: sibling events receive `defer_until` after a terminal
+failure so the daemon does not immediately replay them as fresh leads. The
+resident-authored postpone path — "I choose not to handle this pending
+event until T / until new ingress" — remains open and should land with Q1's
+claim semantics so chosen postponement and crash recovery share one model.
 
 ### Q3 — Response routing across N events
 
@@ -303,10 +343,11 @@ ticket; this page is its substrate.
 ## Remaining work
 
 1. **Q1/Q2** — the dispatch burst-coalescing debounce shipped 2026-06-20
-   (arrival coalescing; see *Shipped* above). Still open: the **per-run
-   claim** (Q1) and a **`defer_until`** brake for postponed *and*
-   operationally-failed events (Q2), so an un-folded or credit-failed burst
-   stops re-spawning (and re-failing) per event.
+   (arrival coalescing), and the operational-failure sibling deferral shipped
+   the same day (retry brake; see *Shipped* above). Still open: the
+   **per-run claim** (Q1) and the **resident-authored** `defer_until`
+   contract for chosen postponement (Q2), so an un-folded burst is handled by
+   explicit run intent rather than by daemon convention.
 2. **Q3** — move the primary response/outbox key to **run id** (cleanest),
    with explicit per-event delivery routing.
 3. **Q4** — confirm **run-granularity** cost attribution and "folding is

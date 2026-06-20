@@ -209,8 +209,10 @@ For each pending event, the daemon:
    self-scheduled wakes) the host-agnostic playbook deliberately leaves out
    (see [`plan-playbook-generalization.md`](plan-playbook-generalization.md));
 7. invokes the configured runner headlessly;
-8. treats stdout as the default terminal reply while also accepting a
-   current-thread outbox reply as a valid closeout; on each heartbeat it
+8. treats stdout as the plain current-thread fallback while accepting a
+   small set of recognized operational signals as valid closeouts; this is
+   a daemon liveness floor, not a taxonomy of every satisfactory run shape.
+   On each heartbeat it
    drains the agent's outbox, then refreshes the live inbox view (plus one
    final drain after the runner returns) — promoting interim or
    interleaved replies to per-event partial queues, delivering

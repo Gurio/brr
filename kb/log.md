@@ -7469,3 +7469,51 @@ Tests: new `tests/test_daemon_burst.py` (pure-function settle logic with
 controlled mtimes; deterministic loop-wiring + config-path tests).
 `test_daemon_single_flight.py` disables the window so its ordered two-event
 dispatch assertions stay focused. Full suite: 965 passed.
+
+## [2026-06-20] implement | #128 operational-failure sibling deferral
+
+Followed the burst-coalescing slice with the next bounded #128 behaviour:
+when a run reaches a terminal operational failure before folding a queued
+burst, the lead event still receives the explicit failure note, but sibling
+pending events are stamped with a short `defer_until`,
+`deferred_by_run`, and `defer_reason=operational_failure`. The daemon now
+chooses leads from `protocol.list_dispatchable(...)`, while
+`protocol.list_pending(...)` and the live `inbox.json` view still expose
+deferred events to any fresh wake. This brakes the "one failure message per
+leftover burst sibling" spam without pretending Q1 per-run claims or Q3
+run-keyed outboxes have shipped.
+
+Config: `dispatch.failure_defer_seconds` defaults to 300 seconds; ≤0
+disables the brake. `design-run-event-model.md` and `kb/index.md` now mark
+burst coalescing plus operational-failure sibling deferral as shipped, with
+per-run claims, resident-authored postponement, run-id response/outbox
+keying, and cost attribution still open.
+
+Tests: `pytest tests/test_protocol.py tests/test_daemon_burst.py
+tests/test_daemon_single_flight.py` (46 passed).
+
+## [2026-06-20] implement | Retire "stdout is final delivery" in hot-path orientation
+
+During the portals dogfooding wake, the maintainer pushed back on the
+generated bundle's phrasing that "final stdout" resolved terminal delivery.
+That wording lagged the shipped daemon model: `_result_satisfied_delivery`
+already accepts a current-thread reply, folded/routed reply, gate send,
+commit, internal/noop work, or explicit failure note as the run's satisfying
+signal. The old phrase made agents reason from the obsolete one-event →
+one-terminal-reply shape.
+
+Updated the generated delivery contract, `brr docs portals`, `run.md`,
+`runners.md`, `active-task.md`, `execution-map.md`, `brr-internals.md`, the
+bundled dominion-playbook seed, `subject-daemon.md`, and
+`design-portal-grammar.md` to frame stdout as the **plain current-thread
+fallback**, not the delivery model. A follow-up user correction refined the
+landing: don't code up every possible satisfactory completion shape. The
+current recognized signals are a small daemon liveness floor; intentional
+communication should use stdout or an explicit portal, and the freer
+run-completion artifact / output-frame shape belongs to #159. This was a
+narrow hot-path correction because the live wake proved the old wording was
+actively misleading.
+
+Tests: `pytest tests/test_prompts.py tests/test_docs.py tests/test_daemon.py
+tests/test_protocol.py tests/test_daemon_burst.py tests/test_daemon_single_flight.py`
+(146 passed).
