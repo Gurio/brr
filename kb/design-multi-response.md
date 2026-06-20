@@ -76,7 +76,8 @@ refreshes it on every heartbeat after draining any outbox replies. The
 JSON contains the current event id and the currently pending events
 (id, source, status/created metadata, summary, and body), excluding the
 event already being processed. The resident re-reads this file at natural
-plan / todo boundaries, then decides whether to:
+plan / todo boundaries and once more before terminal closeout, then decides
+whether to:
 
 - keep working on the current event;
 - fold in a quick pending event by writing an outbox reply with
@@ -84,9 +85,11 @@ plan / todo boundaries, then decides whether to:
 - leave cross-context work pending for its own future wake.
 
 This completes the interleaving contract for events that arrive
-mid-thought. It does **not** make the daemon parse agent commands or
-pre-claim work; the only state-changing fold-in remains a delivered
-`event: <id>` reply, which marks that target event `done`.
+mid-thought and are visible before the runner returns. It does **not** make
+the daemon parse agent commands, pre-claim work, or hold terminal delivery
+open for messages that arrive after the runner has already exited; the only
+state-changing fold-in remains a delivered `event: <id>` reply, which marks
+that target event `done`.
 
 ### Daemon drain (producer → queue)
 

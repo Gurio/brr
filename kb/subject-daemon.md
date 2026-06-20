@@ -68,8 +68,12 @@ Events that arrive while a thought is running are no longer invisible
 until the next spawn. The worker writes an initial pending-events view to
 the run outbox and refreshes `inbox.json` there on every heartbeat after
 draining any agent-written replies. The resident checks that file at
-natural plan / todo boundaries and may fold in quick replies with the
-multi-response `event: <id>` path. Idle dispatch is still FIFO: true
+natural plan / todo boundaries, and once more before terminal closeout,
+and may fold in quick replies with the multi-response `event: <id>` path.
+That final check is still agent discipline rather than daemon magic: it
+cannot catch a message that arrives after the runner has returned, but it
+prevents avoidable "I answered and then immediately woke again" splits when
+the follow-up is already visible. Idle dispatch is still FIFO: true
 agent-selected next-event ordering or long-running batch claims need a
 separate claim protocol beyond today's `pending` / `processing` / `done`
 states.

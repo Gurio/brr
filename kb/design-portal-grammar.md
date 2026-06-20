@@ -5,9 +5,10 @@ command migration shipped (`brr docs cockpit` → `brr docs portals`, the
 bundled manual reframed so the dotfile table *is* the portal grammar — see
 decision 3); a narrow hot-path stdout wording correction shipped
 2026-06-20 after dogfooding showed "final delivery" was actively
-misframing the current model. The behavioral grammar (in-generation
-portals, parked-portal run mailbox) and the reconcile/projection layer
-naming remain sequenced *after*
+misframing the current model, followed by a #148 dogfood correction that
+makes a pre-closeout `inbox.json` read part of the run contract. The
+behavioral grammar (in-generation portals, parked-portal run mailbox) and
+the reconcile/projection layer naming remain sequenced *after*
 [#148](https://github.com/Gurio/brr/issues/148) ships.
 This page is the design seed for
 [#159](https://github.com/Gurio/brr/issues/159) (*cockpit output frame
@@ -188,6 +189,16 @@ ahead of the grammar would be the wrong receipt.
   communication, and the daemon's need as an operational receipt. The
   broader #159 direction is a freer run-completion artifact / output frame,
   not a longer enum.
+- **Make the live inbox check a pre-closeout habit.** A later #148
+  dogfood wake showed a related Telegram follow-up spawning as its own run
+  right after a terminal reply. The daemon record suggests that exact event
+  may have arrived after the runner had already returned, so this is not
+  fully solved by prompt discipline. The shipped correction is narrower:
+  the generated bundle, manual, and playbook now tell the resident to
+  re-read `inbox.json` immediately before terminal closeout and either fold
+  a related follow-up or explicitly leave it queued. The structural form —
+  an inbound portal that is in the generation path, or a post-run mailbox /
+  output-frame handoff — stays with #159.
 
 ## What a future wake picks up
 
