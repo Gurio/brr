@@ -205,7 +205,8 @@ dive-in map) and are stable until something contradicts them.
   removed in favour of mechanical run construction, agent-decided
   branching, and plain-text responses.
 - [Run / event model — retire the per-event "task"](design-run-event-model.md) —
-  *active; run-manifest rename shipped 2026-06-18*. The `task` concept is a leftover of the
+  *active; run-manifest rename shipped 2026-06-18; burst coalescing +
+  failure sibling deferral shipped 2026-06-20*. The `task` concept is a leftover of the
   spawn-per-event arch (one event → one task → one run → one reply); the
   resident reshape already broke that 1:1 (multi-response, folded-in
   events, `gate:` sends, the §6 delivery floor). Reframes the two real
@@ -214,9 +215,11 @@ dive-in map) and are stable until something contradicts them.
   to tackle / fold / postpone). The first slice removed the persisted
   `Task`/`.brr/tasks` layer in favour of `Run` manifests at
   `.brr/runs/<run-id>/run.md`, `run-*` IDs, and run-keyed lifecycle
-  packets / conversation records. Remaining behaviour work: per-run
-  claim + `defer_until` debounce, run-id response/outbox keying, and
-  run-granularity cost attribution (coupled to #130). Slice of
+  packets / conversation records. The 2026-06-20 behavioural slices add
+  burst-settle dispatch and a daemon-authored `defer_until` brake for
+  sibling events after operational failure. Remaining behaviour work:
+  per-run claim + resident-authored postponement, run-id response/outbox
+  keying, and run-granularity cost attribution (coupled to #130). Slice of
   [`design-co-maintainer.md`](design-co-maintainer.md) §6/§9/§11.
 
 - [The resident's cockpit — runner control & a live dwelling](plan-resident-cockpit.md) —
@@ -248,7 +251,9 @@ dive-in map) and are stable until something contradicts them.
   thin pipe) and the **portal grammar** (the generated stream *is* the
   surface; inbound/outbound/parked portals subsume the dotfile control
   protocol). Drops the "dashboard"/"cockpit" nouns; lists the shapes to
-  change once the re-skin lands.
+  change once the re-skin lands. Narrow exception shipped 2026-06-20:
+  hot-path orientation now says stdout is the plain current-thread fallback,
+  not the delivery model.
 
 ## Conversations & responses
 

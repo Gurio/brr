@@ -3,9 +3,12 @@
 Status: **direction settled in conversation (2026-06-18).** The naming +
 command migration shipped (`brr docs cockpit` → `brr docs portals`, the
 bundled manual reframed so the dotfile table *is* the portal grammar — see
-decision 3); the behavioral grammar (in-generation portals, parked-portal
-run mailbox) and the reconcile/projection layer naming remain sequenced
-*after* [#148](https://github.com/Gurio/brr/issues/148) ships.
+decision 3); a narrow hot-path stdout wording correction shipped
+2026-06-20 after dogfooding showed "final delivery" was actively
+misframing the current model. The behavioral grammar (in-generation
+portals, parked-portal run mailbox) and the reconcile/projection layer
+naming remain sequenced *after*
+[#148](https://github.com/Gurio/brr/issues/148) ships.
 This page is the design seed for
 [#159](https://github.com/Gurio/brr/issues/159) (*cockpit output frame
 and parallel-safe run mailbox*) — written so a future wake can pick the
@@ -172,6 +175,19 @@ ahead of the grammar would be the wrong receipt.
   [`design-managed-delivery.md`](design-managed-delivery.md) /
   [`subject-managed-mode.md`](subject-managed-mode.md) so a future wake
   does not re-derive the wrong bucket.
+- **Retire "stdout is final delivery" in hot-path orientation.** This
+  piece did ship early on 2026-06-20 because a live portals dogfood wake
+  surfaced the contradiction: the daemon already treats success as a
+  recognized operational signal, not as "stdout was non-empty," so wording
+  that centers "final stdout" was making agents reason from the obsolete
+  one-event→one-terminal-reply model. The maintainer also rejected the
+  natural overcorrection: do **not** code up an ontology of every possible
+  satisfactory completion shape. The generated delivery contract,
+  `brr docs portals`, and short runner docs now frame stdout as the plain
+  current-thread fallback, explicit portals as the path for intentional
+  communication, and the daemon's need as an operational receipt. The
+  broader #159 direction is a freer run-completion artifact / output frame,
+  not a longer enum.
 
 ## What a future wake picks up
 
