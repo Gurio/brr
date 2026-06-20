@@ -7517,3 +7517,23 @@ actively misleading.
 Tests: `pytest tests/test_prompts.py tests/test_docs.py tests/test_daemon.py
 tests/test_protocol.py tests/test_daemon_burst.py tests/test_daemon_single_flight.py`
 (146 passed).
+
+## [2026-06-20] implement | #148 pre-closeout inbox check
+
+A #148 dogfood wake exposed a responsiveness miss: a related Telegram
+follow-up was treated as a fresh run right after the prior terminal reply.
+The daemon record suggests that exact message may have arrived just after
+the runner returned, so this is not fully solvable by prompt discipline,
+but the prompt was still missing a load-bearing habit.
+
+Updated the generated Run Context Bundle, `run.md`, `brr docs portals`,
+execution/internals docs, the bundled dominion-playbook seed, current
+daemon/multi-response kb pages, and `design-portal-grammar.md` so the live
+`inbox.json` portal is checked at natural plan/todo boundaries **and once
+more immediately before terminal closeout**. The wording names the limit:
+messages that arrive after runner return still need the #159 structural
+inbound-portal / output-frame work. Codex runs also now get a hot-path note
+mapping Codex-local progress/final channels to brr's user-visible `.card`,
+outbox, and `gate:` portals.
+
+Tests: `pytest tests/test_prompts.py tests/test_docs.py` (67 passed).

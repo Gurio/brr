@@ -253,7 +253,8 @@ dive-in map) and are stable until something contradicts them.
   protocol). Drops the "dashboard"/"cockpit" nouns; lists the shapes to
   change once the re-skin lands. Narrow exception shipped 2026-06-20:
   hot-path orientation now says stdout is the plain current-thread fallback,
-  not the delivery model.
+  not the delivery model, and the live inbox portal is checked before
+  terminal closeout as part of #148 dogfooding.
 
 ## Conversations & responses
 
