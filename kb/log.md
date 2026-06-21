@@ -7552,3 +7552,22 @@ point. The recommended first code slice is portal helper commands that write
 today's control files, not parallel execution.
 
 Validation: `pytest tests/test_docs.py tests/test_protocol.py` (43 passed).
+
+## [2026-06-21] plan | #159 live daemon-state portal first
+
+Maintainer pushback on the #159 helper-command slice exposed a sharper
+responsiveness diagnosis: manual outbox helpers reduce frontmatter and
+routing mistakes, but they do not make pending events or unacknowledged
+daemon state naturally visible while a runner is thinking. The current
+`inbox.json` file is live, but only if the resident remembers to read it.
+
+Revised `design-portal-grammar.md` and `kb/index.md` so the first #159 slice
+is now a runner-visible live daemon-state portal: a compact file/text view
+covering pending/foldable events, unacknowledged delivery state, run/card
+posture, budget/keepalive, and changed-since markers. Runner-specific
+surfacing, such as Codex adapters or an opt-in shell wrapper, is framed as
+an adapter experiment rather than the core contract so brr keeps its
+swappable-runner architecture. Outbound portal helper commands remain useful
+secondary ergonomics after the resident knows which portal it wants to open.
+
+Validation: `pytest tests/test_docs.py` (11 passed).

@@ -1,7 +1,8 @@
 # Design: portal grammar & the reconcile/projection layer
 
-Status: active (2026-06-20; #159 design contract drafted after #148
-closed; implementation slices pending).
+Status: active (2026-06-21; #159 design contract revised after live
+dogfood: first slice should expose runner-visible daemon state, not start
+with outbound helper commands).
 
 This page is the current design contract for
 [#159](https://github.com/Gurio/brr/issues/159): the output-frame grammar
@@ -20,7 +21,9 @@ marked places where that stream turns to the world.
 > surface." The 2026-06-19 to 2026-06-20 dogfood passes supplied the
 > concrete evidence: PLAN shape, live `inbox.json` habits, stdout wording
 > drift, outbox frontmatter footguns, burst coalescing, and failure
-> deferral.
+> deferral. The 2026-06-21 follow-up corrected the first implementation
+> slice: helper commands reduce protocol slips, but responsiveness is
+> primarily a live inbound-state problem.
 
 ## Current shipped surface
 
@@ -35,6 +38,10 @@ This is the live substrate #159 builds on:
 - #148 shipped the current-protocol control loop: PLAN message shape,
   live `.card`/outbox dwelling habits, Codex runner adapter wording,
   and the explicit pre-closeout `inbox.json` read.
+- The daemon refreshes `inbox.json` beside the outbox on every heartbeat,
+  but the runner only sees that state when it chooses to read the file.
+  There is no runner-visible "what changed while I was thinking?" capsule
+  yet.
 - #128 shipped the run/task storage rename, burst-coalescing dispatch,
   and operational-failure sibling deferral. Per-run claims,
   resident-authored postponement, and run-keyed response/outbox routing
@@ -43,10 +50,11 @@ This is the live substrate #159 builds on:
   shape (`event: <id>\n---\nbody`) so it does not leak selector text or
   misroute to the lead event.
 
-What is **not** shipped: in-generation portal syntax, run-keyed primary
-outbox/response paths, event leases, resident-authored event deferral,
-parked-portal mailbox records, portal helper commands, and any parallel
-local execution. Single-flight remains the default executor.
+What is **not** shipped: a runner-visible live daemon-state portal,
+in-generation portal syntax, run-keyed primary outbox/response paths,
+event leases, resident-authored event deferral, parked-portal mailbox
+records, outbound portal helper commands, and any parallel local
+execution. Single-flight remains the default executor.
 
 ## Settled design calls
 
@@ -64,6 +72,11 @@ local execution. Single-flight remains the default executor.
    #159 should make the mailbox and output frame safe for future
    parallel runs, while preserving single-flight as the shipped local
    behaviour.
+5. **Responsiveness is inbound-state first.** The dogfood pain is not
+   mainly that writing `.card` or `event:` files is hard; it is that the
+   runner's live view of pending events, unacknowledged deliveries, and
+   daemon-owned continuation state is too easy to miss after wake time.
+   Outbound helpers are still useful, but they are a secondary affordance.
 
 ## Reconcile/projection layer
 
@@ -101,7 +114,7 @@ each frame must mean before any new syntax is built.
 | --- | --- | --- | --- | --- |
 | PLAN | parked + outbound append-log | chat / issue comment | approve or edit; what resumes | ordinary outbox message using the five-part PLAN shape |
 | PROGRESS | outbound desired-state | live `.card` | current phase; why chunking; medium/quota if known | `.card` control file |
-| INBOUND-CHECK | inbound | not always user-visible | what was checked; fold/defer/leave decision when it matters | read `inbox.json` at boundaries and pre-closeout |
+| INBOUND-CHECK | inbound | not always user-visible | what was checked; fold/defer/leave decision when it matters | read `inbox.json` at boundaries and pre-closeout; no live state capsule yet |
 | INTERRUPTION-REPLY | outbound append-log to event | target event's thread | one complete reply; no duplicate answer | outbox file with `event:` route |
 | HANDOFF | outbound append-log or desired-state | PR, issue, branch note, chat | what changed; where review continues | `gate: forge`, issue comment, final reply |
 | DEFERRAL | parked | chat note, schedule, or mailbox record | why parked; when / what resumes it | dominion `schedule.md` or daemon-authored `defer_until` today |
@@ -124,10 +137,20 @@ The resident's decision for each visible event is one of:
 - **leave for another wake**: scope or branch differs enough that a new
   run is healthier.
 
-The shipped manual makes this a habit ("read `inbox.json`"). #159's
-structural version moves the check into the output frame so the resident
-does not have to remember a filename. The user should see the decision
-when it affects them, not the `.brr/outbox` path.
+The shipped manual makes this a habit ("read `inbox.json`"). That is a
+stopgap. #159's structural version should make daemon state a standing
+inbound portal: a compact, runner-readable capsule that answers "what
+needs my attention now?" without requiring the resident to reconstruct it
+from scattered prompt prose and filenames.
+
+The first capsule can stay simple and file-based: pending/foldable events
+with ids and summaries, unacknowledged or undelivered outbound work, the
+current run/card/delivery state, budget/keepalive posture, and a
+changed-since marker. It should also have a cheap text view (`brr portal
+state` or equivalent) for agents that naturally inspect command output.
+The file remains the universal contract; any runner adapter that can
+surface the capsule after tool calls is an optimization, not the product
+foundation.
 
 ### Outbound portals
 
@@ -139,11 +162,12 @@ An outbound portal emits to a surface. Every emission must declare:
 - whether it resolves an event, updates a surface, or only narrates
   progress.
 
-The frontmatter footgun proved the robustness point. A human-facing
-message should not depend on the resident hand-writing hidden protocol
-correctly. The near-term fix is helper commands that write today's files;
-the deeper fix is portal markers in the stream that the runner adapter
-extracts structurally.
+The frontmatter footgun proved a robustness point: a human-facing message
+should not depend on the resident hand-writing hidden protocol correctly.
+Small helper commands that write today's files are still worthwhile, but
+they solve outbound syntax and routing mistakes. They do not by themselves
+solve the responsiveness problem, because they do not make pending input
+show up while the resident is thinking.
 
 ### Parked portals
 
@@ -279,39 +303,54 @@ stream markers make them structurally hard to misuse.
 
 ## Implementation sequence
 
-1. **Portal helper commands.** Add small helpers that write today's
-   control files: `card`, `reply --event`, `send --gate`, `inbox`, and a
-   PLAN/deferral writer if the shape stays useful. This is the cheapest
-   way to move from "remember frontmatter" to "use a tool" without
-   changing daemon storage.
-2. **Resident-authored deferral.** Let a run deliberately postpone a
+1. **Live daemon-state portal.** Add a daemon-owned, runner-readable
+   state capsule beside the existing outbox/inbox files and a small
+   inspected text view (`brr portal state` / `brr status --agent`, naming
+   TBD). It should merge the live inbox, unacknowledged delivery state,
+   run/card/budget posture, and "changed since last read" attention signal
+   into one place. This keeps the architecture runner-swappable while
+   letting an agent ask one natural question: "what daemon state should I
+   fold into my next step?"
+2. **Optional runner surfacing.** Experiment with runner-specific ways to
+   show that capsule at natural tool boundaries: a Codex/Claude adapter if
+   the runner exposes one, or an opt-in shell/PATH wrapper for host
+   command output. This must stay adapter-level, not the core contract:
+   wrappers miss non-shell thinking and runner internals would break the
+   swappable-runner shape.
+3. **Outbound portal helper commands.** Add small helpers that write
+   today's control files: `card`, `reply --event`, `send --gate`, and a
+   PLAN/deferral writer if the shape stays useful. These are for
+   robustness and ergonomics once the resident already knows which portal
+   it wants to open.
+4. **Resident-authored deferral.** Let a run deliberately postpone a
    pending event with `defer_until`, reason, and resume condition. This
    completes the non-failure half of #128 Q2.
-3. **Run-key primary outbox/response.** Move the primary response/outbox
+5. **Run-key primary outbox/response.** Move the primary response/outbox
    key from lead event id to run id; require explicit `event:`/`gate:` or
    current-thread target for deliveries. This is #128 Q3 and removes the
    "which event owns the run" question.
-4. **Event claims.** Add per-run claim leases and exit-time outcome
+6. **Event claims.** Add per-run claim leases and exit-time outcome
    handling. Keep single-flight, but make the storage model parallel-safe.
-5. **Parked-portal mailbox records.** Persist PLAN approvals, deferrals,
+7. **Parked-portal mailbox records.** Persist PLAN approvals, deferrals,
    child-run requests, and resume conditions as mailbox records instead
    of relying only on conversation history.
-6. **Concept prose sweep.** After the primitives land, reconcile
+8. **Concept prose sweep.** After the primitives land, reconcile
    `plan-resident-cockpit.md`, `plan-cost-aware-cockpit.md`,
    `design-managed-delivery.md`, `subject-managed-mode.md`, and the index
    so the graph consistently says portals / projection instead of
    dashboard / cockpit.
 
-The first code slice should be helper-shaped, not a parallel executor.
-It attacks the real dogfood pain (manual file/frontmatter protocol) while
-leaving the mailbox storage change crisp and reviewable.
+The first code slice should be live-state-shaped, not helper-shaped and
+not a parallel executor. It attacks the real dogfood pain: the resident
+needs current daemon state to be naturally available during the run, not
+only injected at wake time.
 
 ## Standing portal candidates
 
 This wake also confirms which context belongs on a live, summonable
 surface rather than in always-injected prose:
 
-- live inbox / queued-event state;
+- live daemon-state / queued-event / unacknowledged-delivery state;
 - runner medium and quota posture;
 - branch dirt, unpushed commits, and prior-run artifact state;
 - forge issue/PR state when relevant;
