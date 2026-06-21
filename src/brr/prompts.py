@@ -740,6 +740,21 @@ def _build_run_context_bundle(
                 "research, or pure-discussion runs can keep the "
                 "placeholder name."
             )
+        sections.append(
+            "- For a run that changes code, the default landing is a "
+            "reviewable PR, not just a pushed branch. Commit early, push "
+            "the branch as soon as there is one coherent increment "
+            "(don't hold everything for the end), and — when a forge gate "
+            "is configured — open or refresh a PR with a `gate: forge` "
+            "outbox file (`head` your branch, `base` the default branch, "
+            "plus `title` and a body that leads with the *why*). Push more "
+            "commits to refresh the same PR as the work grows, and use "
+            "mid-thought outbox replies or the `.card` to check in while it "
+            "takes shape. If you woke on a PR-comment event the PR already "
+            "exists, so a push is the refresh — no new `gate: forge` "
+            "needed. Skip the PR only for read-only, research, or "
+            "discussion runs, or when you say why one isn't wanted yet."
+        )
 
     inbox_block = _format_pending_events(pending_events)
     if inbox_block:
