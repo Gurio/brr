@@ -7552,3 +7552,43 @@ point. The recommended first code slice is portal helper commands that write
 today's control files, not parallel execution.
 
 Validation: `pytest tests/test_docs.py tests/test_protocol.py` (43 passed).
+
+## [2026-06-21] plan | #159 live daemon-state portal first
+
+Maintainer pushback on the #159 helper-command slice exposed a sharper
+responsiveness diagnosis: manual outbox helpers reduce frontmatter and
+routing mistakes, but they do not make pending events or unacknowledged
+daemon state naturally visible while a runner is thinking. The current
+`inbox.json` file is live, but only if the resident remembers to read it.
+
+Revised `design-portal-grammar.md` and `kb/index.md` so the first #159 slice
+is now a runner-visible live daemon-state portal: a compact file/text view
+covering pending/foldable events, unacknowledged delivery state, run/card
+posture, budget/keepalive, and changed-since markers. Runner-specific
+surfacing, such as Codex adapters or an opt-in shell wrapper, is framed as
+an adapter experiment rather than the core contract so brr keeps its
+swappable-runner architecture. Outbound portal helper commands remain useful
+secondary ergonomics after the resident knows which portal it wants to open.
+
+Validation: `pytest tests/test_docs.py` (11 passed).
+
+## [2026-06-21] implement | #159 live daemon-state portal
+
+Shipped the first #159 code slice after the helper-command reconsideration:
+daemon runs now maintain a `portal-state.json` file beside `inbox.json` and
+refresh it on each heartbeat plus final drain. The capsule gives the runner
+one live place for pending/foldable events, drained reply counts, pending
+outbox files, current card text, budget/keepalive posture, and a stable
+`change_token` for attention-relevant changes. Runner subprocesses receive
+`BRR_PORTAL_STATE` and related `BRR_*` handles, including Docker runners,
+so agents do not have to copy paths out of prompt prose.
+
+Added `brr portal state` as the inspected text/JSON view over the same file,
+updated the Run Context Bundle wording, bundled `run.md`, portal/execution/
+internals docs, and the #159 design/index pages. Outbound helper commands
+remain secondary ergonomics; deeper delivery acknowledgements, event leases,
+resident-authored deferral, and parked mailbox records remain future #159
+slices.
+
+Validation: `pytest tests/test_outbox.py tests/test_runner.py tests/test_envs.py
+tests/test_prompts.py tests/test_docs.py tests/test_cli.py` (194 passed).

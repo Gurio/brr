@@ -243,7 +243,7 @@ dive-in map) and are stable until something contradicts them.
   (medium in the wake bundle), the first A2 quota snapshot ingress, and
   the diffense de-firehose first.
 - [Portal grammar & the reconcile/projection layer](design-portal-grammar.md) —
-  *active; #159 design contract drafted 2026-06-20 after #148 closed*.
+  *active; #159 design contract revised 2026-06-21 after live dogfood*.
   Names the **reconcile/projection layer** above gates (append-log vs
   desired-state semantics × N transports), the resident **output-frame
   grammar** (PLAN, PROGRESS, INBOUND-CHECK, INTERRUPTION-REPLY, HANDOFF,
@@ -253,8 +253,11 @@ dive-in map) and are stable until something contradicts them.
   cost stays run-granular with folding as the consent point. The page also
   records what has shipped early (portals manual, PLAN shape, stdout
   wording, pre-closeout inbox check, tolerant outbox routing, #128 burst /
-  failure deferral) versus the next implementation slices, starting with
-  portal helper commands rather than parallel execution.
+  failure deferral, and the first #159 live `portal-state.json` capsule)
+  versus the remaining implementation slices: runner-adapter surfacing,
+  outbound helper commands, resident-authored deferral, run-keyed
+  response/outbox paths, mailbox records, and later parallel-compatibility
+  work.
 
 ## Conversations & responses
 
