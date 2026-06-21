@@ -241,3 +241,74 @@ recovery handle in the bundle — the failed run's last `.card` + emitted
 outbox artifacts (+ its run.md intent) surfaced directly, so a recovery
 wake reads in-flight state off a live surface instead of grepping JSONL.
 This is the clearest standing-portal candidate from this wake.
+
+### 2026-06-21 (evt q5ap) — the permission *envelope*: shape, surface, mid-run switching
+
+Maintainer extends the thread to the **envelope** ("a perfect framing")
+and asks to design it precisely+ergonomically for both users and agents:
+a possible phone-app/website to manage permissions while talking to the
+local cli-agent via TG+GH, "move as much as possible to the user";
+envelope set as a config file on init, mid-stream changes maybe local-only
+maybe not; and the hard one — under single-flight, how does an agent
+"switch something for a run" when a runner is already daemon-scheduled and
+paid for in a token budget.
+
+My reply (design conversation, no code — genuine fork). Key reconciles:
+
+1. **"Envelope" is already overloaded.** Billing has the *overdraft
+   envelope* (credit headroom). The governance envelope here is bigger:
+   the run's **authority boundary = what the agent may do × how much it
+   may spend**. Spend axis already exists (overdraft envelope); action
+   axis already exists (six-mode `ask`-family permission-prompt policy,
+   compute-only per decision-cli-shape). The envelope isn't new surface —
+   it's the object that *binds both axes into one declarative user-owned
+   thing*. Naming debt to clear before "envelope" means three things.
+
+2. **Pushed back on the phone-app/website** using his own 2026-06-17 line:
+   most first users want brr as a thin TG/GH wrapper; abstraction depth
+   lives in the daemon, surface stays thin. A dedicated permissions app is
+   depth pushed onto the surface. Counter: make the *existing* prompt the
+   editor — when I hit the envelope edge, that TG/GH message also adjusts
+   the envelope ("allow once / this run / always→write config"). App/site
+   = optional richer *view* later, not the primitive. Structurally the
+   prompt **is** a parked portal (#159) = same shape as PLAN→approve
+   (#148); the envelope edit rides the portal mailbox we're already building.
+
+3. **Init-config vs mid-stream, local-or-not** maps onto append-log vs
+   desired-state (the split I already drew). Standing envelope = desired-
+   state (durable, committed, reconciled, governs future runs). Per-run
+   "just now" grant = append-log/ephemeral (one wake, evaporates, never
+   touches the file). "Always" = a reconciled edit to the config. So
+   "local only or not" answers itself by which semantics the change has;
+   the ergonomic move is letting the user pick once/always *at the prompt*.
+
+4. **Single-flight + mid-run switching (the real arch answer).** This
+   thought owns the slot till it ends; can't preempt self or swap engine
+   mid-flight. Switching splits by *what*:
+   - **Widen envelope (budget/permission), same runner, in place** —
+     `.keepalive` is the precedent (agent extends own wall-clock via a
+     control file); token budget is the same move. Envelope-exhausted→ask
+     upsell, designed for spawn-start, just also fires mid-run.
+   - **Change the runner (model/provider/re-spec)** — can't happen in
+     place. End-this-thought-with-a-respawn-request; daemon schedules a
+     fresh single-flight run under the new envelope from committed state
+     (diff = receipt, nothing lost). Single-flight preserved by
+     *serializing*, never running two. "Park and respawn" = parked-portal
+     pattern with a whole new wake as continuation.
+   - **Pure ephemeral grant** — reflux event, continue.
+   Paid budget never wasted: in-place widening adds to it; respawn inherits
+   committed work. The one move single-flight forbids: a run mutating its
+   own engine while burning the slot.
+
+5. **Environment now + the standing-portal candidate.** I steer via
+   inbox.json / portal-state.json / .card / .keepalive / outbox. **Missing:
+   an envelope portal** — no first-class live surface for my current
+   authority (what I may do, spend ceiling, remaining), and no widen
+   channel except wall-clock via .keepalive. Proposed: generalize
+   `.keepalive` from "extend time" to the full envelope — inbound face
+   (authority + remaining budget) + parked-outbound face (request more →
+   becomes the user's prompt). Clearest standing-portal candidate from the
+   thread; makes everything above concrete.
+
+Still a design conversation — awaiting his nod on direction before any kb
+page or implementation slice.
