@@ -7,3 +7,5 @@
 # truncated — so order by importance.
 full playbook.md
 tail:45 dogfooding-plan-loop.md
+# active fork (prune once settled): the perception=injection / action=emission reshape
+head:34 portal-reshape-synthesis.md
