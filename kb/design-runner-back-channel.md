@@ -1,6 +1,7 @@
 # Design: the runner back channel (hooks) & the minimal runner interface
 
-Status: proposed (2026-06-22) — tracked by
+Status: proposed (2026-06-22), back channel verified against runner docs
+(2026-06-22, see §Verification) — tracked by
 [#171](https://github.com/Gurio/brr/issues/171). Supersedes the `brr portal
 wrap` shell-wrapper slice of [`design-portal-grammar.md`](design-portal-grammar.md)
 §Implementation sequence #2; the wrapper is retired when the hooks back channel
@@ -97,11 +98,56 @@ Per-runner mapping (brr generates the hook config from the profile, so the user
 does not hand-write it):
 
 - **Claude Code** — `settings.json` `hooks` block: `PostToolUse` → `brr hook
-  post-tool`, `Stop` → `brr hook stop`, optionally `SessionStart`. PostToolUse
-  output can return `additionalContext`; Stop can return a block decision.
-- **Codex CLI** — the notify/hook surface mapped onto the same phases; where
-  Codex lacks a perfect equivalent, the missing phase simply doesn't fire and
-  the heartbeat backstop covers it.
+  post-tool`, `Stop` → `brr hook stop`, optionally `SessionStart` for the seed
+  capsule. The endpoint emits **JSON on stdout (exit 0)**; the verified shapes:
+  - *post-tool flush + injection* —
+    `{"hookSpecificOutput": {"hookEventName": "PostToolUse",
+    "additionalContext": "<portal-state delta>"}}`. This is **non-blocking**:
+    the delta is woven in alongside the tool result and the turn continues.
+  - *stop-control* — `{"decision": "block", "reason": "<pending input>",
+    "hookSpecificOutput": {"hookEventName": "Stop", "additionalContext": "…"}}`.
+    `decision: "block"` prevents the stop and feeds the reason back so the turn
+    continues with the pending event in view.
+  - *session-start seed* — `SessionStart` is one of the three events where bare
+    stdout is injected, so the capsule can be raw text.
+  - **Mechanism caveat:** for `PostToolUse`/`Stop`, **plain stdout is debug-log
+    only** — context injection requires the JSON `additionalContext` field.
+    Only `UserPromptSubmit` / `UserPromptExpansion` / `SessionStart` inject bare
+    stdout. The `brr hook` endpoint must therefore speak JSON for post-tool/stop.
+- **Codex CLI** — the same lifecycle event set (`SessionStart`, `PreToolUse`,
+  `PostToolUse`, `Stop`, `UserPromptSubmit`, …) mapped onto the brr phases.
+  Codex hooks return JSON with `additionalContext` (injected into model
+  context), `continue: false` (halt), `stopReason`, and `updatedInput`
+  (PreToolUse rewrite). `PostToolUse` and `Stop` both carry context-injection
+  **and** continuation control, so Codex is **not flush-only** — full Tier 2
+  parity (this resolves the earlier "Codex parity" caution, below).
+
+## Verification: hooks *are* a back channel into the runner (2026-06-22)
+
+The load-bearing claim — hooks push fresh context *into* the running agent, not
+just emit telemetry *out* — was checked against both runners' current docs at
+the maintainer's request. **Confirmed, bidirectional, on both.**
+
+- **Claude Code** ([hooks reference](https://code.claude.com/docs/en/hooks)):
+  - `PostToolUse` accepts `hookSpecificOutput.additionalContext` for
+    **non-blocking** feedback woven in alongside the tool result — exactly the
+    `post-tool` inbound-injection path.
+  - `Stop` accepts `decision: "block"` + `reason` (and `additionalContext`),
+    which **prevents the stop and continues the turn** — exactly the
+    premature-stop-control affordance.
+  - `SessionStart` (and `UserPromptSubmit`/`UserPromptExpansion`) inject bare
+    stdout into context — usable for the seed capsule.
+  - `PreToolUse` can `deny` with a reason fed back to the model and can rewrite
+    inputs — not needed for the first slice but available.
+- **Codex CLI** ([codex hooks](https://developers.openai.com/codex/hooks)):
+  the same event set with `additionalContext` injected into model context,
+  `continue: false` to halt, and `updatedInput` to rewrite. Codex's own doc
+  states hooks are "not fire-and-forget."
+
+The fire-and-forget worry (hooks only good for "analytics and shit") is
+**unfounded** for the runners brr targets. The design holds; the only
+refinement the check forced is the mechanism caveat above (JSON
+`additionalContext`, not plain stdout, for post-tool/stop).
 
 ## Writing to the user without a halt (the follow-up)
 
@@ -155,9 +201,52 @@ as the source the hook renders for injection. The retirement is about the
 - **Stop-control scope.** Blocking a premature stop is the highest-value, most
   intrusive affordance. Ship outbound-flush + inbound-injection first; gate
   stop-control behind a follow-up slice once the flush path is proven.
-- **Codex parity.** Confirm Codex's hook surface covers post-tool and stop; if
-  it only fires a coarse notify, Tier 2 for Codex may be flush-only at first,
-  with heartbeat covering the rest.
+- ~~**Codex parity.**~~ *Resolved 2026-06-22:* Codex's hook surface covers
+  `PostToolUse` and `Stop` with `additionalContext`/`continue`, so Tier 2 is
+  full parity, not flush-only.
+
+### Proposed resolutions (firmed 2026-06-22)
+
+The maintainer asked to address the remaining unknowns now where the answer is
+already clear rather than parking all of them. These are proposed (reversible,
+in a design doc) so the implementation slice starts from a decision, not a blank:
+
+- **`brr hook` JSON schema — proposed.** One transport-neutral envelope, brr
+  owns the abstract phases, the runner profile maps native names on:
+  - *stdin (event):* `{"phase": "post-tool|stop|session-start", "run_id": …,
+    "event_id": …, "tool": {…}|null, "change_token": …}` — brr fills the bits
+    its endpoint needs; runner-native fields are read from the raw hook payload
+    that brr also passes through.
+  - *stdout (result):* a neutral
+    `{"inject": "<text|null>", "block": false, "block_reason": null}`, which the
+    profile adapter renders into the runner's native shape — for Claude,
+    `inject` → `hookSpecificOutput.additionalContext`, `block`+`block_reason` →
+    `{"decision":"block","reason":…}`; for Codex, `inject` → `additionalContext`,
+    `block` → `continue:false`+`stopReason`.
+- **Config installation — proposed: per-run, ephemeral.** brr generates the hook
+  config into the run's worktree-scoped runner settings each run, matching the
+  worktree-per-run model; nothing is written to the user's global config, so it
+  is self-contained and disappears with the worktree. (Drops the `brr init` /
+  opt-in alternatives.)
+- **Stop-control activation — decided: deferred behind the first slice.** Ship
+  flush + inbound-injection first; Stop `block` lands in a follow-up once the
+  flush path is proven (this matches the §back-channel-contract note).
+- **Outbox→flush wiring — proposed: the hook *signals*, the daemon stays the
+  sole drainer.** I checked the code before firming this: `_drain_outbox` in
+  `daemon.py` is coupled to the daemon's in-process emit (`_WorkerEmit`) and
+  conversation-log indexing, and the daemon's drain locks are `threading.Lock`
+  (in-process only). So an external `brr hook` process **cannot** "run the same
+  drain" directly, and it must not drain in parallel — the threading locks would
+  not serialize a separate process, risking a double-delivery. The clean shape:
+  `post-tool` drops a lightweight signal (touch a control file in the run dir, or
+  poke a pipe the daemon selects on) and the daemon drains *immediately on that
+  signal* instead of only on the next heartbeat tick. The daemon remains the
+  single drainer, so **the concurrency worry dissolves** — no cross-process lock
+  needed. Inbound injection is independent and safe to do in-process: the hook
+  just reads the daemon-written `portal-state.json` and returns the delta. The
+  remaining implementation choice is only the *signal transport* (control-file
+  touch vs. pipe/socket); the touch-file matches brr's existing control-file
+  idiom (`.keepalive`, `.card`) and is the leaning default.
 
 ## See also
 
