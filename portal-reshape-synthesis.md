@@ -255,3 +255,94 @@ confirmation of the reshape direction from his side, independently derived.
 Stance: still chat-only / active fork; this tightens the *why* for step 2 of
 the sequencing above. No code this wake — prompt contract still the wide-blast
 surface, he's still driving the order.
+
+---
+
+# THE MECHANISM (evt 1k4k, 2026-06-22) — "how on earth do we inject into tail?"
+
+The three axes above all say *weave a delta into the scroll at the halt
+boundary*. They never said **by what channel**. The maintainer pins it: "if we
+controlled the runner's code we'd inject the portal diff in each tool-call
+output — but we can't. So how?" And the paired question: distinguish a cheap
+**internal halt** (tool call / file read, context warm) from an expensive
+**brr respawn** (fresh process, cold rebuild).
+
+## Grounded in runner.py (read this wake)
+- A thought = ONE `subprocess.Popen` of `n --print --dangerously-skip-permissions
+  --system-prompt "…" <prompt>` (`_build_cmd` + `invoke_runner`). Single-shot,
+  headless, final reply on stdout. No `--settings`/MCP/hook wiring today.
+- A **respawn is brr's OWN action** — a second `invoke_runner` call. brr never
+  has to "detect" it; brr *authors* it, tagged with the run id (run-260622-…).
+- An **internal tool-halt happens INSIDE the live Popen** — and brr is **blind**
+  to it today: it's just blocked on stdout. brr has no channel into the live
+  context except what the runner's *harness* chooses to surface.
+
+## The crux rebuttal
+"We can't inject in each tool-call output" is false for the reason it feels
+true. We don't control the runner's *source* — but we don't need to. The
+runner **harness** (Claude Code) runs **hooks** we configure (confirmed:
+update-config skill — "the harness executes these, not Claude"). A `PostToolUse`
+hook fires on **every** tool call — Read, Edit, Bash, anything — and its output
+is fed back into the model context. **That literally IS "inject the portal diff
+into each tool-call output."** The seam he wanted exists; it's just spelled
+"hook configured at spawn," not "patch the runner."
+
+So the one move — **pass a brr-authored settings/hook file at spawn** (via the
+runner profile / `--settings`) — buys BOTH unsolved things at once:
+1. **The injection channel** (PostToolUse hook → portal delta into the tail).
+2. **Visibility into the internal halt** (the hook firing IS brr seeing the
+   halt — the thing it's blind to today).
+
+## The hook menu (claude harness), mapped to our contract behaviors
+Each behavior that today relies on *me remembering a procedure* becomes a thing
+the harness does *to* me:
+- **PostToolUse** → append the `change_token`-gated delta to the tool result.
+  Replaces "remember to `cat inbox.json` / use `portal wrap`." Rides every tool.
+- **Stop** → fires when I try to END the thought; can `block` + inject a reason,
+  forcing continuation. This mechanically enforces "check inbox before closeout,
+  fold in the last-minute follow-up" — kills the burst-fragment double-answer
+  race (dominion evt lu67) at the harness level instead of my fragile detection.
+- **(SessionStart / UserPromptSubmit** = the wake-bundle seam we already use,
+  just the existing top-injection.)
+
+## Discriminating halt vs respawn — already free
+brr owns the discriminator: **same Popen / run id = internal halt** (warm
+context, hot 5-min prefix cache, ~0.1× input) ; **new Popen / new run id =
+respawn** (cold full-price write of the whole prefix). brr authors respawns, so
+it always knows; the hook makes internal halts observable. The cost asymmetry is
+the 5-min cache TTL from the CORRECTION above. Design consequence: **prefer
+hook-injection at the warm tool-halt seam; spend a respawn only for genuinely
+new work** (new event to fold, budget exhausted, branch-worthy tangent).
+
+## The anti-noise constraints (or the hook becomes the next dead surface)
+The failure mode of injection is dilution — same trap that killed `portal wrap`.
+So the hook must:
+- **Diff, not state.** Emit only the delta since my last-acknowledged token.
+- **Salience-gate.** New user msg / budget threshold / sibling event → inject.
+  Heartbeat tick / unchanged token → silent. (Reuse existing `change_token`.)
+- **Idempotent.** Track last-injected token; never re-lay the same delta twice.
+
+## Honest limits / runner-pluggability
+- Hooks fire on tool events only. A long pure-reasoning stretch with no tool
+  call has no seam — acceptable (nothing urgent waits there, and Stop still
+  catches the end).
+- Hooks are **runner-specific** (claude=hooks; codex/gemini differ). So this is
+  a per-runner **injection adapter** behind one internal interface — fits the
+  existing runner-profiles abstraction. brr's contract becomes "give me a
+  boundary-injection channel"; each runner backend implements it however it can
+  (hook / MCP / wrapper), or degrades to today's top-injection-only.
+- MCP alone ≠ this. MCP tool output is brr-controlled but still requires *me to
+  call it* — same "remember a procedure" weakness as wrap. Hooks **push without
+  my volition**; that's the whole point.
+
+## Ladder placement (playbook's "push lessons down the ladder")
+- `wrap` / `cat inbox.json` = rung 1 (a procedure I must remember — weakest).
+- PostToolUse delta = rung 2 (a fact placed in my path).
+- Stop-blocks-on-unhandled-follow-up = rung 3 (a failure the environment makes
+  impossible). This is the strongest rung we've reached in the reshape.
+
+Stance: chat-only design reply. This is the implementation kernel of tier-2, but
+it's a real build (per-runner hook adapter + settings injection + heartbeat→hook
+delta plumbing) on the most load-bearing surface — a fork, not a reversible
+one-liner. Deliver the mechanism + the one-move framing; let him pick whether
+hooks become the first concrete build after the `portal wrap` removal.
