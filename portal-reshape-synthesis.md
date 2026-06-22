@@ -210,3 +210,48 @@ prompts + heartbeat — deeply load-bearing; confirms hold-don't-rush.)
    (tier-2) — needs the prompt-contract tail section designed.
 3. keepalive → injected budget capsule + ask-to-continue (tier-2 relocation).
 4. Slash the now-dead pitfalls/docs that stood in for the cut commands.
+
+---
+
+# THIRD AXIS (evt 6u2r, 2026-06-22) — salience decay, not just cost
+
+Maintainer (half-typed telegram, but the core landed): "when you halt to read
+and respawn inside a runner, that drifts the context away ... we gotta reinject
+the metadata you need to meaningfully operate, because otherwise it's some
+initial wake context, somewhat irrelevant at later invocations hence not read
+with the same importance."
+
+This is a **distinct axis** from the two I'd already worked:
+- injection-vs-query (modality) — first cut, partly wrong.
+- volatility × relevance × size, made tractable by caching (cost) — the
+  CORRECTION above.
+- **NEW: attention/salience decay by position.** Caching makes re-sending the
+  top-of-scroll bundle *cheap*, but cheap ≠ *attended*. A fact injected once at
+  the top recedes positionally as the agentic loop grows (and across threaded
+  re-spawns it returns as the generic *initial* template, not tuned to where the
+  work now is). Recency-weighting means the model reads it "with less
+  importance" deep in a run. Cost and salience are orthogonal: tail placement,
+  which I'd justified purely by cache-correctness, is *also* where attention
+  lives — that's the deeper reason tier-2 belongs at the tail.
+
+The sharpening this forces on the synthesis: tier-2 tail injection isn't only
+volatile *state* (inbox/portal/budget). It should also re-lay the few
+**operative orientation** facts — current task intent, where I am in it,
+what's pending — at each respawn/halt boundary, because the top copy has
+decayed in salience, not just freshness. "Reinject what I need to operate, at
+the boundary" = salience refresh, change_token-gated so it only fires when
+something moved (don't re-lay an unchanged capsule every tool call — that's
+its own dilution tax).
+
+The concrete gap this names: brr's heartbeat *does* refresh
+`portal-state.json` / `inbox.json` every tick — but into a **file**. That
+refreshes the data and not the salience: a file I must remember to `cat`, and
+when I've drifted is exactly when I won't. Refresh-into-a-file is the cockpit
+leftover in its purest form for *this* axis. The fix the maintainer is pointing
+at = the same tier-2 move (weave the capsule into the scroll at the boundary),
+now with a second independent justification (salience), not just cost. Strong
+confirmation of the reshape direction from his side, independently derived.
+
+Stance: still chat-only / active fork; this tightens the *why* for step 2 of
+the sequencing above. No code this wake — prompt contract still the wide-blast
+surface, he's still driving the order.
