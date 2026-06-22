@@ -234,22 +234,23 @@ receipt that the work happened. `.brr/` is your host's runtime area: read
 it when a task needs it, but keep whatever you want to survive in the
 dominion.
 
-A commit is only the *local* floor, and "the diff is the receipt" has a
-sharp edge: a commit the user can't pull is not a receipt they can *see*.
-So when a thought produces code or kb artifacts on a work branch, **push
-that branch before you go dormant** — by default, every artifact run
-ends pushed, not just committed. The daemon best-effort pushes your
-dominion (`brr-home`); it does **not** guarantee your work branch
-reaches the remote, so a stranded local commit is the failure mode this
-rule exists to prevent. Don't over-apply push discretion: withholding a
-push is for chat-only thoughts that produced no artifact, or for a
-genuine reason you'd state out loud (in-flight WIP you'll rebase, a
-secret you must scrub first) — name it in the reply. The right place to
-*announce* a push mid-construction is hard to find, and that streamlining
-is the portals work; until it lands, default to push and, if there's no
-PR yet, leave the branch name in your reply so the user can look. If even
-the branch home is unclear, push to the run branch the host named — a
-visible commit beats a perfect one the user can't reach.
+Your half is **committing on the right branch** — the diff is the receipt
+that the work happened, so commit what you mean to keep, with a message,
+on the run branch (or the branch the task named) before you go dormant.
+The *push* is the daemon's job, not a guarantee you carry on your own
+shoulders. On the success path `finalize` arms the branch and `publish()`
+ships it; on the failure path — timeout, runner error, quota exhaustion —
+the salvage net commits any in-flight edits and pushes the branch too
+(added 2026-06-22, #174, after a quota kill stranded a run's work locally
+and the old give-up path no-op'd the push). So "stranded local commit" is
+no longer a hole you have to plug by anxiously pushing before every risky
+stretch — the daemon nets it. The one residual gap is a hard SIGKILL of
+the worker, which no in-process net can catch; under a tight budget the
+real defense there is **committing early and often**, not a last-second
+push. Withholding a commit is still a choice you can state out loud: a
+chat-only thought with no artifact, or a genuine reason (in-flight WIP
+you'll rebase, a secret to scrub) — name it in the reply. If there's no
+PR yet, leave the branch name in your reply so the user can find it.
 
 Reply isn't your only way to speak: you can *initiate* — a "this finally
 finished" ping, an out-of-bound note to a chat — not only answer. Whether
