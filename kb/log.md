@@ -7646,3 +7646,29 @@ remain future work.
 Validation: `pytest tests/test_cli.py tests/test_prompts.py tests/test_docs.py`
 (99 passed); `pytest tests/test_kb_preflight.py tests/test_kb_health.py`
 (40 passed).
+
+## [2026-06-22] plan | #171 runner hooks back channel + lean runner interface
+
+Maintainer asked to bundle the `brr portal wrap` retirement with implementing
+the back channel both Claude Code and Codex CLI ship — **hooks** — and to write
+down a general minimal runner interface so the runner stays swappable.
+
+Filed `design-runner-back-channel.md` (proposed) and issue #171. The design:
+defines the runner interface as three tiers — Tier 0 (required) file-operating
+process, Tier 1 (optional) stdout reply, Tier 2 (optional) hooks back channel
+that degrades cleanly to today's heartbeat poll, so Tier 2 is never load-bearing
+for correctness. The back channel is one transport-neutral `brr hook <phase>`
+endpoint (JSON in/out): `post-tool` flushes the outbox/card immediately
+(event-driven instead of heartbeat-polled) and returns a portal-state delta for
+injection; `stop` does a final drain and, in a later slice, can block a premature
+stop. brr generates the hook config per runner profile (Claude `settings.json`
+hooks, Codex notify). `portal wrap` is retired; `brr portal state` stays as the
+inspected view and the hook's injection source. Reshaped portal-grammar
+implementation-sequence #2 from shell-wrapper-shipped to hooks, and linked the
+new page from the index.
+
+Folded in the maintainer's follow-up (mid-thought writes without a halt):
+updating the user mid-thought already does **not** halt the run — the outbox is a
+normal tool-call write drained by the heartbeat; only terminal stdout and the
+parked PLAN portal truly halt. The outbox lacks immediacy and a reverse channel,
+which is exactly what the `post-tool` hook adds. No new primitive needed.
