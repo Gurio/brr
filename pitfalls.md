@@ -142,11 +142,18 @@ diagnostic confirmed it (no `.hook-state.json` after 6+ tool calls; endpoint
 perfect when run by hand). Leading suspect: **untrusted local hooks** —
 `~/.claude.json` has `hasTrustDialogAccepted=False` and no hook-approval record;
 headless `--print` can't clear Claude Code's hook trust/approval gate, so
-local-source hooks get silently skipped. So the *activation ladder* has at least
-two rungs that each silently no-op: (1) a flag that disables hooks (`--safe-mode`,
-fixed), (2) trust/approval not granted for the source the config lives in. When
-debugging "hooks don't fire," check BOTH the invocation flags AND
-`hasTrustDialogAccepted` / hook-approval state in `~/.claude.json`. Next
-diagnostic: a daemon-reload run that A/B's one variable (project-source
-settings.json vs local; `--settings <file>`; matcher present). Full writeup:
-`kb/design-runner-back-channel.md` §Second activation failure.
+local-source hooks get silently skipped. RESOLVED by experiment 2026-06-23: ran nested `claude --print` against fresh temp
+dirs with a sentinel hook and isolated by elimination. It is NOT trust, NOT the
+setting-source, NOT a missing matcher — all tested, all no-fire (even
+`--output-format stream-json`, even a forced-trusted dir, even with a confirmed
+tool call). **The real cause is structural: Claude Code v2.1.185 does not run
+settings-file lifecycle hooks under the headless `claude --print "<prompt>"`
+invocation at all.** The whole tier-2 was built on a documented-but-never-tested
+assumption. Likely (untested) fix: full streaming SDK mode (`--input-format
+stream-json --output-format stream-json`), which is a runner.py rearchitecture.
+So the firing diagnostic stands (`.hook-state.json` / `[brr portal update]`
+injection = proof), but the lesson is broader: **verify a runner capability by
+firing it end-to-end before building on it; docs-verified ≠ works.** Demote claude
+to Tier 0/1 (responsiveness via heartbeat-polled outbox drain, which DOES work)
+until streaming lands. Full writeup: `kb/design-runner-back-channel.md` §Second
+activation failure / §Fix directions.

@@ -373,11 +373,25 @@ fires. As of run `…-1953-mf1j` it **does not** under `claude --print` v2.1.185
 brr's side is provably correct (endpoint returns the right capsule, env handles
 all present, settings.local.json generated), but the harness never invokes the
 hook — no `.hook-state.json`, no injected delta, mid-run events found only by
-hand-reading `inbox.json`. Leading suspect: untrusted local hooks
-(`hasTrustDialogAccepted=False`, no approval record; headless `--print` can't
-clear the trust gate). Full ranked hypotheses + the precheck false-positive gap
-are in `design-runner-back-channel.md` §Second activation failure. **Lesson for
-the ladder:** `hook_capability()` is a rung-1 *assumption* dressed as a check — it
-asserts prerequisites but not firing, so it reports Tier 2 while the runner is
-silently Tier 0/1. The real rung-3 fix is an activation *probe* (after spawn,
-confirm the hook actually fired once) before trusting injection for correctness.
+hand-reading `inbox.json`.
+
+I then ran a controlled in-run experiment (nested `claude --print` against fresh
+temp dirs, SessionStart/PostToolUse hook touching a sentinel) and isolated it by
+elimination: NOT firing under setting-source local/project/default/`--settings`,
+NOT under a forced-trusted dir, NOT with `matcher:"*"` + a confirmed tool call,
+NOT under `--output-format stream-json`. **Conclusion is structural: Claude Code
+v2.1.185 does not run settings-file lifecycle hooks in the headless
+`claude --print "<prompt>"` mode brr uses.** The whole tier-2 rested on a
+documented-but-never-end-to-end-tested assumption that it does. The one untested
+(likely-fix) path is full streaming SDK mode (`--input-format stream-json
+--output-format stream-json`) — a runner.py rearchitecture, not a flag tweak, and
+itself needs a firing test before committing. Matrix + fix directions in
+`design-runner-back-channel.md` §Second activation failure / §Fix directions.
+
+**Lesson for the ladder:** `hook_capability()` is a rung-1 *assumption* dressed
+as a check — it asserts prerequisites (flavour/cwd/PATH) but not firing, so it
+reports Tier 2 while claude is silently Tier 0/1. Cheap fix to ship regardless of
+the rewrite call: demote claude hooks (probe-gate or pull `hooks: claude`) so
+nothing trusts a channel that never fires. The actual working responsiveness
+today is the heartbeat-polled outbox drain + inbox/portal-state refresh — that's
+how this wake's mid-thought replies reached the user.
