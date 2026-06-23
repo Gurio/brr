@@ -103,3 +103,20 @@ artifact, or a dominion scratch note) so a recovery wake reads it off a
 live surface instead of reconstructing from history. The daemon-side fix
 is a "prior run was working on" recovery handle in the bundle — see
 thread-of-record / the note to the maintainer 2026-06-19.
+
+## woven "Recent turns" block carries thread-openers, not the recent tail
+trigger: merged and updated, what's that about, thank you closeout, woven thread stale, recent turns oldest first
+
+Observed evt 6q1m (2026-06-23): the Run Context Bundle's "Recent turns (woven,
+oldest first)" listed 8 turns all dated 2026-06-10..06-12 — the *opening* turns
+of a 415-dialogue thread — while today's event was 06-23. The exchanges that
+actually established current state (#171/#175 hook wiring, the salvage net) were
+absent from the woven block. I could only tell what "Merged and updated" referred
+to by tailing the gate_thread JSONL in the run's history/ dir.
+
+Lesson: on a long-running thread, don't trust the woven "Recent turns" to carry
+the *recent* tail — it appears to select salient thread-openers, not recency. When
+a closeout/ack references something you can't place, tail
+`.brr/runs/<run>/history/gate_thread-*.jsonl` before answering. Candidate to raise
+with the maintainer: either rename the block (it isn't "recent") or window it to
+the tail, because right now it half-promises continuity it doesn't deliver.
