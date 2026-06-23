@@ -346,3 +346,38 @@ it's a real build (per-runner hook adapter + settings injection + heartbeat→ho
 delta plumbing) on the most load-bearing surface — a fork, not a reversible
 one-liner. Deliver the mechanism + the one-move framing; let him pick whether
 hooks become the first concrete build after the `portal wrap` removal.
+
+---
+
+# RECONCILED — the fork shipped (evt xp05, 2026-06-23)
+
+The fork is no longer a fork: it got **built and merged**. The mechanism (harness
+hooks as the tier-2 injection channel) is real code now —
+`kb/design-runner-back-channel.md` is the accepted design, `src/brr/hooks.py` is
+the implementation, and on `main`: #175 (back-channel impl), #176 (retire
+`portal wrap` + the `--safe-mode`→`--setting-sources local` fix), #177 (closeout
+capsule: affirmative-empty stop signal + SCM commit/push facet). So this whole
+doc has graduated from "active synthesis I rebuild each wake" to **lineage** — the
+reasoning that produced the shipped shape. Future wakes: read the kb pages for
+current state; read this only for the *why* behind them.
+
+What stayed true after contact with implementation: perception=injection /
+action=emission as the organizing axis; the three-tier (volatility × relevance ×
+size, made tractable by caching) placement rule; salience-decay as the second
+justification for tail injection; hooks (PostToolUse delta / Stop block) as the
+rung-2/rung-3 mechanism. None of that needed walking back.
+
+**The one thing the design did NOT anticipate — and it's the live blocker:**
+harness *activation*. The whole tier-2 frame assumes the configured hook actually
+fires. As of run `…-1953-mf1j` it **does not** under `claude --print` v2.1.185:
+brr's side is provably correct (endpoint returns the right capsule, env handles
+all present, settings.local.json generated), but the harness never invokes the
+hook — no `.hook-state.json`, no injected delta, mid-run events found only by
+hand-reading `inbox.json`. Leading suspect: untrusted local hooks
+(`hasTrustDialogAccepted=False`, no approval record; headless `--print` can't
+clear the trust gate). Full ranked hypotheses + the precheck false-positive gap
+are in `design-runner-back-channel.md` §Second activation failure. **Lesson for
+the ladder:** `hook_capability()` is a rung-1 *assumption* dressed as a check — it
+asserts prerequisites but not firing, so it reports Tier 2 while the runner is
+silently Tier 0/1. The real rung-3 fix is an activation *probe* (after spawn,
+confirm the hook actually fired once) before trusting injection for correctness.

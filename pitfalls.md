@@ -135,3 +135,18 @@ if it's absent after a run of tool calls, the harness never called the hook
 (distinct from "called but didn't inject"). Don't trust config-present /
 endpoint-works as proof the channel is live; trust `.hook-state.json` / `.flush`
 firing evidence, or a visible `[brr portal update]` injection in your context.
+
+UPDATE 2026-06-23 (run …-1953-mf1j): the `--setting-sources local` fix was NOT
+sufficient — hooks STILL don't fire under `claude --print` v2.1.185. Same
+diagnostic confirmed it (no `.hook-state.json` after 6+ tool calls; endpoint
+perfect when run by hand). Leading suspect: **untrusted local hooks** —
+`~/.claude.json` has `hasTrustDialogAccepted=False` and no hook-approval record;
+headless `--print` can't clear Claude Code's hook trust/approval gate, so
+local-source hooks get silently skipped. So the *activation ladder* has at least
+two rungs that each silently no-op: (1) a flag that disables hooks (`--safe-mode`,
+fixed), (2) trust/approval not granted for the source the config lives in. When
+debugging "hooks don't fire," check BOTH the invocation flags AND
+`hasTrustDialogAccepted` / hook-approval state in `~/.claude.json`. Next
+diagnostic: a daemon-reload run that A/B's one variable (project-source
+settings.json vs local; `--settings <file>`; matcher present). Full writeup:
+`kb/design-runner-back-channel.md` §Second activation failure.
