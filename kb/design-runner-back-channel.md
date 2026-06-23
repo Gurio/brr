@@ -14,6 +14,17 @@ below — history in git.)
 behaviour — see §Retiring); live-dogfood confirmation that post-tool flush +
 inbound injection actually fire end-to-end under a daemon reload.
 
+**Activation bug found + fixed 2026-06-23 (live dogfood).** The channel never
+fired for the `claude` runner because its profile invoked `--safe-mode`, which
+sets `CLAUDE_CODE_SAFE_MODE=1` and disables hooks — silently no-op'ing the
+generated `.claude/settings.local.json`. brr's side was proven correct in the
+same run (`brr hook post-tool` returned the live pending events as
+`additionalContext`); the harness simply never called it (no `.hook-state.json`
+written). Fixed by swapping `--safe-mode` → `--setting-sources local` in the
+profile (commit on `brr/retire-portal-wrap`). End-to-end firing still needs a
+daemon-reload run to confirm — a profile flag change can't be self-verified from
+inside a `--safe-mode` run.
+
 This page bundles two things into one shape: a **runner back channel** built on
 the *hooks* mechanism every target CLI agent ships, and — in the same move — the
 retirement of `brr portal wrap` plus a written-down **minimal runner interface**
