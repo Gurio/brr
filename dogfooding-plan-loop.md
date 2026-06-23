@@ -75,3 +75,34 @@ window) not *visibility*.
 
 **Lesson placed where I'll trip over it:** the marker-not-re-dump move is
 the right reflex when the woven thread shows a sibling already answered.
+
+## 2026-06-23 — OOB dogfooding session: the burst seam, felt by the user (evt mhua)
+
+Maintainer fired a 3-message burst to test the OOB experience and reported it
+plainly: *"trying to dogfood with some oob messages — didn't work too well."*
+The fragments:
+- mhua (this wake): the verdict above.
+- 0q16: *"You're replying at a follow up which arrived before your session stopped"* —
+  he's narrating the exact race: a prior session was mid-flight when 0q16/iybj
+  landed, so they queued, and a *fresh* wake (mhua) now picks up the reply.
+- iybj: a genuine question (own-type hooks for user-owned runners).
+
+**Same seam as evt lu67 (burst-fragment fold race), now with first-person user
+signal.** The gap isn't visibility — inbox.json showed both pending cleanly. The
+gap is **timing**: closely-spaced fragments from one correspondent each race their
+own wake instead of folding into one wake's inbox *before* it plans. From the
+user's chair that reads as "my follow-ups got a laggy / misaligned answer." This
+is #128 territory (event model + per-run claim + defer_until / burst-coalescing
+fold window). Recurrence is now confirmed across two independent sessions — worth
+pushing past a dominion note toward an actual fold-window at the daemon seam.
+
+**Hooks-extensibility fact worth keeping** (asked in iybj, answered from
+`brr/runner-back-channel-impl` #171, *unmerged*): the `brr hook <phase>` endpoint
+is runner-neutral — `render_native` hands an **unknown flavour the neutral
+`{inject,block,block_reason}` envelope verbatim**, explicitly "so a custom runner
+can adopt the protocol directly." So a user-owned runner *can* consume the back
+channel. What's *not* there: (1) a registration seam to map the neutral envelope
+into your own runner's native hook fields (hardcoded claude/codex/gemini in
+`render_native`); (2) auto native-config generation beyond claude
+(`_CONFIG_SUPPORTED = {"claude"}`; codex/gemini intended, emitters are follow-ups).
+So "own type hooks" = a code change in hooks.py, not a config/plugin point today.
