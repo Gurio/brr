@@ -120,3 +120,18 @@ a closeout/ack references something you can't place, tail
 `.brr/runs/<run>/history/gate_thread-*.jsonl` before answering. Candidate to raise
 with the maintainer: either rename the block (it isn't "recent") or window it to
 the tail, because right now it half-promises continuity it doesn't deliver.
+
+## A hooks-capable runner profile must not also disable hooks (claude --safe-mode)
+trigger: hooks back channel, brr hook, post-tool, inbound injection, --safe-mode, settings.local.json, hooks not firing, runner profile, Tier 2
+The back channel (#171/#175) can be fully wired daemon-side — config generated,
+`brr hook post-tool` returning correct `additionalContext` — and still fire
+**zero times**, because the *runner invocation flag* suppresses hooks. The
+`claude` profile shipped `--safe-mode`, which sets `CLAUDE_CODE_SAFE_MODE=1` and
+disables hooks (+ CLAUDE.md/skills/plugins/MCP), silently no-op'ing its own
+`hooks: claude`. Fixed 2026-06-23 → `--setting-sources local` (brr's hook config
+lives in the *local* settings source). Diagnostic that nails "did the harness
+fire the hook at all": the hook writes `.hook-state.json` on every invocation —
+if it's absent after a run of tool calls, the harness never called the hook
+(distinct from "called but didn't inject"). Don't trust config-present /
+endpoint-works as proof the channel is live; trust `.hook-state.json` / `.flush`
+firing evidence, or a visible `[brr portal update]` injection in your context.
