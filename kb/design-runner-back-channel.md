@@ -1,13 +1,18 @@
 # Design: the runner back channel (hooks) & the minimal runner interface
 
-Status: accepted on 2026-06-22 — design of record, implementation pending.
-Back channel verified against all three target runners' docs (claude, codex,
+Status: accepted on 2026-06-22 — **hooks back channel shipped on `main`
+(#171/#175, 2026-06-22); `brr portal wrap` retired 2026-06-23**. Back
+channel verified against all three target runners' docs (claude, codex,
 gemini; see §Verification). Tracked by
-[#171](https://github.com/Gurio/brr/issues/171). Supersedes the `brr portal
+[#171](https://github.com/Gurio/brr/issues/171). Superseded the `brr portal
 wrap` shell-wrapper slice of [`design-portal-grammar.md`](design-portal-grammar.md)
-§Implementation sequence #2; the wrapper is retired when the hooks back channel
-lands. (Proposed 2026-06-22, accepted same day after the maintainer's review
-round folded in below — history in git.)
+§Implementation sequence #2 — that wrapper is now deleted. (Proposed
+2026-06-22, accepted same day after the maintainer's review round folded in
+below — history in git.)
+
+**Still open:** `.keepalive` retirement (gated on the no-timeout-for-Tier-0/1
+behaviour — see §Retiring); live-dogfood confirmation that post-tool flush +
+inbound injection actually fire end-to-end under a daemon reload.
 
 This page bundles two things into one shape: a **runner back channel** built on
 the *hooks* mechanism every target CLI agent ships, and — in the same move — the
@@ -176,13 +181,17 @@ it now.)
 
 Two control surfaces become redundant once the back channel lands.
 
-**`portal wrap`** is strictly dominated — delete the wrapper and its prose:
+**`portal wrap`** was strictly dominated — **deleted 2026-06-23** (commit on
+`brr/retire-portal-wrap`), now that the hooks back channel is on `main`:
 
-- `brr portal wrap` subcommand + `cmd_portal_wrap` in `cli.py` (and its tests).
+- `brr portal wrap` subcommand + `cmd_portal_wrap` in `cli.py` and its three
+  tests — removed.
 - The `brr portal wrap` paragraph in `src/brr/docs/portals.md` and the wrapper
-  line in the Run Context Bundle wording (`prompts.py`).
-- The portal-grammar implementation-sequence framing of #2 as a shipped wrapper
-  slice (rewritten to: superseded by the hooks back channel).
+  line in the Run Context Bundle wording (`prompts.py`) — removed; the docs now
+  describe hook-pushed injection (Tier 2) with a `portal-state.json` /
+  `brr portal state` pull fallback.
+- The portal-grammar implementation-sequence framing of #2 — rewritten to:
+  superseded by the hooks back channel, wrapper retired.
 
 **Keep** `brr portal state` — it stays useful as the inspected text view *and* as
 the source the hook renders for injection. The retirement is the *manual wrapper*,
