@@ -154,6 +154,36 @@ does not hand-write it):
   for blocking is documented; the exact injection-field schema lives in Gemini's
   hooks *reference* page (not yet pinned here — see §Resolutions → still open).
 
+### What the delta carries by boundary (the injected capsule)
+
+`hooks.format_delta` renders the portal-state payload into the injected text.
+Three boundaries, two of which render **unconditionally** (added 2026-06-23,
+maintainer's dogfooding feedback on run `…-1348-u62q`):
+
+- **session-start (seed)** — the full initial capsule, always.
+- **post-tool (mid-run)** — *gated* on `change_token`. Renders only when
+  attention-relevant state moved (new pending event, delivery ack, budget
+  shift); otherwise stays silent so editing churn injects no noise.
+- **stop (closeout)** — renders **unconditionally**, not token-gated. Two
+  reasons, both from the maintainer's point that *silence is ambiguous*:
+  1. **Affirmative empty signal.** "Knowing there are no events explicitly is
+     itself an agentic signal." A closeout header that says `0 pending
+     event(s)` is a confirmation the resident can act on; silence is not. So
+     stop always emits the header (`[brr portal closeout] …`), pending count
+     included even when zero.
+  2. **SCM posture (commit/push reminder).** The capsule carries an `scm`
+     facet — `{known, branch, unpushed_commits, modified_files}`, computed
+     locally and failure-safe from `worktree.unpushed_commit_count` /
+     `uncommitted_file_count` against the run's worktree. Rendered at
+     seed/stop only, and only when there is something to act on (unpushed
+     commits or modified files), so a clean tree stays quiet. This is the
+     fix for the lived gap that "the initial context doesn't stress pushing
+     enough" — a wake about to end now *sees* "N commit(s) not pushed, M
+     modified file(s)" as injected context. `scm` is deliberately **excluded
+     from `change_token`** (like `elapsed_seconds`) so mid-run editing churn
+     never trips a post-tool injection; it is a boundary signal, not a
+     live-churn one.
+
 ## Halt vs respawn — two different concepts (the follow-up)
 
 The follow-up asked whether updating the user mid-thought requires "an internal

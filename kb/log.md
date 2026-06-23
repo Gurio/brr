@@ -7843,3 +7843,40 @@ pull fallback), and the portal-grammar implementation-sequence framing. Kept
 on the unbuilt no-timeout-for-Tier-0/1 behaviour, so the prior wake's "both
 retire" framing was reconciled to "portal wrap now, keepalive later." Suite green
 (997). kb/index, portal-grammar, and back-channel pages updated.
+
+---
+
+## [2026-06-23] feat | Hook closeout capsule: affirmative empty signal + SCM commit/push posture
+
+Completed the in-flight work the salvage net caught from interrupted run
+`…-1348-u62q` (branch `brr/run-260623-1348-u62q`). The maintainer's dogfooding
+feedback had two concrete asks plus a conceptual one:
+
+1. **"Knowing there are no events explicitly is also an agentic signal."** The
+   `post-tool` boundary stays gated on `change_token` (silent when nothing
+   moved), but **stop now renders unconditionally** — a `[brr portal closeout]`
+   header that states the pending count even when it's `0`. Silence was
+   ambiguous; an affirmative all-clear is not.
+2. **"You didn't push the branch — the initial context doesn't stress its
+   importance enough; put minimal git stats in the hook."** The portal-state
+   payload now carries an `scm` facet (`known/branch/unpushed_commits/
+   modified_files`), computed locally + failure-safe via
+   `worktree.unpushed_commit_count` / new `uncommitted_file_count`. Rendered at
+   seed/stop only, only when non-zero, so a wake about to end *sees* "N
+   commit(s) not pushed, M modified file(s)" as injected context. `scm` is
+   excluded from `change_token` so mid-run editing churn never trips a post-tool
+   injection — it's a boundary signal, not a live-churn one.
+
+The salvage commit had added `_scm_facet`, `uncommitted_file_count`, and the
+`work_dir` param on `_write_live_portal_state` but left it **unwired**: no caller
+passed `work_dir` (so the facet was always `known:False`) and `format_delta`
+never rendered it. This wake wired `work_dir=run_root` into all 5
+`_write_live_portal_state` callers and added the seed/stop rendering +
+`compute_neutral` stop-unconditional path. 10 new tests (hooks closeout/scm
+gating, `uncommitted_file_count`, `_scm_facet`); suite green (1007).
+
+Still open (part 3 of the feedback, not code): the conceptual reconciliation of
+"portals as an ornamented magic scroll the agent turns to the world through"
+with "hooks as the necessary ornamentation" — tracked in dominion
+`portal-reshape-synthesis.md` (perception=injection, action=emission), left for a
+design wake.
