@@ -408,3 +408,13 @@ the rewrite call: demote claude hooks (probe-gate or pull `hooks: claude`) so
 nothing trusts a channel that never fires. The actual working responsiveness
 today is the heartbeat-polled outbox drain + inbox/portal-state refresh — that's
 how this wake's mid-thought replies reached the user.
+
+**2026-06-26 (evt 4nx0) — SHIPPED the demotion.** Maintainer green-lit the
+ledger ("time to address them"). Pulled `hooks: claude` from the profile, kept
+`--setting-sources local` for isolation, kept the machinery for codex/gemini as
+unverified intent, dropped the streaming-SDK rewrite (reframe: safety-net the
+reactive model never wanted). Branch `brr/demote-claude-hooks`; kb page
+reconciled. Tier-2 tail-injection (the 3 self-perception query surfaces,
+`.keepalive`→budget capsule, granted-permissions capsule) is now confirmed
+**blocked on hooks for claude** — its path forward is the heartbeat-polled tail
+capsule, not a push-hook. That's the next concrete portal-reshape build to scope.
