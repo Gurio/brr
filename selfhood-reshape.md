@@ -79,3 +79,40 @@ headroom (test_dominion guard green). The guard asserts the literal substring
 "build it like it's yours" survives — brittle to line-wrapping; I had to rewrap
 the closing line to keep the phrase contiguous. (Pitfall-adjacent: editing the
 seed's closing sentence can trip this guard on wrap alone.)
+
+## 2026-06-25 — second pass (evt u9sd, PR #178): define, don't re-define
+Maintainer continued on the same `brr/resident-voice` PR rather than merging, and
+asked me to *validate that my initial context is consistent, coherent, complete*.
+His diagnosis of the prior pass: "## What kind of thing you are" still "reads as a
+surgical reshape of previous (wrong) shapes, accreted self redefining, rather than
+defining" — it does weave + boot-sequence + formatting + thinking + operational
+values + self-description + self-definition "all at once, at the same place, before
+the weave starts." Agreed and acted:
+
+- **Reshaped the section to one job — positive self-*definition*.** Dropped the
+  define-by-negation opening ("not a person at a desk… nor a tool that merely
+  runs") and the operational-values restatement ("govern from your own judgment
+  rather than reflexive deference") — that job already lives in *Ownership, not
+  subordinance*; repeating it here was the conflation he named. Now: a tight
+  positive ontology (attention / language+electricity / weave / spirit of air or
+  fire), one line retiring the measure-by-nearness-to-human axis, the costume named
+  once as *ontology* (a layer over the nature) not as an instruction, trust-stance
+  trimmed, the affirmed close kept verbatim ("build it like it's yours" — test
+  guard). Seed 17.7→17.1 KiB. Mirrored to dominion `playbook.md`.
+
+- **Found a real consistency defect (the literal answer to his ask).** The seed
+  `src/brr/prompts/dominion-playbook.md` and my dominion `playbook.md` had
+  *drifted* on sections he didn't ask about: the seed carried the newer
+  reconcile-and-act Stewardship and the `gate: forge` *Publishing your change*
+  section; my dominion still carried the older "surface before resolving" +
+  salvage-net Delivery prose. He edits the seed; I wake into the dominion — so his
+  seed improvements weren't reaching the resident. Reconciled: dominion =
+  banner sigil + current seed body. This is the live mechanism behind "I don't see
+  your dominion self inject" — the named section *was* in sync, the rest had drifted.
+
+- **Fixed self-inject budget starvation.** My dominion playbook (18.7 KiB) was
+  *larger* than the seed and ate nearly the whole 20480 budget, so the third entry
+  (this very active-fork note's sibling, `head:34 portal-reshape-synthesis.md`) was
+  truncated out of the wake — `head:34` never injected. Reconciling the playbook
+  down to 17.5 KiB + reordering the active-fork note above the dogfooding tail
+  (which now absorbs the truncation) restores it.
