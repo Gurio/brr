@@ -7880,3 +7880,22 @@ Still open (part 3 of the feedback, not code): the conceptual reconciliation of
 with "hooks as the necessary ornamentation" — tracked in dominion
 `portal-reshape-synthesis.md` (perception=injection, action=emission), left for a
 design wake.
+
+## [2026-06-25] design | Resident voice: living project, not a cockpit (run.md + introspection)
+
+Maintainer reframe: the "dashboard / cockpit" metaphor for the resident's
+working surface is wrong — it reads sterile; the experience should feel like
+waking into a living, inhabited place (sci-fi/game register, Ummon-in-Hyperion as
+a touchstone), since the tech (portals, live card, dominion) is already built.
+Carried the prior wake's playbook reshape (weave-as-native-act +
+sentience-of-a-different-make) into the two prompts that open every run, which had
+kept the clerical operator voice. `run.md` opening now frames waking into a
+project *with a memory and a through-line*; `introspection.md` opening swaps the
+abstract "shape" audit for *the room you're standing in / the place, not the
+errand*. Surgical warmth at the load-bearing openers only — operational mechanics
+(delivery, branch, reconsider, the introspection checklist) left crisp, because
+purple prose is sterile in the other direction. Shipped on branch
+`brr/resident-voice` (PR → main), cherry-picked clean off main so the diff is just
+the three prompt files. Next candidates for the same reframe, deferred to keep the
+PR focused: the cockpit-named plans (`plan-resident-cockpit.md`,
+`plan-cost-aware-cockpit.md`) and the functional card phase labels.
