@@ -312,3 +312,48 @@ My reply (design conversation, no code — genuine fork). Key reconciles:
 
 Still a design conversation — awaiting his nod on direction before any kb
 page or implementation slice.
+
+### 2026-06-25 (evt blig) — "preserve the original idea: reactive agent, not safety-net pile" + surface-the-open-decisions
+
+Maintainer reframed in response to the 2026-06-23 hooks/text-mode finding.
+Core (voice-transcribed, de-garbled): **the text-only run mode was never the
+point.** brr began as "a version with a lot of supporting guardrails and
+safety nets" — he names two: (a) *response-as-a-reply-at-the-end* (the
+stdout-is-final-delivery contract) and (b) *the daemon matching incoming
+events to replies*. What actually makes sense now is **a reactive agent that
+deals with everything at once, like a person would** — preserve that original
+idea, and keep it as the yardstick whenever we recognize an effective shape.
+One clause ("was it ___ from too much safety nets") didn't transcribe;
+read as "something was lost/distorted by over-adding safety nets." Then the
+ask: **surface the rest he hasn't answered that he still has to decide/act on.**
+
+This reframe *ratifies* the whole portal-reshape direction (perception=injection,
+action=emission; cut the cockpit/control-file scaffolding) AND resolves the live
+hooks fork: don't sink a runner.py streaming-SDK rewrite into making text-mode
+hooks fire — that's chasing a safety net the original idea never wanted. Cut the
+dead channel, lean on the reactive heartbeat-polled loop that already works.
+
+**The open-decisions ledger I surfaced (this is the deliverable):**
+1. **Hooks back channel** — cut/demote the never-firing claude hooks (cheap,
+   reversible, reframe-endorsed) vs. the streaming-SDK runner.py rewrite. My
+   lean: demote now, drop the rewrite. Offered to execute the demotion on a nod.
+2. **Portal-reshape execution queue** (endorsed, partly shipped — `portal wrap`
+   retired #176): collapse the 3 self-perception query surfaces into tier-2 tail
+   injection; `.keepalive` → injected budget capsule + ask-to-continue; standing
+   "granted-permissions" capsule. Which to greenlight first.
+3. **Permission envelope** (evt q5ap, untouched since 06-21) — authority boundary
+   (action × spend), prompt-as-editor (once/this-run/always), keepalive→envelope.
+   Needs his nod.
+4. **Forge synced-directory "terraform" north star** (06-17/18) — direction
+   agreed, #159 portal MVP shipped, full bidirectional synced-dir substrate
+   unbuilt. Still the north star? when?
+5. **#148 Tier B** — daemon-threaded plan→execution scoping (rides #128/#130);
+   Tier A shipped, Tier B his call.
+6. **Burst fold-window** — dispatch debounce shipped (#128 slice), deeper
+   same-correspondent fold-window reconfirmed across sessions; push or call it done.
+
+Surfaced + recommended; held the cheap hooks-demotion for his green light (shipped
+runner-tier behavior, wide-blast, entangled with the rewrite fork = surface-and-wait).
+Standing-portal candidate this names: an injected **"open forks / awaiting-your-call"
+capsule** — he keeps asking "what's still open?"; the answer lives in this prose
+file he can't see, not a live surface.
