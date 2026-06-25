@@ -1,29 +1,54 @@
 # Design: the runner back channel (hooks) & the minimal runner interface
 
-Status: accepted on 2026-06-22 — **hooks back channel shipped on `main`
-(#171/#175, 2026-06-22); `brr portal wrap` retired 2026-06-23**. Back
-channel verified against all three target runners' docs (claude, codex,
-gemini; see §Verification). Tracked by
-[#171](https://github.com/Gurio/brr/issues/171). Superseded the `brr portal
-wrap` shell-wrapper slice of [`design-portal-grammar.md`](design-portal-grammar.md)
-§Implementation sequence #2 — that wrapper is now deleted. (Proposed
-2026-06-22, accepted same day after the maintainer's review round folded in
-below — history in git.)
+Status: accepted on 2026-06-22 — the back-channel *machinery* shipped on `main`
+(#171/#175); `brr portal wrap` retired 2026-06-23. **But the `claude` flavour is
+demoted (2026-06-26): claude hooks never fire under the headless `claude --print`
+mode brr uses, so the default runner runs Tier 0/1 on the heartbeat-polled
+model.** Tracked by [#171](https://github.com/Gurio/brr/issues/171). Superseded
+the `brr portal wrap` shell-wrapper slice of
+[`design-portal-grammar.md`](design-portal-grammar.md) §Implementation sequence
+#2 — that wrapper is deleted.
 
-**Still open:** `.keepalive` retirement (gated on the no-timeout-for-Tier-0/1
-behaviour — see §Retiring); live-dogfood confirmation that post-tool flush +
-inbound injection actually fire end-to-end under a daemon reload.
+**The two activation failures, and the demotion (the current state).** §Verification
+below confirmed hooks are a back channel *in the runners' docs* — but a docs check
+is not a firing test, and firing is where it broke, twice:
 
-**Activation bug found + fixed 2026-06-23 (live dogfood).** The channel never
-fired for the `claude` runner because its profile invoked `--safe-mode`, which
-sets `CLAUDE_CODE_SAFE_MODE=1` and disables hooks — silently no-op'ing the
-generated `.claude/settings.local.json`. brr's side was proven correct in the
-same run (`brr hook post-tool` returned the live pending events as
-`additionalContext`); the harness simply never called it (no `.hook-state.json`
-written). Fixed by swapping `--safe-mode` → `--setting-sources local` in the
-profile (commit on `brr/retire-portal-wrap`). End-to-end firing still needs a
-daemon-reload run to confirm — a profile flag change can't be self-verified from
-inside a `--safe-mode` run.
+1. *First failure (2026-06-23):* the `claude` profile invoked `--safe-mode`, which
+   sets `CLAUDE_CODE_SAFE_MODE=1` and disables hooks. Fixed by swapping to
+   `--setting-sources local`.
+2. *Second failure (2026-06-23, structural):* even with the local settings source
+   and a provably-correct brr side (`brr hook post-tool` returns the right
+   capsule, env handles present, `settings.local.json` generated), Claude Code
+   v2.1.185 **still** never invokes the hook in `claude --print "<prompt>"` mode —
+   no `.hook-state.json`, no injected delta. Isolated by elimination (a nested
+   `claude --print` experiment with a sentinel-touching hook): not firing under
+   any setting-source, not under a forced-trusted dir, not with `matcher:"*"` + a
+   confirmed tool call, not under `--output-format stream-json`. Conclusion:
+   settings-file lifecycle hooks do not run in headless `--print` mode.
+
+The one untested path that might fire is full streaming-SDK mode
+(`--input-format stream-json --output-format stream-json`) — a `runner.py`
+rearchitecture, not a flag tweak.
+
+**Resolution (the 2026-06-25 "reactive agent, not safety-net pile" reframe).**
+The streaming-SDK rewrite is **dropped**, not parked: text-mode hook firing was
+chasing a guardrail the reactive model never needed. The heartbeat-polled outbox
+drain + `portal-state.json`/`inbox.json` refresh is what actually carries
+mid-thought responsiveness, and it works. So the cut, shipped 2026-06-26: the
+`claude` profile drops its `hooks: claude` field (`hook_capability` now reports
+the truth instead of a never-firing Tier 2). The machinery — `src/brr/hooks.py`,
+the `brr hook` endpoint, `render_native`, the capability precheck — stays for
+`codex`/`gemini`, whose hooks are **declared intent, unverified end-to-end**:
+treat them as Tier 2 only after a live firing test, not assumed from the profile.
+
+> **Ladder lesson.** `hook_capability()` was a rung-1 *assumption dressed as a
+> check*: it asserts prerequisites (flavour renderable, endpoint on PATH, cwd
+> writable) but not *firing*, so it reported Tier 2 while claude was silently
+> Tier 0. Until a runner has a live firing test, a `hooks:` declaration is intent,
+> not capability.
+
+**Still open (independent of the above):** `.keepalive` retirement, gated on the
+no-timeout-for-Tier-0/1 behaviour (see §Retiring).
 
 This page bundles two things into one shape: a **runner back channel** built on
 the *hooks* mechanism every target CLI agent ships, and — in the same move — the
