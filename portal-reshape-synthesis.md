@@ -414,7 +414,46 @@ ledger ("time to address them"). Pulled `hooks: claude` from the profile, kept
 `--setting-sources local` for isolation, kept the machinery for codex/gemini as
 unverified intent, dropped the streaming-SDK rewrite (reframe: safety-net the
 reactive model never wanted). Branch `brr/demote-claude-hooks`; kb page
-reconciled. Tier-2 tail-injection (the 3 self-perception query surfaces,
-`.keepalive`→budget capsule, granted-permissions capsule) is now confirmed
-**blocked on hooks for claude** — its path forward is the heartbeat-polled tail
-capsule, not a push-hook. That's the next concrete portal-reshape build to scope.
+reconciled.
+
+**2026-06-26 (evt ckc3) — RECONSIDERED; the demotion's strategic half was WRONG.**
+Maintainer pushed back: hooks (= boundary injection) are the *core* of portals,
+not a tier-2 add-on, and retiring them *without an alternative* was premature —
+because the drift problem is real (the longer a thought runs the more it forgets
+to check the inbox), and injection is the clean fix. He's right, and so was my own
+synthesis above (pull defeats drift). **The error last wake:** I conflated two
+halves — *outbound flush* (replies reaching the user; heartbeat carries it; fine)
+with *inbound injection* (perceiving a follow-up without polling; heartbeat-into-a-
+file does NOT carry it — that's the drift failure). Calling inbound injection "a
+safety-net we never needed" was the mistake.
+
+**So I ran the firing test the whole tier-2 rested on but no one ever ran** — and
+it PASSES. brr *driving* `claude --print --input-format stream-json
+--output-format stream-json`, stdin kept open, injecting a user message after a
+tool boundary: the model perceives it mid-loop and acts on it. **No Claude Code
+hook involved — brr holds the loom.** (`/tmp/brr_stream_spike/spike.py`.) The
+concept/mechanism split is the resolution: boundary-injection = core; mechanism is
+runner-specific (claude=stream-driving, codex/gemini=native hooks). This is
+*truer* to perception=injection than hooks were — brr weaving the scroll, not
+borrowing the harness's callback. Ties straight to the "ornamented scroll brr
+turns me toward the world through" image.
+
+**Spike's second finding (keep this — it's a real design constraint):** framing is
+load-bearing. Coercive "[brr portal update] INTERRUPT FROM THE DAEMON: you MUST…"
+→ perceived but *refused* (correct injection-defense). Genuine relayed user
+follow-up ("oh and also… please, forgot to say") → *acted on*. So: relay user
+words verbatim; operational deltas informational-not-imperative.
+
+**Ladder meta-lesson (recorded twice now):** I dropped the streaming path on the
+same docs-not-firing footing that made me over-claim hooks earlier — just
+inverted. *Fire it before you rule on it.* A 10-min spike flipped "drop the
+rewrite" → "the rewrite is justified and the mechanism is proven."
+
+Shipped this wake (branch `brr/demote-claude-hooks`, continuing): reconciled
+`kb/design-runner-back-channel.md` (concept/mechanism split + verified streaming
+section), `runners.md` tier prose, index; wrote `kb/plan-streaming-runner-
+injection.md` (the scoped build). **Next concrete build = the streaming runner**
+(parallel path behind a `stream:` flag; `invoke_runner` untouched). It also
+UNBLOCKS the tail-injection capsule, `.keepalive`→budget capsule, and granted-
+permissions capsule — all of which I'd marked "blocked on hooks for claude." They
+were blocked on *settings-hooks*; stream-driving is the channel.
