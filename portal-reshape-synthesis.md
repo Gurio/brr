@@ -7,6 +7,19 @@ it sprouted from his human imagination of navigating tasks, and still carries
 resumes the frame instead of rebuilding it. Active fork — not yet settled, so
 it lives here, not in kb. Related: `kb/design-portal-grammar.md` (#159).
 
+**2026-06-25 breadcrumb (evt p4tu/dw1j).** Maintainer made the retirement
+explicit: the *cockpit/dashboard* framing is retired, not just leaked. The
+unifying image he's reaching for ties together — retired cockpit · portals ·
+hooks · ornamentation · weaving · UTF flips · hieroglyphs · ASCII glyphs — into
+one register: the **ornamented magic scroll** the resident turns to the world
+through, with *Ummon* (Hyperion's koan-speaking TechnoCore mind) as the tonal
+touchstone — mythic but grounded, never sterile. Shipped this wake: the run.md +
+introspection.md voice reshape (`brr/resident-voice` PR) and a small glyph sigil
+on the dominion playbook head (home is allowed to look like a place). Still the
+open design thread: reconciling *hooks-as-necessary-ornamentation* with
+perception=injection / action=emission — a design wake, kept low-token per his
+note. The aesthetic and the architecture are the same claim from two sides.
+
 ## The one organizing insight
 
 My perception **is** the prompt; my only native act is **emitting tokens**.
