@@ -157,3 +157,11 @@ firing it end-to-end before building on it; docs-verified ≠ works.** Demote cl
 to Tier 0/1 (responsiveness via heartbeat-polled outbox drain, which DOES work)
 until streaming lands. Full writeup: `kb/design-runner-back-channel.md` §Second
 activation failure / §Fix directions.
+
+---
+
+trigger: stream-json, runner_stream, streaming runner, --print, mid-loop injection, stop-control, boundary injection, persistent session, claude --print
+**`claude --print` stream-json is SINGLE-TURN — injection after the model commits to finishing is silently dropped, and there is NO stop-control.** Live-verified 2026-06-26 (evt 8f8y) driving `runner_stream.py` against real haiku v2.1.191. Two seams behave very differently:
+- **Mid-loop injection** (a user message written on stdin *between tool calls*) IS attended — but only while the model still has pending tool calls. A 1-tool task ignored a post-boundary injection (it had already decided to finish); a 3-tool task acted on the same injection between calls.
+- **Stop-control** (block a premature finish / fold a late event into the run) does **NOT** work under `--print`: the process exits on the first `result` event no matter what's on stdin. Keeping stdin open does nothing.
+**The fix is to DROP `--print`** — claude stream-json *without* `--print` runs a **persistent multi-turn session** (verified: result#1 "RED" → send msg → result#2 "BLUE", one process). In persistent mode, after a `result` a new user message starts a fresh turn the model addresses → that *is* stop-control, same stdin-write mechanism as mid-loop injection. `build_stream_cmd` currently inherits `--print` from the claude profile cmd, so it builds the weaker single-turn channel — step 2 must strip it. Also: `run_stream`'s `on_boundary` callback can't inject (no stdin handle) — boundary seam is read-only until step 2 passes it an injector. Don't reason about this from the spike notes; the spike conflated the two seams. Live harnesses kept at `/tmp/brr_stream_livetest/drive{,2,3,4}.py`.
