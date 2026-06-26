@@ -82,6 +82,20 @@ the loom that weaves the resident's scroll. Cost note: the per-tool-call halt is
 already how tool-using agents step (5-min prefix cache keeps respawns ~0.1×), so
 stream-driving rides boundaries that exist anyway — see §Halt vs respawn.
 
+> **Persistence correction (2026-06-26, evt 8f8y — live-driven, not spiked).**
+> Driving the step-1 module against a live haiku v2.1.191 session sharpened the
+> mechanism: **`--print` stream-json is single-turn.** Mid-loop injection lands
+> only while tool calls are still pending; once the model decides to finish, the
+> process exits on the first `result` and any late stdin is dropped — so `--print`
+> has **no stop-control**. A **persistent session (drop `--print`)** is multi-turn:
+> after a `result`, a new user message starts a fresh turn the model addresses
+> (verified — an `echo FOLD-INJECT` ran after the model had said "Done!"). So the
+> two seams this design names — post-tool injection and Stop-control — are the
+> *same* stdin-write mechanism in a persistent session, and the streaming runner
+> must run persistent, not `--print`. The build plan
+> ([`plan-streaming-runner-injection.md`](plan-streaming-runner-injection.md)
+> §Driver re-verification) carries the concrete edits.
+
 **Current state of the machinery.** The `claude` profile declares **no `hooks:`
 field** — correct, because its mechanism is stream-driving, not hooks (the
 `--setting-sources local` flag stays for settings isolation). The hooks machinery

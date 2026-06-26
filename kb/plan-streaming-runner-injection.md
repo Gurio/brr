@@ -1,8 +1,12 @@
 # Plan: the streaming runner — claude Tier-2 boundary injection
 
-Status: in flight 2026-06-26 (evt vtyq) — **step 1 shipped** (the stream-json client
-module `src/brr/runner_stream.py`, 20 tests); steps 2–4 below remain. This is the
-concrete build behind [`design-runner-back-channel.md`](design-runner-back-channel.md)
+Status: in flight 2026-06-26 (evt vtyq; reviewed + live-driven evt 8f8y) — **step 1
+shipped** (the stream-json client module `src/brr/runner_stream.py`, now 22 tests);
+steps 2–4 below remain. Step 1 is **re-verified against the live claude v2.1.191
+CLI** (not just the synthetic fixture), and that drive found a load-bearing
+correction: the driver must run a **persistent (no-`--print`) session**, not
+`--print` — see §Driver re-verification. This is the concrete build behind
+[`design-runner-back-channel.md`](design-runner-back-channel.md)
 §Streaming-driven injection. Parent: [#159](https://github.com/Gurio/brr/issues/159),
 [#171](https://github.com/Gurio/brr/issues/171).
 
@@ -42,6 +46,57 @@ reads JSON events on stdout, with stdin kept **open**. The spike
    user's words; render operational deltas (new-event-waiting, budget, SCM)
    **informational, never imperative**.
 
+## Driver re-verification through the module (2026-06-26, evt 8f8y)
+
+The step-1 module (`runner_stream.py`) was driven against a **live** claude-haiku
+v2.1.191 stream-json session (four harnesses in `/tmp/brr_stream_livetest`,
+reusing `parse_event` / `consume_stream` / `user_message_json`). The parser is
+**confirmed against the real CLI** — `consume_stream` replayed over the captured
+real stream gave identical boundary/result counts, and the live schema's
+interleaved noise (`system/init`, `rate_limit_event`, `system/thinking_tokens`,
+assistant `thinking` blocks) is skipped cleanly (now pinned by
+`test_consume_stream_tolerates_real_cli_noise`). But the live drive surfaced a
+**load-bearing distinction the spike framing missed — `--print` vs persistent
+session:**
+
+- **`--print` + stream-json is _single-turn_.** Mid-loop injection works **only
+  while tool calls are still pending**: a follow-up written *after the model has
+  decided to finish* the turn is silently dropped, and the process **exits on the
+  first `result`** regardless of what is on stdin. Empirically: a one-tool task
+  (`echo ALPHA` → done) ignored a post-boundary injection entirely; a three-tool
+  task picked up the same injection between calls and acted on it. So `--print`
+  gives mid-loop injection but **no stop-control** — there is no way to block a
+  premature finish or fold a late-arriving event into the run.
+- **Persistent session (drop `--print`) is _multi-turn_** and is the architecture
+  step 2/3 should build on. Verified in one process: tool calls run headlessly
+  without `--print`; mid-loop injection between tool calls is attended; and —
+  decisively — **after a `result`, a new user message starts a fresh turn the
+  model addresses** (`echo FOLD-INJECT` ran after the model had already said
+  "Done!"). That post-result fold-in *is* stop-control: brr decides at each
+  `result` whether a foldable pending event exists → inject it as a new turn, or
+  no pending input → close stdin and capture the last `result` as the response.
+
+**Consequence — two corrections to this plan and the module:**
+
+1. **`build_stream_cmd` currently inherits `--print` from the claude profile cmd**
+   and only *adds* the stream flags, so today it produces the strictly-weaker
+   single-turn channel. For step 2/3 it must **strip `--print`** when streaming
+   (run a persistent session). This also unifies the two seams the design splits:
+   "post-tool injection" and "Stop-control" are the *same* stdin-write mechanism,
+   differing only in whether a tool call or a `result` preceded them.
+2. **The §Stop-control note below is only true in persistent mode.** "Don't close
+   stdin while a pending event is unhandled, inject the nudge instead" does
+   **not** work under `--print` (the process is already gone after `result`);
+   it works exactly as written once `--print` is dropped.
+3. **`run_stream`'s `on_boundary` cannot inject** — the callback receives a
+   `StreamBoundary` but no stdin handle / injector, so the boundary seam is
+   read-only today. Step 2 must give the boundary callback a way to write back
+   (pass an `inject: Callable[[str], None]` bound to `proc.stdin`, or move the
+   drive loop inline so it holds both). This is the concrete next edit.
+
+The barebones `--print` floor still degrades cleanly to the heartbeat-polled
+model (outbound flush only); the persistent-session path is the Tier-2 ceiling.
+
 ## Architecture — a parallel runner path, not a rewrite of the old one
 
 Keep `invoke_runner` (the blocking `--print` Popen) as the Tier-0/1 path for
@@ -76,9 +131,15 @@ streaming driver alongside it; route to it only for a profile that opts in.
 1. **stream-json client module** — Popen + event parser + tool-boundary detector,
    tested against recorded event fixtures (capture a real session's stdout once,
    replay in tests). No injection yet. Proves brr can drive the loop and read it.
-2. **Inject + drain at the boundary** — wire outbox drain and `change_token`-gated
-   delta injection; framing rules from the spike. Dogfood behind the flag on a
-   throwaway branch.
+2. **Persistent session + inject/drain at the boundary** — strip `--print` so the
+   driver runs a multi-turn session (see §Driver re-verification: `--print` is
+   single-turn, no stop-control); give `on_boundary` an injector bound to
+   `proc.stdin`; wire outbox drain and `change_token`-gated delta injection at
+   each tool boundary; at each terminal `result`, decide fold-in vs close (the
+   stop-control seam) — fold a foldable pending event as a new-turn user message,
+   else close stdin and capture the last `result` as the response. Framing rules
+   from the spike (relayed follow-ups as the user's words; operational deltas
+   informational). Dogfood behind the flag on a throwaway branch.
 3. **Flag claude onto it** — `stream: claude` in the profile; run a real daemon
    wake through it; confirm a mid-thought follow-up is perceived without a poll.
 4. **Retire the claude pull-reliance** — once stable, the heartbeat poll becomes

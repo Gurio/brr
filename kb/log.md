@@ -7922,3 +7922,37 @@ its dominion and its own becoming, *co*-owns the project and kb with the humans,
 and is co-owned-*with* rather than owned-*by*); planted a draft note in the
 dominion, held the shared seed edit for his nod since PR #178 is already
 reshaping that exact self-definition section.
+
+## [2026-06-26] review | Live-drive the streaming runner: claude --print is single-turn, persistent session is the right architecture
+
+Reviewed step 1 of the streaming runner (`runner_stream.py`, the salvaged in-flight
+work from the session-limit-interrupted run run-260626-0023) and **live-drove it
+against a real claude-haiku v2.1.191 stream-json session** (maintainer asked for
+thorough review + ideally a test; ran haiku to stay within quota). The parser and
+boundary detector are correct against the real CLI — `consume_stream` replayed over
+the captured live stream gave identical boundary/result counts, and the live
+schema's interleaved noise (`rate_limit_event`, `system/thinking_tokens`, assistant
+`thinking` blocks) is skipped cleanly. Hardened the test fixture to pin that
+real-CLI tolerance (synthetic fixture never exercised the `thinking` interleaving):
+22 tests, green.
+
+The live drive found a **load-bearing correction the spike framing missed**:
+`claude --print` + stream-json is **single-turn**. Mid-loop injection works only
+while tool calls are still pending (a 1-tool task dropped a post-boundary
+injection; a 3-tool task acted on the same injection between calls), and the
+process **exits on the first `result`** — so `--print` has **no stop-control**. A
+**persistent session (drop `--print`)** is multi-turn and is the architecture
+steps 2/3 should build on: verified in one process that tool calls run without
+`--print`, mid-loop injection is attended, and after a `result` a new user message
+starts a fresh turn the model addresses (`echo FOLD-INJECT` ran after "Done!").
+That post-result fold-in *is* the Stop-control seam — same stdin-write mechanism as
+post-tool injection, differing only in whether a tool call or a `result` preceded
+it. Three concrete edits captured in `plan-streaming-runner-injection.md` §Driver
+re-verification: (1) `build_stream_cmd` must strip `--print` (it currently inherits
+it from the profile cmd → strictly-weaker single-turn channel); (2) the §Stop-control
+claim only holds in persistent mode; (3) `run_stream`'s `on_boundary` can't inject
+(no stdin handle) — the boundary seam needs an injector. Step 2 (the persistent
+driver + injection wiring) is the next chunk; held it for the maintainer's nod
+since it touches the most load-bearing surface (every claude run) and settles the
+single-turn-vs-persistent architecture, not just a one-liner. Findings written to
+the plan + `design-runner-back-channel.md` §Persistence correction.
