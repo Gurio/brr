@@ -1,19 +1,25 @@
 # Plan: the streaming runner — claude Tier-2 boundary injection
 
-Status: in flight 2026-06-26 (evt vtyq; reviewed + live-driven evt 8f8y; **step 2
-shipped at module level** evt wcxs) — steps 1–2 done in `src/brr/runner_stream.py`
-(now 43 tests); steps 3–4 below remain. **Step 1** = the stream-json client,
-re-verified against the live claude v2.1.191 CLI. **Step 2** = the persistent
-(no-`--print`) driver with boundary injection: `build_stream_cmd` strips
-`--print`/`-p` (`_DROP_FLAGS`); `consume_stream` grew an `on_result` stop-control
-seam; `run_stream` binds a stdin `Injector` to the boundary/result callbacks and,
-when none are wired, builds a default `StreamInjectionPolicy` from the run env's
-`BRR_PORTAL_STATE` — change_token-gated delta at each boundary, fold-pending-once
-at each result, else close stdin. It reuses `hooks.format_delta`, so the streaming
-and hook paths render the same capsule. **Not yet daemon-routed** — no profile
-sets `stream:`, so every run still takes the blocking `invoke_runner` path; step 3
-flips claude onto it behind the flag and validates a real wake. This is the
-concrete build behind
+Status: in flight 2026-06-26 (evt vtyq; reviewed + live-driven evt 8f8y; step 2
+shipped evt wcxs; **step 3 shipped + claude default-on** evt wlap) — steps 1–3
+done in `src/brr/runner_stream.py`; only step 4 (retire the pull-reliance fallback)
+remains. **Step 1** = the stream-json client, re-verified against the live claude
+v2.1.191 CLI. **Step 2** = the persistent (no-`--print`) driver with boundary
+injection: `build_stream_cmd` strips `--print`/`-p` (`_DROP_FLAGS`);
+`consume_stream` grew an `on_result` stop-control seam; `run_stream` binds a stdin
+`Injector` to the boundary/result callbacks and, when none are wired, builds a
+default `StreamInjectionPolicy` from the run env's `BRR_PORTAL_STATE`. **Step 3** =
+daemon routing + the step-2 deferrals: the `claude` profile declares
+`stream: claude`; `runner.invoke_runner` routes a `stream:`-declaring profile (no
+`runner_cmd` override) to `run_stream`, keeping the heartbeat/budget/`kill_active`
+contract (the driver registers `_active_proc` itself). The policy now touches the
+shared `.flush` signal at each boundary/result so the heartbeat drains the outbox
+promptly (deferral #1, reusing the daemon's existing flush mechanism — no daemon
+coupling), and folds a still-pending event in by its **body verbatim** under a
+neutral relay header rather than the op summary (deferral #2; the portal-state
+event record already carries the full body). Validated live (claude v2.1.191 haiku,
+real profile flags survive stream mode). Host + worktree envs stream; the docker
+env (own invoke) stays blocking. This is the concrete build behind
 [`design-runner-back-channel.md`](design-runner-back-channel.md)
 §Streaming-driven injection. Parent: [#159](https://github.com/Gurio/brr/issues/159),
 [#171](https://github.com/Gurio/brr/issues/171).

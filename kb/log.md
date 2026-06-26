@@ -7991,3 +7991,46 @@ blocking `invoke_runner` path; step 3 flips claude onto it behind the flag, wire
 in-process outbox drain at the boundary, and relaying a folded event's body verbatim
 (today the policy injects the portal delta/summaries). 43 tests in
 `test_runner_stream.py` (full suite 1039 green). Plan page updated.
+
+## [2026-06-26] implement | Streaming runner step 3: claude default-on + work-status portal facet
+
+Step 3 of the claude streaming runner (`runner_stream.py`), plus the operator-requested
+live work-status info, plus a reconciliation on "drop --print from the other runners"
+(evt wlap). Three shipped pieces:
+
+1. **claude routed onto streaming, default-on.** The bundled `claude` profile declares
+   `stream: claude`; `runner.invoke_runner` delegates a `stream:`-declaring profile (with
+   no `runner_cmd` override) to `runner_stream.run_stream`. The driver registers
+   `_active_proc` itself, so the daemon's heartbeat/budget/`kill_active` contract is
+   unchanged — host + worktree envs stream; the docker env (own invoke) stays blocking.
+   The two step-2 deferrals folded in: (a) **boundary outbox drain** — the policy touches
+   the shared `.flush` signal at each boundary/result, so the heartbeat fast-poll drains
+   outbound promptly, reusing the existing flush mechanism with zero daemon coupling in
+   the driver; (b) **verbatim event fold-in** — at the terminal result a still-pending
+   event is folded in by its **body verbatim** under a neutral relay header (the user's
+   own words, per the spike's framing rule that coercive framing is refused), not the op
+   summary; the portal-state event record already carries the full body. Validated live
+   against claude v2.1.191 (haiku; real profile flags `--system-prompt` / `--setting-sources
+   local` survive stream-json mode; persistent session captures the result and exits clean).
+   Default-on is reversible — drop the `stream: claude` line to fall back to `--print`.
+
+2. **Work-status `resources` portal facet.** New `resources` facet in portal-state so the
+   running resident can read its live operating posture off `BRR_PORTAL_STATE`. Each
+   sub-field is `known` (quota, via the existing per-run `runner_quota` snapshot) or an
+   honest `unavailable` placeholder (cost metering, coexisting/shadow runs, cross-repo
+   remote SCM — not built yet). The per-run worktree's local SCM posture already rides the
+   `scm` facet. Rendered as a compact `resources:` line at seed/stop in `hooks.format_delta`
+   (boundary signal like `scm:`, never mid-run noise) and in `brr portal state`. Placeholders
+   are deliberate: a future wake sees the slot and what would fill it.
+
+3. **"Drop --print from the other runners" — reconciled, nothing to drop.** claude's `--print`
+   is the single-turn trap that streaming strips. codex (`codex exec`) and gemini (`gemini -p`)
+   carry no separable/redundant print flag — their non-interactive modes are *required* for
+   headless operation, not the single-turn trap. So there is nothing to drop there without
+   breaking them. Verified **codex works** end-to-end (`codex exec` → PONG, exit 0, codex-cli
+   0.141.0). gemini postponed (unauthenticated, per the operator). codex/gemini remain on the
+   blocking path with their `hooks:` intent; stream-driving codex via its `--json` event mode
+   would be a separate build, not a flag drop.
+
+Full suite 1047 green. Plan page → step 3 shipped (only step-4 fallback-retirement remains);
+`design-runner-back-channel.md` and `runners.md` reconciled to "built and default-on".

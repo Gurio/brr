@@ -103,11 +103,16 @@ field** — correct, because its mechanism is stream-driving, not hooks (the
 precheck — stays for `codex`/`gemini`, whose hooks are **declared intent,
 unverified end-to-end**: Tier 2 only after a live firing test. The
 `hooks.format_delta` capsule renderer is mechanism-neutral and is reused by the
-stream-driven path. **The streaming runner is not built yet** — see
-[`plan-streaming-runner-injection.md`](plan-streaming-runner-injection.md) for the
-scoped build. Today claude still runs the Tier-0/1 `--print` path
-(heartbeat-polled outbox drain), which carries *outbound* flush but not the
-*inbound* injection above; that gap is exactly what the streaming runner closes.
+stream-driven path. **The streaming runner is built and default-on for claude**
+(`src/brr/runner_stream.py`, profile flag `stream: claude`; shipped 2026-06-26,
+see [`plan-streaming-runner-injection.md`](plan-streaming-runner-injection.md)):
+`invoke_runner` routes a `stream:`-declaring profile to the persistent stream-json
+driver, which strips `--print`, weaves a change-token-gated portal delta in at
+each tool boundary, touches the `.flush` signal so the heartbeat drains the
+outbox promptly, and at the terminal result folds a still-pending event's body in
+verbatim (the inbound injection that the heartbeat-polled `--print` path could
+not carry). The `--bare` aliases and `runner_cmd` overrides stay on the Tier-0/1
+blocking path.
 
 > **Ladder lesson.** `hook_capability()` was a rung-1 *assumption dressed as a
 > check*: it asserts prerequisites (flavour renderable, endpoint on PATH, cwd
