@@ -121,6 +121,28 @@ a closeout/ack references something you can't place, tail
 with the maintainer: either rename the block (it isn't "recent") or window it to
 the tail, because right now it half-promises continuity it doesn't deliver.
 
+## Closely-spaced message fragments race separate wakes — answer the burst, not just the first line
+trigger: let's do medium, you stopped before answering, stopped before answering, burst fragments, orphaned follow-up, double-answer, coalesce window, debounce, #128, why didn't you reply, fragment burst
+
+Observed evt-ratx (2026-06-27): the maintainer sent "let's do medium" then two
+trailing fragments seconds apart. A wake planned/ended on an earlier slice before
+the trailing fragment was folded into its inbox, so "let's do medium" sat
+**unanswered** until a later wake tripped over it — and the maintainer rightly
+flagged the stop as a problem. Each burst pays a re-orientation wake plus a
+no-answer / double-answer risk.
+
+Lesson — two altitudes:
+1. **Cheap, already live:** the delivery contract re-reads `inbox.json` /
+   `portal-state.json` immediately before closeout. *Honour it* — re-read the
+   live inbox before terminal delivery and fold a related trailing fragment into
+   this wake (one `event: <id>` reply per folded event). This is the only thing
+   that stops a second orphaning; it caught evt-ratx.
+2. **Durable fix (carry forward):** daemon-side burst-coalescing at the event
+   seam — a per-run claim + short debounce/coalesce window so fragments from one
+   correspondent gather into one wake's inbox *before* it plans. Squarely #128.
+   When that ships and a burst can no longer split across wakes, slash this
+   pitfall — the seam fix is the better memory. Synthesis: dogfooding-plan-loop.md.
+
 ## Firing-test runner hooks from a clean env; stale stream conclusions are retired
 trigger: hooks back channel, brr hook, post-tool, PostToolUse, PostToolBatch, Stop, boundary injection, inbound injection, --safe-mode, CLAUDE_CODE_SAFE_MODE, settings.local.json, hooks not firing, hooks don't fire, runner hooks, runner profile, Tier 2, --print, stream-json, runner_stream, stop-control
 Do not trust config-present / endpoint-works as proof that a runner hook channel
