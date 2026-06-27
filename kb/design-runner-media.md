@@ -20,8 +20,13 @@ brr currently has **runner profiles**, not **runner media**:
   `Runner: <medium>` into the Mode block, and can append a trusted quota summary
   from `runner.quota.*`, `BRR_RUNNER_QUOTA_*`, or `.brr/runner-quota.json`.
 - The live `portal-state.json` resource facet has the future slots already:
-  `quota`, `cost`, `coexisting_runs`, and `remote_scm`. Today only `quota` can
-  be known; `cost` and the others truthfully render as unavailable.
+  `quota`, `cost`, `coexisting_runs`, and `remote_scm`. Each renders three-state
+  (evt-go5z): `known` carries a proven value; `absent` is affirmative-empty (no
+  quota snapshot for this medium, no PR for the branch yet); `unimplemented`
+  names a not-yet-built collector (`cost`, `coexisting_runs`). Today `quota`
+  reaches `known` when a snapshot is proved and `remote_scm` reaches `known` when
+  a PR is recorded; the rest render `absent`/`unimplemented` honestly. See
+  `design-resident-boundary.md` §1.
 - Boundary interweave is now native hooks: Claude and Codex reach the same
   runner boundary via `brr hook <phase>`, so fresh resource state can be woven
   into the resident at seed/stop and, when attention changes, at post-tool.

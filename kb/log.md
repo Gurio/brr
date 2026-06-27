@@ -8272,3 +8272,32 @@ boundary facets and the cost matrix actually move.
 
 Branch `brr/boundary-and-medium-synthesis`. No code changed this wake — design
 synthesis only.
+
+---
+
+## [2026-06-27] feat | medium settled; boundary portal shows substantially more missing data
+
+Maintainer confirmed two open forks from the boundary synthesis (evt-go5z,
+telegram) and asked for a concrete enrichment. **Vocabulary fork resolved:**
+`medium` is the noun for the executor — `runner` dissolves into "the resident",
+with a dedicated rename run left as a sanctioned follow-up (kept out of this
+behavioural diff). **Boundary ask:** the portal should "show substantially more
+missing data" than the old flat `unavailable` — no PR, no outbound messages,
+running so long, plus unimplemented-but-required slots.
+
+Shipped that across all three rails (JSON `portal-state.json`, the woven hook
+line, and `brr portal state`): the resource facets are now three-state —
+`known` (proven value), `absent` (affirmative-empty: no PR for the branch, no
+quota snapshot for this medium), `unimplemented` (collector not built, with a
+`required` flag) — each carrying a `note` on *why* a slot is empty. Added
+network-free PR posture in `remote_scm` (recorded `github_pr_number` →
+`pr_state: open`, else the not-yet-created receipt), a `budget.long_running`
+flag with a "running long" line past the soft budget, and a
+no-outbound-at-closeout receipt (`outbound.any_sent`). The distinction encodes
+the maintainer's own split: "missing data" (absent) vs "unimplemented but
+required" — absence is data, surfaced on purpose, not a silent gap.
+
+Still open: populate the `known` *values* (live quota/cost collectors), unify
+the three renderers behind a single projection helper, and the runner→medium
+rename run. Reconciled `design-resident-boundary.md` (§1/§3/§5/summary) and
+`design-runner-media.md`. Branch `brr/boundary-and-medium-synthesis`.

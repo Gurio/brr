@@ -59,11 +59,32 @@ tier-2/tier-3 design, not a bug.
 crossing near-empty, a coexisting run appearing, a relay cap approaching. Those
 are exactly the moments the boundary should interrupt with the resource line
 mid-run. The plumbing already supports it (`change_token` gating); what is
-missing is the collectors that make any resource facet move at all (everything
-renders `unavailable` today). So the work is *populate the facets*, not *merge
-the rails*. The one cheap hardening worth doing regardless: keep the JSON and
-the woven projection reading from a **single projection helper** so they can
-never drift in *which* facets they carry.
+missing is the collectors that make any resource facet move at all. So the work
+is *populate the facets*, not *merge the rails*. The one cheap hardening worth
+doing regardless: keep the JSON and the woven projection reading from a **single
+projection helper** so they can never drift in *which* facets they carry (still
+open — there are now three renderers: `_resources_facet`, `_format_resources`,
+`_format_portal_state`, agreeing on the same four keys by convention).
+
+**Shipped 2026-06-27 (evt-go5z): three-state facet honesty.** The maintainer
+agreed the rails are not identical *but* asked the boundary to "show
+substantially more missing data" than the old flat `unavailable`. The fix
+distinguishes the two kinds of "missing" the resident must not conflate:
+
+- `known` — proven value this heartbeat.
+- `absent` — the collector ran and there is genuinely nothing: **no PR for this
+  branch yet**, no quota snapshot the medium exposes, **no outbound message
+  sent**. Affirmative-empty — the same logic the closeout capsule uses for "0
+  pending events". Absence is data, surfaced on purpose.
+- `unimplemented` — the collector is not built (cost metering, coexisting runs),
+  with a `required` flag separating expected-to-grow from someday-niceties.
+
+The same wake also surfaced **"running long"** (elapsed past the soft budget,
+flagged in `budget.long_running`) and the **no-outbound-at-closeout** receipt,
+across all three rails (JSON portal, woven hook line, `brr portal state` CLI).
+This is the visible half of §5's PR posture and the first concrete step of
+"populate the facets"; the *values* behind `known` (live quota/cost numbers)
+still need their collectors.
 
 ## 2. The open-source vs brnrd split — the static envelope is not too limiting
 
@@ -97,7 +118,7 @@ open-source-friendly while giving the service a real, fair value-add — consist
 with [`decision-llm-relay.md`](decision-llm-relay.md) (BYO stays free/default;
 brnrd-owned intelligence pays provider cost + a transparent service fee).
 
-## 3. Vocabulary — runner / run / weave / medium (OPEN FORK)
+## 3. Vocabulary — runner / run / weave / medium (SETTLED → `medium`)
 
 **Maintainer's clarification:** stop conflating the *entity* (the weaver) with
 the *executor type* (Codex / Claude / Gemini). Proposed:
@@ -126,11 +147,19 @@ With `medium` as the executor, **`runner` largely dissolves** — the weaver is
 is a satisfying *cut*, not just a rename, and fits the pre-release bias toward
 collapsing names that no longer carry their weight.
 
-**Why this is a fork, not a done deal:** `runner` is embedded across config keys
-(`runner`, `runner_cmd`), prompts (`runners.md`), kb page names
-(`design-runner-*`), and code (`resolve_runner`, runner profiles). The rename is
-a wide, mechanical blast best done as its own dedicated run once the noun is
-fixed. **Needs the maintainer's pick of noun before the rename run.**
+**Resolved 2026-06-27 (evt-go5z): the maintainer picked `medium`** ("let's do
+medium"). So the noun is fixed: the executor (Codex / Claude / Gemini / custom)
+is the **medium**, `run`/`weave` is the wake's work, and `runner` dissolves into
+"the resident". `substrate` stays available as a clinical synonym for technical
+prose.
+
+**The rename is now a sanctioned follow-up run, deliberately not folded into the
+boundary work.** `runner` is embedded across config keys (`runner`,
+`runner_cmd`), prompts (`runners.md`), kb page names (`design-runner-*`), and
+code (`resolve_runner`, runner profiles). It is a wide, mechanical blast that
+earns its own dedicated run with a migration shim for live config — kept
+separate so a behavioural change (this boundary enrichment) and a pure rename
+do not tangle in one diff.
 
 ## 4. Cost manifests per medium, and the respawn navigation matrix
 
@@ -218,23 +247,30 @@ the free mechanism, always an offered convenience over it."
 
 ## Settled vs open
 
-**Settled this conversation (recorded above, no code yet):**
+**Settled this conversation:**
 - The boundary is one concept, two rails of different density; the portal json
   is the snapshot/fallback rail, not a redundant copy. (§1)
 - Self-deployed static envelope + best-effort local signals is the open
   mechanism; brnrd adds the live authoritative rail + remote control. (§2)
+- **Vocabulary:** `medium` is the noun for the executor; `runner` dissolves into
+  "the resident". A dedicated rename run follows. (§3, evt-go5z)
 - Failover = cheap-recovery + visible receipt + honest escalation, not a perfect
   classifier; PR posture (incl. not-yet-created) joins the boundary. (§5)
 - Business posture reconciles with open-source via transparent
   paid-everywhere-it-fits. (§6)
 
-**Open forks (need a maintainer nod before the build):**
-- **Vocabulary (§3):** confirm `medium` (vs substrate / shell) for the executor,
-  which frees `runner` to dissolve into "the resident." Then a dedicated rename
-  run.
-- **First concrete build:** populate the resource collectors so the boundary
-  facets actually move (the matrix and the near-empty-quota mid-run injection
-  both depend on it) — the §4 / §1 work.
+**Shipped (evt-go5z):**
+- Three-state facet honesty (`known`/`absent`/`unimplemented` + `required`),
+  PR-not-created posture, `long_running`, and no-outbound-at-closeout — across
+  the JSON portal, the woven hook line, and `brr portal state`. (§1)
+
+**Open forks / next builds:**
+- **The rename run** (§3) — `runner` → `medium`/`resident`, its own dedicated run.
+- **Populate the `known` values:** live quota/cost collectors so a facet carries
+  a real number, not just an honest `absent`. The matrix (§4) and the
+  near-empty-quota mid-run injection both depend on it.
+- **Single projection helper** so the three renderers can never drift in *which*
+  facets they carry. (§1)
 
 ## See also
 
