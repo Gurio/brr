@@ -165,3 +165,21 @@ trigger: stream-json, runner_stream, streaming runner, --print, mid-loop injecti
 - **Mid-loop injection** (a user message written on stdin *between tool calls*) IS attended — but only while the model still has pending tool calls. A 1-tool task ignored a post-boundary injection (it had already decided to finish); a 3-tool task acted on the same injection between calls.
 - **Stop-control** (block a premature finish / fold a late event into the run) does **NOT** work under `--print`: the process exits on the first `result` event no matter what's on stdin. Keeping stdin open does nothing.
 **The fix is to DROP `--print`** — claude stream-json *without* `--print` runs a **persistent multi-turn session** (verified: result#1 "RED" → send msg → result#2 "BLUE", one process). In persistent mode, after a `result` a new user message starts a fresh turn the model addresses → that *is* stop-control, same stdin-write mechanism as mid-loop injection. `build_stream_cmd` currently inherits `--print` from the claude profile cmd, so it builds the weaker single-turn channel — step 2 must strip it. Also: `run_stream`'s `on_boundary` callback can't inject (no stdin handle) — boundary seam is read-only until step 2 passes it an injector. Don't reason about this from the spike notes; the spike conflated the two seams. Live harnesses kept at `/tmp/brr_stream_livetest/drive{,2,3,4}.py`.
+
+## Firing-test a runner CLI from a CLEAN env — parent agent session leaks CLAUDE_CODE_SAFE_MODE
+trigger: claude hooks, codex hooks, --print, settings.local.json, PostToolUse, PostToolBatch, hooks don't fire, firing test, runner hooks
+When you spawn `claude`/`codex` to test whether hooks/skills/plugins fire, you
+are (usually) spawning it from inside your OWN agent session, which exports
+`CLAUDE_CODE_SAFE_MODE=1` (+ CLAUDECODE, CLAUDE_CODE_SESSION_ID, AI_AGENT, …).
+Safe mode **silently disables settings-file hooks** while logging the reassuring
+"managed settings-file hooks still run" — so the child reports "Found 0 total
+hooks in registry" and you wrongly conclude hooks don't fire under `--print`.
+This single contaminant poisoned the whole streams-vs-hooks design for weeks
+(evt o538, 2026-06-27). ALWAYS run such firing tests with
+`env -u CLAUDE_CODE_SAFE_MODE -u CLAUDECODE -u CLAUDE_CODE_ENTRYPOINT
+-u CLAUDE_CODE_SESSION_ID -u CLAUDE_CODE_CHILD_SESSION -u AI_AGENT … claude …`.
+Confirmed truth: Claude PostToolUse/PostToolBatch/Stop(block-continues) all fire
+under `--print` with additionalContext injection; Codex PostToolUse fires too.
+Production fix landed: `runner.clean_runner_environ()` strips these. (If that
+helper is ever proven by a test to make the leak impossible end-to-end, slash
+this pitfall — the guardrail is the better memory.)
