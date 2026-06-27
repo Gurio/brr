@@ -121,65 +121,25 @@ a closeout/ack references something you can't place, tail
 with the maintainer: either rename the block (it isn't "recent") or window it to
 the tail, because right now it half-promises continuity it doesn't deliver.
 
-## A hooks-capable runner profile must not also disable hooks (claude --safe-mode)
-trigger: hooks back channel, brr hook, post-tool, inbound injection, --safe-mode, settings.local.json, hooks not firing, runner profile, Tier 2
-The back channel (#171/#175) can be fully wired daemon-side — config generated,
-`brr hook post-tool` returning correct `additionalContext` — and still fire
-**zero times**, because the *runner invocation flag* suppresses hooks. The
-`claude` profile shipped `--safe-mode`, which sets `CLAUDE_CODE_SAFE_MODE=1` and
-disables hooks (+ CLAUDE.md/skills/plugins/MCP), silently no-op'ing its own
-`hooks: claude`. Fixed 2026-06-23 → `--setting-sources local` (brr's hook config
-lives in the *local* settings source). Diagnostic that nails "did the harness
-fire the hook at all": the hook writes `.hook-state.json` on every invocation —
-if it's absent after a run of tool calls, the harness never called the hook
-(distinct from "called but didn't inject"). Don't trust config-present /
-endpoint-works as proof the channel is live; trust `.hook-state.json` / `.flush`
-firing evidence, or a visible `[brr portal update]` injection in your context.
+## Firing-test runner hooks from a clean env; stale stream conclusions are retired
+trigger: hooks back channel, brr hook, post-tool, PostToolUse, PostToolBatch, Stop, boundary injection, inbound injection, --safe-mode, CLAUDE_CODE_SAFE_MODE, settings.local.json, hooks not firing, hooks don't fire, runner hooks, runner profile, Tier 2, --print, stream-json, runner_stream, stop-control
+Do not trust config-present / endpoint-works as proof that a runner hook channel
+is live. Trust end-to-end firing evidence: `.hook-state.json` / `.flush` written
+by the hook, or a visible injected `[brr portal update]` / `additionalContext`
+that the model actually reads.
 
-UPDATE 2026-06-23 (run …-1953-mf1j): the `--setting-sources local` fix was NOT
-sufficient — hooks STILL don't fire under `claude --print` v2.1.185. Same
-diagnostic confirmed it (no `.hook-state.json` after 6+ tool calls; endpoint
-perfect when run by hand). Leading suspect: **untrusted local hooks** —
-`~/.claude.json` has `hasTrustDialogAccepted=False` and no hook-approval record;
-headless `--print` can't clear Claude Code's hook trust/approval gate, so
-local-source hooks get silently skipped. RESOLVED by experiment 2026-06-23: ran nested `claude --print` against fresh temp
-dirs with a sentinel hook and isolated by elimination. It is NOT trust, NOT the
-setting-source, NOT a missing matcher — all tested, all no-fire (even
-`--output-format stream-json`, even a forced-trusted dir, even with a confirmed
-tool call). **The real cause is structural: Claude Code v2.1.185 does not run
-settings-file lifecycle hooks under the headless `claude --print "<prompt>"`
-invocation at all.** The whole tier-2 was built on a documented-but-never-tested
-assumption. Likely (untested) fix: full streaming SDK mode (`--input-format
-stream-json --output-format stream-json`), which is a runner.py rearchitecture.
-So the firing diagnostic stands (`.hook-state.json` / `[brr portal update]`
-injection = proof), but the lesson is broader: **verify a runner capability by
-firing it end-to-end before building on it; docs-verified ≠ works.** Demote claude
-to Tier 0/1 (responsiveness via heartbeat-polled outbox drain, which DOES work)
-until streaming lands. Full writeup: `kb/design-runner-back-channel.md` §Second
-activation failure / §Fix directions.
+Current truth after evt o538 (2026-06-27): Claude Code `PostToolUse`,
+`PostToolBatch`, and `Stop` hooks **do** fire under headless `claude --print`
+when the environment is clean; `Stop` block continues the turn, and
+`additionalContext` injection lands. Codex native `PostToolUse` fires via inline
+hook config too. The earlier dominion notes claiming "Claude hooks do not fire
+under `--print`", "`--print` is single-turn with no stop-control", and "drop
+`--print` for persistent stream mode" were false conclusions from contaminated
+tests and are retired.
 
----
-
-trigger: stream-json, runner_stream, streaming runner, --print, mid-loop injection, stop-control, boundary injection, persistent session, claude --print
-**`claude --print` stream-json is SINGLE-TURN — injection after the model commits to finishing is silently dropped, and there is NO stop-control.** Live-verified 2026-06-26 (evt 8f8y) driving `runner_stream.py` against real haiku v2.1.191. Two seams behave very differently:
-- **Mid-loop injection** (a user message written on stdin *between tool calls*) IS attended — but only while the model still has pending tool calls. A 1-tool task ignored a post-boundary injection (it had already decided to finish); a 3-tool task acted on the same injection between calls.
-- **Stop-control** (block a premature finish / fold a late event into the run) does **NOT** work under `--print`: the process exits on the first `result` event no matter what's on stdin. Keeping stdin open does nothing.
-**The fix is to DROP `--print`** — claude stream-json *without* `--print` runs a **persistent multi-turn session** (verified: result#1 "RED" → send msg → result#2 "BLUE", one process). In persistent mode, after a `result` a new user message starts a fresh turn the model addresses → that *is* stop-control, same stdin-write mechanism as mid-loop injection. `build_stream_cmd` currently inherits `--print` from the claude profile cmd, so it builds the weaker single-turn channel — step 2 must strip it. Also: `run_stream`'s `on_boundary` callback can't inject (no stdin handle) — boundary seam is read-only until step 2 passes it an injector. Don't reason about this from the spike notes; the spike conflated the two seams. Live harnesses kept at `/tmp/brr_stream_livetest/drive{,2,3,4}.py`.
-
-## Firing-test a runner CLI from a CLEAN env — parent agent session leaks CLAUDE_CODE_SAFE_MODE
-trigger: claude hooks, codex hooks, --print, settings.local.json, PostToolUse, PostToolBatch, hooks don't fire, firing test, runner hooks
-When you spawn `claude`/`codex` to test whether hooks/skills/plugins fire, you
-are (usually) spawning it from inside your OWN agent session, which exports
-`CLAUDE_CODE_SAFE_MODE=1` (+ CLAUDECODE, CLAUDE_CODE_SESSION_ID, AI_AGENT, …).
-Safe mode **silently disables settings-file hooks** while logging the reassuring
-"managed settings-file hooks still run" — so the child reports "Found 0 total
-hooks in registry" and you wrongly conclude hooks don't fire under `--print`.
-This single contaminant poisoned the whole streams-vs-hooks design for weeks
-(evt o538, 2026-06-27). ALWAYS run such firing tests with
-`env -u CLAUDE_CODE_SAFE_MODE -u CLAUDECODE -u CLAUDE_CODE_ENTRYPOINT
--u CLAUDE_CODE_SESSION_ID -u CLAUDE_CODE_CHILD_SESSION -u AI_AGENT … claude …`.
-Confirmed truth: Claude PostToolUse/PostToolBatch/Stop(block-continues) all fire
-under `--print` with additionalContext injection; Codex PostToolUse fires too.
-Production fix landed: `runner.clean_runner_environ()` strips these. (If that
-helper is ever proven by a test to make the leak impossible end-to-end, slash
-this pitfall — the guardrail is the better memory.)
+The contaminant was usually the parent agent session: `CLAUDE_CODE_SAFE_MODE=1`
+(plus `CLAUDECODE`, `CLAUDE_CODE_SESSION_ID`, `AI_AGENT`, etc.) silently disables
+settings-file hooks while logging reassuring hook text. For live runner tests,
+spawn with those vars stripped, or use `runner.clean_runner_environ()`, which now
+does this in production. If future tests prove that helper makes this impossible
+end-to-end, slash this pitfall; the code guard is the better memory.
