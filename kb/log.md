@@ -8241,3 +8241,34 @@ is not assumed to be API-visible; brnrd relay debits provider cost plus the
 transparent relay service fee from `decision-llm-relay.md`. The older billing
 and managed-mode pages now carry the partial supersession so they no longer
 read as compute-wallet-only.
+
+## [2026-06-27] design | The boundary as one envelope on two rails; medium vocabulary fork
+
+Dogfooding session against a maintainer design message (evt-9dp2/slhg) that
+braided several threads: should the portal json and the hooks be one concept;
+the open-source vs brnrd boundary split; runner/run/weave/medium vocabulary;
+cost manifests per medium and the respawn matrix; failover triage; and the
+fair-but-everywhere business posture. Filed `design-resident-boundary.md` as the
+reconciliation against the same-day runner-media / back-channel / cost-aware
+pages, and indexed it.
+
+Settled: the **boundary is one concept on two rails of different density** — a
+mid-run re-evaluation, after tracing `daemon._resources_facet` (full JSON
+snapshot) vs `hooks._format_resources` (seed/stop-gated woven line). The portal
+json is the complete snapshot + no-hook fallback rail the gated injection reads
+from, not a redundant "more live" copy; making them byte-identical would revive
+the firehose. The real gap is *populating the collectors* (all facets render
+`unavailable`), not merging the rails. Also settled: self-deployed static
+**envelope** is the open mechanism, brnrd adds the live authoritative rail +
+remote control (open-source-friendly, fair value-add); failover = cheap-recovery
++ visible receipt (PR posture incl. not-yet-created joins the boundary) rather
+than a perfect failure classifier; business posture reconciles with OSS via
+transparent paid-everywhere-it-fits.
+
+Open forks left for a maintainer nod: confirm **medium** (vs substrate/shell) for
+the executor — which frees `runner` to dissolve into "the resident" and implies
+a dedicated rename run; and the first concrete build = resource collectors so the
+boundary facets and the cost matrix actually move.
+
+Branch `brr/boundary-and-medium-synthesis`. No code changed this wake — design
+synthesis only.

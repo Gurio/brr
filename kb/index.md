@@ -249,6 +249,18 @@ dive-in map) and are stable until something contradicts them.
   respawns can move to stronger media, and brnrd-owned LLM relay can sit behind
   a spend-plan consent checkpoint with wallet/audit line items instead of an
   opaque command-string convention.
+- [The boundary — one envelope, two rails, and the medium vocabulary](design-resident-boundary.md) —
+  *active synthesis 2026-06-27*. Reconciles a maintainer design message against
+  the same-day runner-media / back-channel / cost-aware pages. Settles that the
+  **boundary is one concept on two rails of different density** —
+  `portal-state.json` is the complete snapshot/fallback rail, the hook capsule is
+  the salience-gated injection rail, *not* a redundant copy; the open-source
+  static **envelope** is the open mechanism while brnrd adds the live
+  authoritative rail + remote control; failover is cheap-recovery + a visible
+  receipt (PR posture, incl. *not-yet-created*, joins the boundary) rather than a
+  perfect failure classifier. Carries two open forks: the **medium** vocabulary
+  (runner→resident / executor→medium) and populating the resource collectors so
+  the boundary facets (and the respawn cost matrix) actually move.
 - [Portal grammar & the reconcile/projection layer](design-portal-grammar.md) —
   *active; #159 design contract revised 2026-06-21 after live dogfood*.
   Names the **reconcile/projection layer** above gates (append-log vs
