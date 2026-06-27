@@ -1,10 +1,42 @@
 # Design: the runner back channel & the minimal runner interface
 
-Status: accepted on 2026-06-22 — the back-channel *machinery* shipped on `main`
-(#171/#175); `brr portal wrap` retired 2026-06-23. Tracked by
-[#171](https://github.com/Gurio/brr/issues/171). Superseded the `brr portal wrap`
-shell-wrapper slice of [`design-portal-grammar.md`](design-portal-grammar.md)
-§Implementation sequence #2 — that wrapper is deleted.
+Status: accepted on 2026-06-22; **unified on native hooks 2026-06-27** — the
+managed streaming driver is retired and both Claude and Codex now reach the
+boundary back channel through their native lifecycle hooks (`brr hook <phase>`).
+The back-channel *machinery* shipped on `main` (#171/#175); `brr portal wrap`
+retired 2026-06-23. Tracked by [#171](https://github.com/Gurio/brr/issues/171).
+Superseded the `brr portal wrap` shell-wrapper slice of
+[`design-portal-grammar.md`](design-portal-grammar.md) §Implementation sequence
+#2 — that wrapper is deleted.
+
+> ## Current shape (2026-06-27, after the rip-out)
+>
+> Boundary injection is **native hooks for every Tier-2 runner** — no special
+> per-runner machinery. brr owns the abstract phases (`post-tool` / `stop` /
+> `session-start`) and the neutral `{inject, block, block_reason}` result;
+> `render_native` maps it to each flavour's fields. The install mechanism is the
+> only thing that differs:
+>
+> - **claude** (`hooks: claude`) — per-run `.claude/settings.local.json` with
+>   `PostToolBatch` / `Stop` / `SessionStart` → `brr hook <phase>`. Injection via
+>   `hookSpecificOutput.additionalContext`; `Stop` `decision:block` continues the
+>   turn. Fire-verified Claude Code 2.1.191.
+> - **codex** (`hooks: codex`) — hook config injected as runner argv
+>   (`-c hooks.<Event>=[…]`) + `--dangerously-bypass-hook-trust` (the project
+>   `.codex/config.toml` install hung under repo-trust). `PostToolUse` / `Stop` /
+>   `SessionStart`; same `hookSpecificOutput` envelope. Fire-verified `PostToolUse`
+>   + injection on codex-cli 0.141.0.
+> - **gemini** (`hooks: gemini`) — intent only; no emitter, no firing test yet.
+>
+> The `Stop` hook folds a still-pending foldable event into the same thought by
+> relaying its **body verbatim** as the user's words (`hooks._fold_in_message`),
+> the behaviour ported out of the deleted streaming driver. The env-contamination
+> guardrail (`runner.clean_runner_environ()`) is the precondition that makes
+> settings-file hooks reliable. `runner_stream.py` and its test are deleted; the
+> plan that built them is [`plan-streaming-runner-injection.md`](plan-streaming-runner-injection.md)
+> (abandoned 2026-06-27). **Everything below this block is the historical record
+> of how the streaming detour happened and was reversed — read it as lineage, not
+> current shape.**
 
 > ## ⚠ Load-bearing correction — Claude hooks DO fire under `--print` (2026-06-27, evt o538)
 >
@@ -48,19 +80,19 @@ shell-wrapper slice of [`design-portal-grammar.md`](design-portal-grammar.md)
 > launched from inside an agent session can no longer silently disable runner
 > hooks. This is the precondition for hooks-as-mechanism to be *reliable*.
 >
-> **Queued (the rip-out, its own focused wake):** flip the `claude` profile to
-> `hooks: claude` (post-tool → `PostToolBatch`) and the `codex` profile to
-> `hooks: codex` (+ `--dangerously-bypass-hook-trust`); add a Codex hook-config
-> emitter to `install_hook_config` (Codex hooks fire via `-c` inline TOML — the
-> *project `.codex/config.toml`* install path hung under repo-trust and needs
-> nailing, so prefer the proven `-c hooks={…}` argv injection); port the
-> verbatim event-body fold-in (framed as the user's own words — injection-defense
-> still applies) into the `Stop` phase's `block_reason`; then delete
-> `src/brr/runner_stream.py` and its tests. The hook machinery (`brr hook`
-> endpoint, `compute_neutral`, `render_native`, `format_delta`, claude config
-> emitter) already exists and is tested — the rip-out is mostly profile flips +
-> a Codex emitter + deletions. Everything below this block still describes the
-> pre-rip-out streaming state; read it as current-code, not as the target shape.
+> **Landed 2026-06-27 (the rip-out, evt 1tqp).** `claude` flipped to
+> `hooks: claude` (post-tool → `PostToolBatch`), `codex` to `hooks: codex`
+> (+ `--dangerously-bypass-hook-trust`). The Codex hook config is injected as
+> runner argv via `hooks.codex_hook_args()` (`-c hooks.<Event>=[…]`, threaded
+> through `RunnerInvocation.extra_runner_args`) rather than a settings file. The
+> verbatim event-body fold-in is ported into `compute_neutral`'s `Stop` phase.
+> `runner_stream.py` + `test_runner_stream.py` deleted; the `invoke_runner`
+> stream-routing branch is gone. The codex hook schema was reverse-engineered via
+> `codex exec --strict-config` probes — it mirrors Claude's
+> `hooks.<Event>=[{matcher,hooks=[{type="command",command="…"}]}]`, events
+> `PostToolUse` / `Stop` / `SessionStart` (no `PostToolBatch`). See the Current
+> shape block at the very top of this page for the settled state. Everything
+> below is the historical streaming detour, not current code.
 >
 > **Concept vs mechanism — the load-bearing correction (2026-06-26, evt ckc3).**
 > An earlier framing fused two things under the word *hooks* and the fusion sent

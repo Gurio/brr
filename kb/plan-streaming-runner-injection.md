@@ -1,5 +1,21 @@
 # Plan: the streaming runner — Claude and Codex boundary injection
 
+Status: **abandoned on 2026-06-27** — the streaming driver was ripped out and
+boundary injection unified on native hooks for both Claude and Codex. The
+streaming approach existed only because settings-file hooks looked unfireable
+under `claude --print`; that was a false negative from a contaminated test env
+(`CLAUDE_CODE_SAFE_MODE` leaking from a parent agent session), and once stripped,
+`PostToolBatch` / `Stop` / `SessionStart` fire and inject cleanly. `runner_stream.py`
+and `test_runner_stream.py` are deleted; the `claude` profile declares
+`hooks: claude`, `codex` declares `hooks: codex` (argv-installed). Current design
+of record: [`design-runner-back-channel.md`](design-runner-back-channel.md). This
+page is kept as the history of *why* streaming was tried and retired — the
+cautionary "fire it before you rule on it" lesson cuts both ways.
+
+---
+
+_Historical (the streaming plan as it stood before retirement):_
+
 Status: in flight 2026-06-26 (evt vtyq; reviewed + live-driven evt 8f8y; step 2
 shipped evt wcxs; **step 3 shipped + claude default-on** evt wlap; **Codex
 JSONL stream shipped** evt 47ew) — steps 1–3 are done in
