@@ -8640,3 +8640,29 @@ basename sections were trimmed modestly within test constraints.
   `RunnerProfile` (Task 4A vocabulary sweep)
 - kb pages still using medium/vessel/cockpit prose (Task 4B semantic reconcile)
 - Index hygiene, oversized-page splits, proposal-scaffolding cleanup
+
+## [2026-06-28] refactor | Task 3.3 — cockpit file renames complete
+
+Executed Task 3.3 of `plan-repo-gardening.md` on `brr/initial-context-reweave`
+(commit `0bf281c`).
+
+Renamed `plan-resident-cockpit.md` → `plan-resident-portals.md` and
+`plan-cost-aware-cockpit.md` → `plan-cost-aware-runner.md`, completing the
+cockpit retirement that `design-portal-grammar.md` §3 settled months ago but
+was never mechanically applied to filenames.
+
+Link sweep touched: `kb/index.md`, `design-resident-boundary.md`,
+`design-portal-grammar.md`, `design-runner-media.md`, `design-runner-management.md`,
+`decision-bundled-docs.md`, and the plan files themselves. The in-code link in
+`prompts.py` (D2) was already fixed in Task 1.
+
+Also updated `plan-initial-context-reweave.md` status to "executed" and noted
+D2 as fully resolved.
+
+**Remaining (Task 4A):**
+- Body-prose "cockpit" sweep inside the renamed plan files (historical context;
+  low priority)
+- Full vocabulary sweep of vessel/medium across kb + code (incl.
+  `runner_media.py` → `runner_select.py`)
+- Proposal-scaffolding cleanup (4 pages: decision-licensing-and-defense,
+  decision-monorepo-structure, design-diffense, plan-env-fly-machines)
