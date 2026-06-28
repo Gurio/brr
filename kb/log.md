@@ -8398,3 +8398,44 @@ depth-capped ≤2, ambiguous failures escalate not loop) and the active build is
 held for a supervised wake. Tests: facets/statusline/cli/hooks/daemon green; the
 24 remaining failures are pre-existing in unrelated modules (cloud_gate,
 ergonomics, brnrd). Branch `brr/boundary-and-medium-synthesis`.
+
+## [2026-06-28] implement | Fire-verified cost-data: Claude statusLine dead headless; Codex quota wired from session rollout
+
+Validated the prior wake's Claude cost-awareness changes against a live runner
+(evt-4x6o ask: "validate the claude cost changes work; do something for codex")
+— and the result overturns the evt-e1gl finding both halves rested on.
+
+**Claude statusLine does NOT fire headless.** A probe statusLine command set in
+`.claude/settings.local.json` was never invoked under `claude --print` (brr's
+runner mode), while settings-file *hooks* fired the same run with a clean env
+(stripping `CLAUDE_CODE_SAFE_MODE` et al). statusLine is a TUI footer; the
+daemon never renders one, so `statusline.py` is dead in production — which is
+exactly why the live portal showed quota/spend/context all `absent`. The
+head-less Claude cost source is instead `claude --print --output-format json`:
+its result carries `total_cost_usd` (spend), token `usage`, and
+`modelUsage[model].contextWindow` (context) — but NOT subscription 5h/weekly
+`rate_limits`. Repointing to it changes the stdout contract (stdout→JSON; parse
+`.result` for the reply), so it's deferred to a maintainer-nod chunk.
+
+**Codex DOES expose subscription quota headless — the inverse of the prior
+"edge-only" conclusion.** Every `token_count` event in a Codex session rollout
+(`$CODEX_HOME/sessions/.../rollout-*.jsonl`) carries `rate_limits.primary` (5h)
++ `secondary` (weekly) with `used_percent`/`window_minutes`/`resets_at`, plus
+`plan_type` and `model_context_window`. That is exactly what `/status` prints —
+written to disk continuously, no `/status` call, no credits. Verified live on a
+real rollout and on a fresh `codex exec` run (`codex-cli 0.142.3`). The
+`codex exec --json` *stdout stream* does NOT carry rate_limits (only
+`turn.completed` token usage) — quota lives in the rollout file only.
+
+**Shipped:** `codex_status.py` (reads the newest rollout's last `token_count` →
+levels snapshot in statusline's shape); `facets.build` `levels_collector` is now
+a per-slot set (not one bool) so Codex `spend` honestly reads `unimplemented`
+(no $ gauge) rather than a misleading `absent`; daemon `_collect_levels` picks
+the level source per vessel. Live result: `quota=5h 99% left; 7d 73% left;
+context-window=… (est)`. Tests: `tests/test_codex_status.py` (7) + per-slot
+facet cases; 140 affected tests green. Reconciled `design-resident-boundary.md`
+§8 + `design-runner-media.md` to the fire-verified reality with a lineage
+breadcrumb; pitfall recorded (dominion). Tracking issue brr#195 (collector
+hardening: thread_id correlation, context math, upstream quota seam). Also added
+the maintainer's standing "ask mid-thought when initial context is unclear"
+workflow note to the dominion playbook. Branch `brr/boundary-and-medium-synthesis`.
