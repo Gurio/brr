@@ -8666,3 +8666,34 @@ D2 as fully resolved.
   `runner_media.py` → `runner_select.py`)
 - Proposal-scaffolding cleanup (4 pages: decision-licensing-and-defense,
   decision-monorepo-structure, design-diffense, plan-env-fly-machines)
+
+## [2026-06-28] refactor | Task 4A — vessel/medium vocabulary retired; runner_select module
+
+Executed the mechanical vocabulary sweep (Task 4A of `plan-repo-gardening.md`)
+on `brr/initial-context-reweave` (commit `700ba26`).
+
+**Code (src/brr/):**
+- `runner_media.py` → `runner_select.py` (git mv + full rewrite)
+- `RunnerMedium` → `RunnerProfile`; function renames: `medium_from_profile` →
+  `runner_from_profile`, `implicit_medium` → `implicit_runner`, `load_media` →
+  `load_runners`, `available_media` → `available_runners`, `select_medium` →
+  `select_runner`; `RespawnRequest.proposed_medium` → `proposed_runner`
+- `test_runner_media.py` → `test_runner_select.py` (rewritten; all 15 pass)
+- `vessel` → `Shell` swept across: `claude_status`, `codex_status`, `facets`,
+  `daemon`, `claude_usage`, `runner`, `statusline`, `test_codex_status`
+- `medium` → `Shell` swept across: `codex_status`, `daemon`, `facets`
+
+**KB:**
+- `design-runner-media.md` → `design-runner-cores.md` (git mv)
+- Page title updated; links swept across 8 non-log kb files; index entry
+  re-labeled "Runner Shell/Core selection…"
+- `design-runner-cores.md` body still uses stale vocab (33 hits: RunnerMedium,
+  medium, vessel) — that is the 4B semantic pass, deferred to next wake
+
+**Skipped:**
+- Proposal-scaffolding cleanup (4 pages: decision-licensing-and-defense,
+  decision-monorepo-structure, design-diffense, plan-env-fly-machines) — pages
+  are well-synthesized; the `[info]` finding is accurate but non-urgent. The
+  "Alternatives considered" sections serve as genuine reference, not dead
+  scaffolding. Defer to a gardening wake.
+- Index hygiene (4 missing pages) — already in index from a prior wake.
