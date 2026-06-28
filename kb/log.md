@@ -8465,3 +8465,40 @@ Focused tests (`test_claude_status`, `test_codex_status`, `test_statusline`,
 `test_runner`, `test_hooks`, `test_daemon`) passed: 127 tests. Full `pytest`
 still fails on pre-existing brnrd/cloud/CLI/ergonomics drift, unrelated to this
 change.
+
+## [2026-06-28] implement | Runner-medium foundation + cost-aware selection shape adopted
+
+Maintainer restarted the daemon to check the Claude boundary accounting, then
+sharpened the next workstream: model selection is a *requirement* to implement
+now, carrying low cognitive load (empower the runner to decide, don't make the
+user hand-tune execution details), with the selected medium/cost/quota exposed
+in the status card as governance.
+
+**Boundary finding (reported).** The Claude result-JSON wiring works, but it is
+*terminal accounting*, not a live gauge: spend + context appear on the closeout
+card / final portal refresh of a run, never in a later run's opening wake bundle
+(the snapshot is written after `claude --print` exits, into the per-event
+outbox). So Claude data cannot ride the Mode line the way Codex's live rollout
+quota does, and there is no head-less subscription quota / reset window for
+Claude at all. This run's own closeout card is the live demonstration.
+
+**Shape adopted.** Reconciled the config-format fork (`.brr/config` is flat
+`key=value`; the design's `[[runner.media]]` TOML can't live there) by carrying
+medium metadata as **optional frontmatter keys on the existing `runners.md`
+profiles** — a profile *is* a medium. User knobs stay minimal (`runner=` +
+`runner_policy=`); the selection policy is brr's.
+
+**Shipped** (`runner_media.py` + tests + bundled-profile metadata, branch
+`brr/boundary-and-medium-synthesis`): `RunnerMedium` schema, `implicit_medium()`
+legacy shim, `load/available_media()`, a deterministic conservative
+`select_medium()` (cheapest adequate local medium, never auto-selects a paid
+relay, honours explicit override), and the `RespawnRequest` parked-portal shape.
+Behaviour-neutral — no dispatch wiring yet. 15 new tests pass; adjacent suites
+(`test_runner`, `test_claude_status`, `test_codex_status`, `test_facets`) green.
+
+**Open decisions surfaced** (design-runner-media.md foot): reactive-vs-proactive
+respawn (Claude is terminal-only, so reactive-on-failure for v1); parked respawn
+request first vs. auto-chain (latter wants #128); deterministic selector keys on
+repo default_class only (no event-body heuristic); `cost_rank` is a coarse
+ordering hint not a price; card/portal `runner_media` exposure is the next slice;
+reset windows stay Codex-only by structure.

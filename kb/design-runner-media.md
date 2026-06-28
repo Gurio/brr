@@ -1,6 +1,22 @@
 # Design: runner media, cost policy, and brnrd relay fallback
 
-Status: active on 2026-06-27
+Status: active on 2026-06-27 · foundation shipped 2026-06-28
+
+> **2026-06-28 — shape adopted + foundation shipped (evt-y11i).** Two maintainer
+> steers fixed the user-facing shape: (1) *model selection is a requirement, not
+> a nicety — implement the right shape now*; (2) *carry low cognitive load —
+> empower the runner to make the informed decision, do not ask the user to
+> hand-tune execution details*, and (3) *expose the selected medium / cost /
+> quota in the status card as governance*. Reconciliation: medium metadata rides
+> the **existing profile frontmatter** (`runners.md`), not a new TOML config —
+> this dissolves the config-format fork (`.brr/config` is flat `key=value` and
+> cannot hold the `[[runner.media]]` array the sketch below shows), keeps the
+> only user knobs `runner=` + `runner_policy=`, and makes the *selection policy
+> brr's*. Shipped: `runner_media.py` (schema + implicit legacy shim +
+> deterministic conservative `select_medium` + `RespawnRequest` shape), medium
+> metadata on the bundled profiles, tests. Behaviour-neutral — no dispatch
+> wiring yet. Open decisions for the wiring/card/respawn slices are at the foot
+> of this page.
 
 This page is the implementation-design companion to
 [`plan-cost-aware-cockpit.md`](plan-cost-aware-cockpit.md) and the pricing
@@ -98,6 +114,18 @@ quota_source = "brnrd"
 billing = "llm-relay"
 consent = "spend-plan"
 ```
+
+> **Adopted encoding (2026-06-28): metadata on profiles, not a new TOML file.**
+> The TOML `[[runner.media]]` sketch above is the *full field vocabulary*, but
+> `.brr/config` is a flat `key=value` reader (`config.py`) and cannot hold an
+> array of tables. Rather than add a sectioned config parser (blast radius
+> across every config consumer) or a second config file (more surface for the
+> user to learn), the shipped foundation carries each field as an **optional
+> frontmatter key on the existing `runners.md` profile** — which already parses
+> arbitrary keys. A profile *is* a medium; the extra keys cost the user nothing
+> until they want to retune. The richer dedicated-config form can still arrive
+> later for accounts that declare media the host has no profile for (brnrd
+> relay), but the *local* media that selection runs over need no new format.
 
 This should align with the existing three-scope config model:
 
@@ -277,8 +305,10 @@ Approve / Queue until local reset / Configure own runner
 
 ## Implementation sequence
 
-1. **Data model only:** add runner-medium schema and a resolver that turns legacy
-   `runner=` into one implicit medium. No dispatch changes yet.
+1. **Data model only** *(shipped 2026-06-28, `runner_media.py`)*: runner-medium
+   schema, `implicit_medium()` legacy shim, and a deterministic conservative
+   `select_medium()`. Medium metadata rides the bundled profiles. No dispatch
+   changes yet.
 2. **CLI/display:** `brr runners list` or `brr config get runner.media` shows
    media, owner, class, hooks, quota source, and known freshness.
 3. **Portal upgrade:** replace the flat `resources.quota` string with structured
@@ -316,10 +346,67 @@ As this grows, `portal-state.json` likely deserves a small owner module rather
 than staying as a large helper in `daemon.py`; the portal is becoming a product
 surface, not just heartbeat state.
 
+## Open questions / decisions pending (2026-06-28)
+
+The foundation is wired; the dispatch/card/respawn slices each carry a call the
+maintainer should make. Each has a recommended default so the next wake can
+proceed unless redirected.
+
+1. **Respawn trigger asymmetry — reactive for Claude, proactive only for Codex.**
+   Cost-aware *vessel change* wants to fire before a wall, but the level seams
+   are asymmetric: Codex exposes **live** subscription quota (session rollout,
+   read at wake-start), while Claude exposes **terminal** spend/context only
+   (result JSON, known after the run exits — no head-less subscription quota at
+   all). So a Claude-first run cannot read mid-run that it is near a quota wall;
+   its respawn must be *reactive* — triggered by a classified quota/auth/provider
+   **failure** (sequence step 5), not by a pre-run gauge. Proactive "chunk or
+   defer before the wall" is possible only where a live gauge exists (Codex
+   today). *Recommend:* accept this as v1 — reactive respawn everywhere, proactive
+   where a live gauge exists — rather than blocking on a Claude quota source that
+   does not exist head-less.
+
+2. **Auto-respawn loop vs. parked request — depends on #128.** Fully automatic
+   fallback (`runner_media: [a, b]`, retry on next medium) wants the run/event
+   model's `defer_until` + re-claim (#128). *Recommend:* ship the **parked
+   respawn request** first (the resident emits a `RespawnRequest` — reason,
+   proposed medium, carry-forward — to the outbox; the user re-sends on the
+   chosen medium), which needs no #128. Promote to an automatic chain once #128
+   lands. This keeps the cheap models useful now without the daemon owning
+   invisible billing decisions.
+
+3. **What the deterministic v1 selector keys on.** The selector must stay
+   conservative (no revived LLM triage). Today it keys on: explicit override →
+   `runner_policy` → cheapest adequate local medium at/below `default_class`.
+   *Open:* should v1 read *anything* from the event (source, body length) to pick
+   a starting class? *Recommend:* **no** — start at the repo `default_class`
+   (economy/balanced) and let the resident escalate via a `RespawnRequest` after
+   it has read the repo and knows the task is harder than the body looked. Cheap,
+   predictable, no body-heuristic guessing.
+
+4. **`cost_rank` honesty.** The shipped ranks (gemini 10 < fable 15 < codex 25 <
+   claude/sonnet 30 < opus 50) are **coarse relative ordering hints, not dollar
+   figures** — they only decide tie-break order within a class. *Confirm:* this
+   is the intended contract (selection ordering, never a price promise), and the
+   exact numbers are brr defaults projects retune in their own `runners.md`.
+
+5. **Card / portal exposure (the governance ask, evt-8q21).** The selected
+   medium, class, model, and quota posture should surface in the status card and
+   `portal-state.json` (a `runner_media` resource block — sketch in
+   "Quota and credit signals" above). *Recommend:* extend the existing `resources`
+   facet with a `runner_media` record (selected + fallbacks + quota source/
+   freshness) and let the hook line carry a compact projection — the next slice,
+   once the dispatch wiring chooses a medium to display.
+
+6. **Reset windows (maintainer: "leave for now").** Already satisfied for Codex
+   (rollout `rate_limits.*.resets_at`, wired); **structurally unavailable** for
+   Claude head-less (no subscription quota in result JSON; `/usage` is TUI-only).
+   *Confirm:* we accept this asymmetry rather than chasing an Anthropic source
+   that the head-less seam does not expose.
+
 ## Sources
 
-- Local probes: `codex-cli 0.141.0`, `claude 2.1.191`, no `gemini` binary on
-  this host.
+- Local probes (2026-06-28): `codex-cli 0.142.3`, `claude 2.1.195`, no `gemini`
+  binary on this host.
 - OpenAI Codex CLI reference:
   <https://developers.openai.com/codex/cli/reference>
 - OpenAI Codex changelog, Codex Mini and on-demand credits:
