@@ -8439,3 +8439,29 @@ breadcrumb; pitfall recorded (dominion). Tracking issue brr#195 (collector
 hardening: thread_id correlation, context math, upstream quota seam). Also added
 the maintainer's standing "ask mid-thought when initial context is unclear"
 workflow note to the dominion playbook. Branch `brr/boundary-and-medium-synthesis`.
+
+## [2026-06-28] implement | Claude result JSON wired for terminal spend/context facets
+
+Followed up the maintainer's `/usage` observation with fresh live probes on
+Claude Code 2.1.195. Result: `/usage` is still TUI-visible only from brr's
+head-less vantage. A per-run `statusLine` command did not fire under
+`claude --print` (again), and the `--output-format json` result did not carry
+5h/weekly subscription quota or reset windows. It did carry the usable head-less
+fields: `total_cost_usd` and `modelUsage[model].contextWindow`.
+
+Shipped `claude_status.py` and changed bundled Claude profiles to request
+`--output-format json`; runner capture unwraps `.result` back into the normal
+response file and writes a `.claude-result-levels.json` snapshot so the final
+portal refresh can populate `spend` + `context_window`. Claude `quota` stays
+`absent`/snapshot-only, not fabricated. Removed brr's automatic `statusLine`
+registration from Claude hook settings; the old `brr statusline` helper remains
+only for a manually wired interactive footer. Reconciled
+`design-resident-boundary.md` and `design-runner-media.md` from "Claude repoint
+deferred" to "wired terminal accounting; no head-less reset windows."
+
+Verification: live Codex portal state in this run showed quota reset times
+already injected (`5h 98% left (resets 17:51Z); 7d 73% left (resets 16:12Z)`).
+Focused tests (`test_claude_status`, `test_codex_status`, `test_statusline`,
+`test_runner`, `test_hooks`, `test_daemon`) passed: 127 tests. Full `pytest`
+still fails on pre-existing brnrd/cloud/CLI/ergonomics drift, unrelated to this
+change.

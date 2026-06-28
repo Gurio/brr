@@ -78,7 +78,7 @@ iff it is one of:
   are the *level* facets; the card headline is the minimum distance across them.
   Which level a given vessel can actually read head-less is per-vessel (§8): Codex
   exposes `quota` + `context_window` (wired); Claude exposes `spend` + `context`
-  via its result JSON (deferred) but **not** quota head-less.
+  via its result JSON (wired 2026-06-28) but **not** quota head-less.
 - **an actionable operational state** that changes a decision without being a wall
   — `coexisting_runs` (presence/liveness), `remote_scm` (PR/push posture).
 
@@ -284,9 +284,11 @@ therefore dead in production — it only populates anything in an interactive TU
 session, which the daemon never runs. The head-less Claude cost source is instead
 `claude --print --output-format json`, whose result object carries
 `total_cost_usd` (spend), token `usage`, and `modelUsage[model].contextWindow`
-(context) — but **not** subscription 5h/weekly `rate_limits`. Adopting it changes
-the stdout contract (stdout becomes JSON; brr must read `.result` for the reply),
-so it's a deliberate, **deferred** decision — not yet wired.
+(context) — but **not** subscription 5h/weekly `rate_limits`. brr now opts the
+bundled Claude profiles into result JSON and unwraps `.result` back into the
+plain response file while writing `spend` + `context_window` levels to the
+portal at the terminal refresh. This is terminal accounting, not mid-thought
+quota guidance.
 
 **(c) Codex DOES expose subscription quota head-less — and brr now reads it.**
 Every `token_count` event in a Codex session rollout
@@ -306,14 +308,14 @@ rollout file, so the on-disk path is the one that works.
 
 | Vessel | Spend ($) | Subscription quota (5h/weekly) | Context window | Head-less source |
 | --- | --- | --- | --- | --- |
-| Claude Code (subscription) | `total_cost_usd` ✓ | ✗ (statusLine TUI-only, never fires under `--print`) | `modelUsage.contextWindow` ✓ | `claude --print --output-format json` **result** (deferred: changes stdout contract) |
+| Claude Code (subscription) | `total_cost_usd` ✓ | ✗ (statusLine TUI-only, never fires under `--print`) | `modelUsage.contextWindow` ✓ | `claude --print --output-format json` **result** — *wired* (`claude_status.py`; terminal refresh only) |
 | Codex (subscription) | ✗ (no $ gauge; tokens only) | ✓ `rate_limits.{primary,secondary}` | ✓ `model_context_window` + last `input_tokens` (est) | **session rollout `token_count` events** — *wired* (`codex_status.py`) |
 | Any API-key auth | response usage | `anthropic-ratelimit-*` headers | — | per-call headers |
 | brnrd-owned key | authoritative | authoritative | — | brnrd reads it (§2) |
 
 So the asymmetry is the **inverse** of the earlier note: **Codex's subscription
 quota is head-less-readable (and now live); Claude's is not** (TUI-only). Claude
-gives spend+context head-less (result JSON, deferred); Codex gives quota+context
+gives spend+context head-less (result JSON, wired); Codex gives quota+context
 head-less (rollout, wired). The `facets.build` `levels_collector` arg is now a
 per-slot set, not one bool, so each vessel marks only the slots it truly collects
 (`known`/`absent`) and leaves the rest `unimplemented` — Codex `spend` no longer
@@ -321,19 +323,22 @@ lies as `absent`.
 
 **Build consequence.** Codex quota collector: **done** (read-only, on-disk, no
 credits). Hardening + the upstream quota-seam ask are tracked in
-[brr#195](https://github.com/Gurio/brr/issues/195). Next chunk (needs the
-maintainer's nod — it changes the stdout contract): repoint Claude's level source
-from the dead `statusLine` collector to the `--print --output-format json`
-result, and either retire `statusline.py` or keep it gated behind a future
-interactive mode. Keep the §4 guardrail: the card shows *consumption-so-far +
-reset windows*, **never a forward dollar promise**.
+[brr#195](https://github.com/Gurio/brr/issues/195). Claude result-JSON collector:
+**done** for `spend` + `context_window` terminal accounting; `quota` remains
+unavailable head-less because the result JSON carries no reset windows. The old
+`statusline.py` helper is no longer registered by brr's daemon hooks; it only
+serves a manually wired interactive TUI footer. Keep the §4 guardrail: the card
+shows *consumption-so-far + reset windows when known*, **never a forward dollar
+promise**.
 
 > **Lineage breadcrumb.** 2026-06-28 (this run): live probe overturned the
 > evt-e1gl finding. Claude `statusLine` does not fire under `--print` (so
 > `statusline.py` is dead head-less); Codex *does* expose 5h/weekly quota in its
 > session rollout (so the earlier "Codex quota = edge-only / OpenAI issues
 > #15281/#19555/#17827 not shipped" conclusion was wrong — the data was already
-> on disk). The Codex rollout collector is wired; the Claude repoint is deferred.
+> on disk). The Codex rollout collector is wired; the Claude result-JSON repoint
+> shipped later the same day for terminal spend/context accounting, without
+> claiming Claude subscription quota/reset support.
 
 **The rename is now a sanctioned follow-up run, deliberately not folded into the
 boundary work.** `runner` is embedded across config keys (`runner`,
@@ -439,12 +444,11 @@ the free mechanism, always an offered convenience over it."
   until it settles. (§3)
 - **The boundary card is a standing level capsule with edge-gated re-injection;**
   distance-from-envelope (min across walls) is its spine. (§7, evt-tw6t)
-- **Cost-data source (corrected evt-e1gl):** the stream-json loom is retired; the
-  live cost/quota source is the **hooks rail**. For the Claude vessel, the
-  `statusLine` JSON (a hook-shaped collector) hands over spend
-  (`cost.total_cost_usd`), subscription quota level (`rate_limits.*` + resets),
-  and context-window headroom — so the old "spend-live / quota-edge-only" split is
-  really **per-vessel**, and Claude is level-readable on both walls today. (§8)
+- **Cost-data source (corrected 2026-06-28):** the stream-json loom is retired.
+  Codex live quota/context comes from session-rollout `token_count` events.
+  Claude spend/context comes from terminal `--output-format json` results.
+  Claude subscription quota/reset windows remain TUI-only (`statusLine` never
+  fires under `--print`). (§8)
 - **Facet selection (evt-e1gl):** facets are *derived from the walls* (budget,
   spend, quota, context_window) plus actionable state (coexisting_runs,
   remote_scm), defined once in the single projection helper — "by schema," not
@@ -471,22 +475,17 @@ the free mechanism, always an offered convenience over it."
   facets (schema-only outside a wake; live status folded in inside one). Fixed
   `_portal_state_path` to honour `BRR_PORTAL_STATE` so on-demand inspection
   resolves the live portal without `--path`.
-- **Claude statusLine collector** (`statusline.py` + `brr statusline`): registered
-  in the same `.claude/settings.local.json` as the hooks; each footer fire
-  normalizes the session JSON into a level snapshot the daemon folds into the
-  facets. Parse is defensive — the JSON field schema is still **unverified
-  against a live Claude run** (pitfall: fire it before you rule on it).
+- **Claude result-JSON collector** (`claude_status.py`): bundled Claude profiles
+  request `--output-format json`; runner capture unwraps `.result` back into the
+  response file and writes terminal `spend` + `context_window` levels for the
+  final portal refresh. The old `statusline.py` helper is not daemon-registered.
 
 **Open forks / next builds:**
 - **The rename run** (§3) — `runner` → `medium`/`resident`, its own dedicated run.
-- **Smoke-verify the Claude statusLine schema** against a live run and tighten
-  `statusline.parse_session` (drop the defensive fallbacks once the real field
-  nesting of `rate_limits` / `cost` / `context_window` is confirmed).
-- **Codex level collector** (§8c, researched evt-9yvh) — a *second shape*: parse
-  `token_count` events (live via `codex exec --json`, or the
-  `$CODEX_HOME/sessions/*.jsonl` tail) and apply a per-model price table for
-  spend; compute context headroom from token counts; quota stays edge-only.
-  Heavier than the Claude collector (derived, not handed over); lower priority.
+- **Hardening the level collectors:** correlate Codex rollout files to the active
+  session instead of relying on newest-file, confirm context math, and keep
+  watching for a first-class Claude quota/reset seam. Codex spend still needs a
+  price table if it ever graduates beyond `unimplemented`.
 - **The distance-card** (§7) — reframe the budget line as min-distance-across-walls
   now that spend / quota / context_window can carry live levels.
 - **Respawn-on-wall** (§5, deferred evt-1uwp) — see the cautious-deferral note
