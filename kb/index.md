@@ -249,6 +249,17 @@ dive-in map) and are stable until something contradicts them.
   respawns can move to stronger media, and brnrd-owned LLM relay can sit behind
   a spend-plan consent checkpoint with wallet/audit line items instead of an
   opaque command-string convention.
+- [Repo gardening — initial context, respawn model, imagery, kb/code sweep](plan-repo-gardening.md) —
+  *planning 2026-06-28*. The four-task hub for the gardening crossroads: reweave
+  the initial wake context, build the cost-and-capability-aware respawn model,
+  settle the imagery/vocabulary (Runner = Shell + Core; keep portal; retire
+  vessel/medium/cockpit), and sweep kb + code. Planned on Claude for a Sonnet
+  execution run.
+- [Initial wake-context reweave (gardening Task 1)](plan-initial-context-reweave.md) —
+  *planning 2026-06-28*. File-by-file target-shape spec for the prompts + Run
+  Context Bundle the resident reads on every wake; written as new-shape +
+  rationale so the execution run composes fresh files rather than nudging
+  accreted text.
 - [The boundary — one envelope, two rails, and the medium vocabulary](design-resident-boundary.md) —
   *active synthesis 2026-06-27*. Reconciles a maintainer design message against
   the same-day runner-media / back-channel / cost-aware pages. Settles that the
@@ -384,6 +395,14 @@ dive-in map) and are stable until something contradicts them.
   spawn-compute joined the protocol; renamed to
   `design-brnrd-protocol.md` on 2026-05-25 with the
   brnrd-naming-keep decision.
+- [brnrd repo-first model decision](decision-brnrd-repo-first-model.md) —
+  brnrd's account/project model is repo-first.
+- [brnrd channel routing design](design-brnrd-channel-routing.md) —
+  how brnrd routes messages across channels/gates.
+- [brnrd GitHub bot user design](design-brnrd-github-bot-user.md) —
+  the brnrd GitHub bot identity and its interactions.
+- [brnrd GitHub installation sync design](design-brnrd-github-installation-sync.md) —
+  syncing GitHub App installation state into brnrd.
 - [brnrd GitHub OAuth identity decision](decision-brnrd-github-oauth-identity.md) —
   *accepted on 2026-06-03*. brnrd accounts are GitHub identities via
   the managed GitHub App / OAuth web flow; email+password signup and

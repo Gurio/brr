@@ -8526,3 +8526,42 @@ from the local Claude subscription. Focused suites passed:
 `test_claude_usage`, `test_claude_status`, `test_hooks`, `test_daemon`,
 `test_outbox`, `test_facets`, `test_codex_status`, `test_runner_quota`, plus the
 Claude runner stdout unwrap case.
+
+## [2026-06-28] plan | Repo-gardening crossroads planned (4 tasks) for a Sonnet execution run
+
+Planning-only wake (maintainer to restart on a cheaper-but-capable model to
+execute). The repo is at an architecture crossroads where vessel/medium/runner/
+core are mixed across configs, kb, prompts, and code. Produced two plan pages.
+
+**Daemon quota check (side-ask).** Verified the restarted daemon's Claude
+quota-awareness: this wake's `portal-state.json` carries `resources.quota` =
+known ("session 100% left; week 55% left") — the cached `/usage` PTY scrape
+rides into the wake. But `spend` + `context_window` are `absent` at wake: the
+known structural boundary — Claude spend/context are terminal (written after
+`claude --print` exits), so they ride a run's *closeout*, never the next run's
+*opening* bundle. Working as designed, not a bug.
+
+**Task 1 — `plan-initial-context-reweave.md`:** file-by-file target-shape spec
+for the 9 prompt `.md` files + the Run Context Bundle strings baked in
+`prompts.py`. Names the discord (D1 vocabulary triple-naming; D2 cockpit link
+live in the daemon string `prompts.py` → `plan-cost-aware-cockpit.md`; D3 the
+Delivery contract re-teaches the whole portal protocol every wake instead of
+injecting live values + a pointer; D4 run.md⇄playbook⇄substrate overlap; D5
+claims-beyond-code re Claude live spend gauge; D6 imagery half-applied) and the
+new shape per file, written so the execution run composes fresh then swaps.
+
+**Tasks 2–4 — `plan-repo-gardening.md` (hub):** (2) informed respawn model
+extending `design-runner-media.md` — cheap dispatcher runner owns user knobs
+then respawns; probe installed models from the Shell itself (no hardcoded
+staleness); cached capability table (swe-bench/terminal-bench) as a hint not a
+hard selector; scheduling-aware respawn via existing schedule/defer; add an
+Activity view (running+scheduled runs) to the brnrd dashboard. (3) Imagery
+decision + pushback: adopt Runner = Shell (CLI) + Core (model), retire
+vessel/medium; **keep "portal" as the genus** (pushback on viewport-wholesale —
+viewport is perception-only and loses outbound/parked; use "viewport" only for
+the inbound sub-type); finish the never-swept cockpit retirement. (4) kb/code
+gardening method + conflict inventory from this wake's preflight.
+
+Also fixed cheap kb-health items: indexed the 2 new pages + the 4
+missing-from-index brnrd pages. Three forks raised to the maintainer
+(vocabulary veto, dispatcher-hop policy, task sequencing) before execution.
