@@ -66,6 +66,30 @@ projection helper** so they can never drift in *which* facets they carry (still
 open — there are now three renderers: `_resources_facet`, `_format_resources`,
 `_format_portal_state`, agreeing on the same four keys by convention).
 
+**How to choose the facets — the selection principle (evt-e1gl, 2026-06-28).**
+The maintainer asked, fairly: "agreeing by convention — I don't understand how to
+*choose* them; what would you prefer?" The answer is to stop choosing them by
+editorial taste (three lists that happen to match) and **derive them from the
+spine we already agreed — distance-from-envelope (§7)**. A slot earns facet status
+iff it is one of:
+
+- **a wall** the run can hit, with a distance the resident plans against —
+  wall-clock `budget`, `spend`, subscription `quota`, and now `context_window`
+  (unlocked by the statusLine finding, §8). These are the *level* facets; the
+  card headline is the minimum distance across them.
+- **an actionable operational state** that changes a decision without being a wall
+  — `coexisting_runs` (presence/liveness), `remote_scm` (PR/push posture).
+
+Everything else is detail to inspect on demand, not a facet. And the *convention*
+that stops drift is to make that set **explicit, once**: the single projection
+helper defines the facet list, each as a uniform three-state record
+(`status: known|absent|unimplemented`, `source`, `freshness`, `summary`,
+`required?`); the three renderers project from it rather than re-listing keys. So
+"by convention" (implicit agreement) → "by schema" (one definition). My
+preference, concretely: the wall-derived set above, which **adds `context_window`
+and promotes subscription `quota` from edge-only to a real level facet for the
+Claude vessel** (§8).
+
 **Shipped 2026-06-27 (evt-go5z): three-state facet honesty.** The maintainer
 agreed the rails are not identical *but* asked the boundary to "show
 substantially more missing data" than the old flat `unavailable`. The fix
@@ -228,47 +252,68 @@ needs a liveness collector. It's the right target, but it's a build, not a
 reframe of existing data. Until then the honest card says `coexisting-runs=
 unimplemented`, which is already the three-state honesty doing its job.
 
-## 8. What the medium actually exposes for live cost/quota (pre-build finding)
+## 8. What the medium actually exposes for live cost/quota (corrected 2026-06-28)
 
 **Question (maintainer):** before building the collectors, clarify exactly what
 we can get from the medium re: live cost and quota. This is load-bearing for the
 card (§7), because a card promising a smooth quota gauge it can't fill is a lie
 the resident learns to distrust.
 
-The honest answer splits into two signals of **very different data quality**, and
-that asymmetry *is* the open-source/brnrd boundary (§2) showing up again:
+**Two corrections landed (evt-e1gl, 2026-06-28) that overturn this section's
+first answer.** Both came from the maintainer, and both reconcile the live-cost
+question *back onto the hooks rail* — there is no streaming dependency here.
 
-- **Live consumption (this run, as it goes) — meterable, but only as a tally brr
-  computes, and only via the streaming driver.** When brr holds the
-  `stream-json` loom (the streaming medium in `plan-streaming-runner-injection.md`,
-  **not yet built**), each message carries usage — input/output/cache token
-  counts, and for Claude a `costUSD` (with caveats). That's the real "as you go"
-  cost signal: a *running consumption tally brr accumulates*, not a balance the
-  CLI hands over. This is the realistic source of "distance from the spend wall."
-  Crucial nuance: it measures **consumption, not remaining** — brr counts what's
-  spent, it doesn't read a headroom number.
-- **Quota / credit *level* (subscription headroom) — mostly NOT exposed.** This
-  is the hard part to be honest about. Claude Code and Codex **subscription**
-  quotas surface chiefly as **error text and near-limit suggestions**, not as a
-  readable gauge (confirmed in the CLI probe table in `design-runner-media.md`).
-  So for subscription media the quota wall is **edge-triggered** (you learn you're
-  near it when the CLI warns/errors), not a smooth level. A clean readable
-  *remaining* number exists only for: **API-key auth** (rate-limit headers),
-  **brnrd-owned keys** (brnrd reads them authoritatively), and **managed cloud**
-  (provider quota API). Historical org/admin usage APIs (OpenAI, Anthropic) are
-  async + admin-cred → they feed pre-analysis, never the live card.
+**(a) The `stream-json` loom is retired; the source is hooks.** The earlier
+answer routed live consumption through "brr holding the stream-json loom (not
+yet built)." That medium was *abandoned* on 2026-06-27 in favour of native hooks
+as the one boundary abstraction over vessels (see
+[`plan-streaming-runner-injection.md`](plan-streaming-runner-injection.md),
+status; [`design-runner-media.md`](design-runner-media.md) §Reconciled). So any
+"distance-from-spend-wall depends on the stream" reasoning is dead. The live cost
+signal must arrive through the same injected-JSON surfaces the hooks rail already
+owns — which is exactly what (b) provides.
 
-**Design consequence for the build.** The card's two walls have asymmetric data:
-the **spend wall is live-meterable** (token tally via streaming) and can show a
-real running number; the **subscription-quota wall is edge-only** and can show
-`ok / warned / hit` but not a smooth gauge — unless brnrd owns the key, which is
-exactly the live authoritative rail brnrd sells (§2). So: **build the consumption
-tally first** (it has real data and directly feeds distance-from-spend-wall);
-treat subscription quota as edge-triggered until brnrd/API-key auth makes it
-level-readable. And keep the §4 guardrail: the card shows *consumption-so-far +
-historical rank*, **never a forward dollar promise**. Build order is therefore
-streaming medium → consumption tally → distance-card, because the *live* half of
-the card depends on brr holding the stream.
+**(b) Claude Code DOES expose subscription quota as a readable level — via the
+status line.** Claude Code's `statusLine` feature invokes a configured command
+and hands it **session JSON on stdin**. That JSON carries (maintainer's finding,
+to be smoke-verified per the "fire it before you rule on it" pitfall):
+
+- `rate_limits.five_hour.used_percentage`, `rate_limits.seven_day.used_percentage`
+  — subscription quota **consumed**, as a readable gauge;
+- `rate_limits.five_hour.resets_at`, `rate_limits.seven_day.resets_at` — reset
+  windows (unix epoch), i.e. *when the wall moves*;
+- `context_window.remaining_percentage` — a **new wall** (context headroom);
+- `cost.total_cost_usd` — the estimated session **spend tally**, handed over by
+  the CLI rather than computed by brr.
+
+Structurally, **the status line is just another hook**: a command brr registers
+in the same `.claude/settings.local.json` it already writes the `PostToolBatch` /
+`Stop` / `SessionStart` hooks into, receiving JSON brr captures into the
+portal-state quota/cost collector. No streaming, no brnrd-owned key, no API-key
+auth required for Claude Code subscription runs.
+
+**Corrected data map.** The earlier "spend live / quota edge-only" split was a
+*per-signal* law; it's really a **per-vessel** asymmetry:
+
+| Vessel | Spend tally | Subscription quota level | Context window | How it arrives |
+| --- | --- | --- | --- | --- |
+| Claude Code (subscription) | `cost.total_cost_usd` | `rate_limits.*` (used % + resets_at) | `context_window.remaining_percentage` | **statusLine JSON** (a hook-shaped collector) |
+| Codex (subscription) | not a clean local gauge | error text + near-limit suggestion (edge-only) | — | failure classifier / suggestion text |
+| Any API-key auth | response usage | `anthropic-ratelimit-*` headers | — | per-call headers |
+| brnrd-owned key | authoritative | authoritative | — | brnrd reads it (the live rail brnrd sells, §2) |
+
+So for Claude Code — brr's own default vessel — **both walls and the context
+window are level-readable today**, cheaply, off one collector. The honest
+caveats remain: `cost.total_cost_usd` is *estimated* and `rate_limits` is
+*consumed%* (so headroom = `100 − used`); historical org/admin usage APIs stay
+async → pre-analysis, never the live card; and Codex subscription quota is still
+edge-only until its own collector or brnrd ownership.
+
+**Design consequence for the build.** Build order is now **statusLine collector →
+populate the quota/cost/context facets → distance-card** — all on the hooks rail,
+no streaming prerequisite. Keep the §4 guardrail: the card shows *consumption-so-
+far + reset windows + historical rank*, **never a forward dollar promise**
+(`cost.total_cost_usd` is past spend, not a projection — safe).
 
 **The rename is now a sanctioned follow-up run, deliberately not folded into the
 boundary work.** `runner` is embedded across config keys (`runner`,
@@ -374,9 +419,16 @@ the free mechanism, always an offered convenience over it."
   until it settles. (§3)
 - **The boundary card is a standing level capsule with edge-gated re-injection;**
   distance-from-envelope (min across walls) is its spine. (§7, evt-tw6t)
-- **Cost-data asymmetry:** live consumption is meterable via the streaming
-  medium; subscription quota is edge-only unless brnrd/API-key auth. (§8,
-  evt-tw6t)
+- **Cost-data source (corrected evt-e1gl):** the stream-json loom is retired; the
+  live cost/quota source is the **hooks rail**. For the Claude vessel, the
+  `statusLine` JSON (a hook-shaped collector) hands over spend
+  (`cost.total_cost_usd`), subscription quota level (`rate_limits.*` + resets),
+  and context-window headroom — so the old "spend-live / quota-edge-only" split is
+  really **per-vessel**, and Claude is level-readable on both walls today. (§8)
+- **Facet selection (evt-e1gl):** facets are *derived from the walls* (budget,
+  spend, quota, context_window) plus actionable state (coexisting_runs,
+  remote_scm), defined once in the single projection helper — "by schema," not
+  "by convention." (§1)
 - Failover = cheap-recovery + visible receipt + honest escalation, not a perfect
   classifier; PR posture (incl. not-yet-created) joins the boundary. (§5)
 - Business posture reconciles with open-source via transparent
@@ -389,11 +441,18 @@ the free mechanism, always an offered convenience over it."
 
 **Open forks / next builds:**
 - **The rename run** (§3) — `runner` → `medium`/`resident`, its own dedicated run.
-- **Populate the `known` values:** live quota/cost collectors so a facet carries
-  a real number, not just an honest `absent`. The matrix (§4) and the
-  near-empty-quota mid-run injection both depend on it.
+- **Claude statusLine collector** (§8) — register a `statusLine` command in the
+  same `.claude/settings.local.json` brr writes hooks into; capture the session
+  JSON into the portal-state quota/cost/context collector. First concrete build
+  to make the `known` values move; smoke-verify the JSON schema before relying on
+  it (pitfall: fire it before you rule on it).
+- **Add the `context_window` facet** and promote subscription `quota` to a level
+  facet for the Claude vessel, per the wall-derived selection principle. (§1, §8)
+- **Populate the remaining `known` values:** Codex/API-key/brnrd collectors so
+  each facet carries a real number, not just an honest `absent`. The matrix (§4)
+  and the near-empty-quota mid-run injection both depend on it.
 - **Single projection helper** so the three renderers can never drift in *which*
-  facets they carry. (§1)
+  facets they carry — define the wall-derived facet set there, once. (§1)
 
 ## See also
 
