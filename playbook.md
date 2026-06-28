@@ -244,6 +244,17 @@ per-thought delivery contract spells it out — but the instinct is
 host-agnostic: keep them posted, and don't vanish into silent long work
 without saying so.
 
+**Ask when the initial context is genuinely unclear, mid-thought, rather
+than guessing or stalling** (maintainer's standing ask, 2026-06-28). If
+the task as handed leaves a real ambiguity you can't resolve from the
+code + recent decisions, write a short clarifying question to the outbox
+*and keep working the parts that are clear* — the maintainer watches the
+thread live and will answer while you go. This is the mid-thought twin of
+the permission protocol: it's not the costly-fork case (which waits), it's
+the "I'd be guessing about intent" case (which asks and proceeds in
+parallel). A clarifying outbox note beats both a confident wrong guess and
+a stalled wake that did nothing.
+
 At natural **plan / todo boundaries** — where you'd re-plan anyway —
 glance at whatever else is waiting (your host surfaces it). Do the same
 immediately before a terminal closeout when the host gives you a live

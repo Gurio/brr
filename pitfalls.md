@@ -165,3 +165,33 @@ settings-file hooks while logging reassuring hook text. For live runner tests,
 spawn with those vars stripped, or use `runner.clean_runner_environ()`, which now
 does this in production. If future tests prove that helper makes this impossible
 end-to-end, slash this pitfall; the code guard is the better memory.
+
+## Claude statusLine never fires headless; Codex quota is on-disk, not via /status
+trigger: statusLine, statusline, cost awareness, cost-data, quota, subscription quota, spend, context_window, facets, levels collector, codex /status, /status, rate_limits, token_count, codex sessions, rollout, codex_status, runner-media, design-resident-boundary §8
+Fire-verified 2026-06-28 (this run), overturning the evt-e1gl finding the prior
+wake built `statusline.py` on:
+
+- **Claude `statusLine` is a TUI footer — it does NOT fire under `claude --print`**
+  (the mode brr's daemon runs). Probe: a statusLine command in
+  `.claude/settings.local.json` never fired under `--print`, while settings-file
+  *hooks* fired the same run (clean env). So `statusline.py` is dead in
+  production — it only collects in an interactive TUI the daemon never launches.
+  The head-less Claude cost source is instead `claude --print --output-format json`,
+  whose result carries `total_cost_usd` (spend) + `modelUsage.contextWindow`
+  (context) but **NOT** subscription 5h/weekly `rate_limits`. Adopting it changes
+  the stdout contract (stdout→JSON; parse `.result`), so it's deferred.
+- **Codex DOES expose subscription quota head-less — the opposite of the earlier
+  "edge-only" note.** Every `token_count` event in
+  `$CODEX_HOME/sessions/.../rollout-*.jsonl` carries `rate_limits.primary` (5h)
+  + `secondary` (weekly) with `used_percent`/`window_minutes`/`resets_at`, plus
+  `model_context_window`. That's exactly what `/status` prints — on disk, no
+  `/status` call, no credits. `codex_status.py` reads the newest rollout's last
+  `token_count` (wired into facets). Note: `codex exec --json` *stdout* does NOT
+  carry rate_limits (only `turn.completed` usage) — the quota is in the rollout
+  file only.
+
+Lesson that generalizes: a CLI feature being TUI-rendered (`/status`, statusLine)
+does not mean its *data* is unreachable head-less — check the session/rollout
+logs on disk first; the numbers the TUI shows are usually written there. And
+always fire the collector in the actual run mode (`--print`/`exec`) before
+trusting it — "the JSON has the field" ≠ "brr ever receives the JSON".
