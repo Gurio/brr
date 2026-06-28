@@ -21,6 +21,61 @@ Companions: [`design-portal-grammar.md`](design-portal-grammar.md),
 [`plan-cost-aware-cockpit.md`](plan-cost-aware-cockpit.md) (to be renamed,
 Part 3), [`design-runner-back-channel.md`](design-runner-back-channel.md).
 
+## Resolved by the maintainer (2026-06-28, evt-zyu6)
+
+The three forks below ("What needs the maintainer") are now answered, plus one
+new agreement on boundary quota. The Sonnet execution run builds on these — they
+are decisions, not open questions.
+
+1. **Vocabulary — adopted, with a refinement (Part 3.1).** Runner stays as the
+   *whole entity behind a run* — "a resident, via a Shell and a Core on a wake,
+   is the Runner." So most of the 271 `runner` code uses **stay** (the umbrella
+   is real). Retire vessel + medium; adopt Shell (CLI) + Core (model); keep
+   portal. **The one override of my earlier draft: the `runner=` *config toggle*
+   goes.** We don't let the user *define a Runner*; the user defines **Cores and
+   Shells**. So the user-facing knobs become `shell=` / `core=` (or a combined
+   pin), not a `runner=` profile selector. Internal Runner/profile code and the
+   umbrella concept remain; only the user-facing toggle is retired.
+2. **Dispatcher hop (Part 2A) — confirmed the conservative shape.** The routing
+   step is **skipped when a specific Shell (or Shell+Core) is pinned**. That
+   exposes a simple interface for the main case — Telegram over a local CLI
+   agent: pin the Shell, no routing hop. The cheap dispatcher runs only when
+   nothing specific is set.
+3. **Sequencing / chunking — confirmed.** Task 4 (and any large task) is chunked
+   across follow-up wakes rather than one giant sweep.
+4. **Boundary quota refresh + inject (new) — agreed, mostly already shipped; one
+   latency fix remains.** See the next section.
+
+### New slice: cheap boundary quota injection (the maintainer's point 1)
+
+The maintainer: "daemon quota is wired into `portal-state.json` already; refresh
+it on a boundary interweave trigger (hook fired) and inject into the boundary —
+cost negligible, benefit substantial." **Agreed on principle and benefit, and
+the *injection* half is already wired** — but with one correction worth acting
+on:
+
+- **Already done (injection):** `_emit_flush` (the boundary back-channel
+  `.flush` trigger) already calls `_write_live_portal_state`, and the post-tool
+  hook injects the `resources:` line — quota included — whenever
+  `change_token` moved (`hooks.py` lines 232-242). So fresh quota *already*
+  enters the weave mid-run, not only at seed/stop.
+- **The correction (cost is not uniformly negligible):** the *negligible* part
+  is **reading the cached snapshot**. The *refresh* itself is an ~18s **blocking
+  PTY `/usage` scrape** (`claude_usage.load_or_refresh_snapshot`, TTL 300s). And
+  that blocking scrape currently sits **on the boundary-flush critical path**:
+  `_emit_flush` → `_write_live_portal_state` → `_collect_levels` →
+  `load_or_refresh_snapshot`. So a tool-boundary flush can occasionally block the
+  daemon ~18s when the cache is stale — which contradicts `_emit_flush`'s own
+  "lighter / prompt, doesn't spam the card" design intent, and the pitfall rule
+  ("hooks read the cached projection, never run the scrape").
+- **The slice for the execution run:** keep injecting on the boundary (free);
+  move the ~18s scrape **off** the flush critical path. Refresh the
+  `claude_usage` cache on the heartbeat cadence (or a small background worker /
+  the next-wake seed), and let `_emit_flush` only *read* the cached snapshot.
+  Then "negligible cost at the boundary" is genuinely true. Net: point 1 is
+  ~80% shipped; what remains is this latency-correctness decoupling, not new
+  plumbing.
+
 ## Daemon-quota check (the maintainer's side-ask)
 
 The maintainer restarted the daemon with the Claude quota-awareness changes and
@@ -56,11 +111,11 @@ hour on Codex"), then **respawns** the real work onto the chosen Runner.
 - v1 keeps the *parked* `RespawnRequest` (no auto-chain until #128's
   `defer_until`/re-claim). The cheap runner emits a respawn request naming the
   target Runner + carry-forward context; the daemon (or a user nod) starts it.
-- **Open question for the maintainer:** does the cheap dispatcher *always* run
-  first (every event pays one cheap hop), or only when the event looks like it
-  needs routing? Recommend: **only when `runner=auto` and `runner_policy` is
-  cost-aware** — a pinned `runner=` skips the hop. Keep low cognitive load:
-  the user sets intent in plain words, brr does the routing.
+- **Resolved (maintainer, evt-zyu6):** the dispatcher hop is **skipped when a
+  specific Shell (or Shell+Core) is pinned** — the simple-interface main case
+  (Telegram over a local CLI agent). The cheap dispatcher runs only when nothing
+  specific is set. Keep low cognitive load: the user pins `shell=`/`core=` for
+  the direct case, or sets intent in plain words and brr routes.
 
 ### 2B — Extract available models from the Shell itself (no hardcoded staleness)
 The maintainer wants brr to pick up a new model release on an installed Shell
@@ -150,8 +205,14 @@ Adopt the Armored Core frame, with one correction to the maintainer's phrasing:
   Core) + selection metadata. The cost-aware layer selects **Cores within
   Shells**. Rename `runner_media.py` → `runner_select.py` (and the page
   `design-runner-media.md` → `design-runner-cores.md`); `RunnerMedium` →
-  `RunnerProfile` or `Runner`. Config: `runner=` stays (selects the Runner);
-  the `model:` field is "the Core"; **no new user knob required.**
+  `RunnerProfile` or `Runner`.
+- **Config (maintainer override, evt-zyu6):** the `runner=` *user-facing toggle*
+  is **retired**. We don't let the user define a Runner; the user defines
+  **Cores and Shells**, so the knobs become `shell=` / `core=` (or a combined
+  pin). The internal Runner/profile code and the umbrella concept **stay** (the
+  Runner is the whole entity behind a run — resident · Shell · Core). The
+  `model:` field is "the Core". Pinning a `shell=`/`core=` is also what skips the
+  dispatcher hop (Part 2A) — the two decisions compose into one user knob-set.
 
 This dissolves D1 (the triple-naming) with the least churn: "runner" — the most
 entrenched, accurate-enough word — survives; only the two redundant
@@ -253,11 +314,15 @@ promote settled resolutions to kb; commit per theme. Budget-aware: this is the
 largest task — the execution run should chunk it and may want its own follow-up
 wakes per area rather than one giant sweep.
 
-## What needs the maintainer before the execution run
-1. **Vocabulary veto check (Part 3.1/3.2):** adopt Runner=Shell+Core, retire
-   vessel+medium, keep portal (viewport = inbound sub-type only), finish
-   cockpit retirement? This **blocks Task 1** (the reweave uses these terms).
-2. **Dispatcher-hop policy (2A):** cheap hop only on `runner=auto`+cost-aware,
-   or always? Recommend the former.
-3. **Sequencing:** confirm Task 1 (reweave) goes first on the Sonnet run, then
-   Task 2 slices, with Task 4 gardening as chunked follow-ups.
+## Maintainer decisions (resolved 2026-06-28, evt-zyu6) — formerly open forks
+All three pre-execution forks are answered (full text in "Resolved by the
+maintainer" near the top):
+1. **Vocabulary — adopted**, with the refinement that Runner stays as the
+   umbrella entity (code mostly stays) and the `runner=` *config toggle* is
+   retired in favour of `shell=`/`core=`. Task 1 is **unblocked**.
+2. **Dispatcher hop — skipped when a specific Shell/Shell+Core is pinned.**
+3. **Sequencing — Task 1 first, then Task 2 slices; Task 4 chunked; large tasks
+   chunked across follow-up wakes.**
+
+Plus a new point-1 slice: cheap boundary quota injection (decouple the ~18s
+`/usage` scrape from the flush critical path). See the top section.

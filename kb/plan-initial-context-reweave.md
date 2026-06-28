@@ -9,9 +9,11 @@ accreted text line by line.
 
 Parent: [`plan-repo-gardening.md`](plan-repo-gardening.md) (the four-task hub).
 The **vocabulary** this page applies (Runner / Shell / Core; portal kept;
-vessel + medium + cockpit retired) is decided in that hub's Part 3. **If the
-maintainer vetoes a term, swap it everywhere below — the structure stands
-regardless of the words.**
+vessel + medium + cockpit retired) is **confirmed by the maintainer (evt-zyu6,
+2026-06-28)** — so this page is unblocked. One refinement to apply: the
+`runner=` *user-facing config toggle* is retired in favour of `shell=`/`core=`
+(Runner stays as the internal umbrella entity), so where D1 below references the
+`runner=` knob, present the knobs as `shell=`/`core=`.
 
 ## What "the initial context" actually is
 

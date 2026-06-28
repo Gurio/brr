@@ -8565,3 +8565,33 @@ gardening method + conflict inventory from this wake's preflight.
 Also fixed cheap kb-health items: indexed the 2 new pages + the 4
 missing-from-index brnrd pages. Three forks raised to the maintainer
 (vocabulary veto, dispatcher-hop policy, task sequencing) before execution.
+
+---
+
+## [2026-06-28] plan | Maintainer resolved the repo-gardening forks; point-1 boundary quota engaged
+
+Discussion wake (still on Claude; Sonnet executes next). The maintainer answered
+the three pre-execution forks in `plan-repo-gardening.md` and added one new
+agreement. Folded all four into the plan hub so the execution run builds on
+decisions, not open questions:
+
+1. **Vocabulary adopted**, with one override of my draft: Runner stays as the
+   *umbrella entity* (resident · Shell · Core for a wake), so most of the 271
+   `runner` code uses stay — but the **`runner=` user-facing config toggle is
+   retired** in favour of `shell=`/`core=`, because the user defines Cores and
+   Shells, not a Runner. Retire vessel + medium; adopt Shell/Core; keep portal.
+   Task 1 (initial-context reweave) is now unblocked.
+2. **Dispatcher hop skipped when a specific Shell/Shell+Core is pinned** — the
+   simple-interface main case (Telegram over a local CLI agent).
+3. **Chunking confirmed** — Task 4 and large tasks split across follow-up wakes.
+4. **Point 1 (boundary quota), agreed + grounded in code:** the *injection*
+   half is already shipped — `_emit_flush` (boundary `.flush`) refreshes
+   `portal-state.json` and the post-tool hook injects the `resources:` line on
+   `change_token` movement. The correction: the ~18s blocking `/usage` PTY
+   scrape (`claude_usage.load_or_refresh_snapshot`, TTL 300s) currently sits on
+   the flush critical path (`_emit_flush` → `_write_live_portal_state` →
+   `_collect_levels`), so a tool-boundary flush can block the daemon ~18s when
+   the cache is stale — against the flush's "lighter/prompt" intent and the
+   read-the-cache-never-scrape pitfall. Remaining slice: move the scrape off the
+   flush path (heartbeat / background refresh), keep the boundary read-only —
+   then "negligible cost at the boundary" is genuinely true. ~80% shipped.
