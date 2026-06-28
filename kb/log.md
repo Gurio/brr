@@ -8301,3 +8301,41 @@ Still open: populate the `known` *values* (live quota/cost collectors), unify
 the three renderers behind a single projection helper, and the runner→medium
 rename run. Reconciled `design-resident-boundary.md` (§1/§3/§5/summary) and
 `design-runner-media.md`. Branch `brr/boundary-and-medium-synthesis`.
+
+---
+
+## [2026-06-28] design | Stream-json loom retired for cost-data; Claude statusLine is the level-readable quota source
+
+Maintainer correction on the cost-awareness thread (evt-e1gl, telegram), against
+my own prior reply (00:21) which had leaned on "the stream-json loom we decided
+to build — not built yet." Two corrections, both folding the live-cost question
+back onto the **hooks rail**:
+
+1. **The streaming medium is retired** — abandoned 2026-06-27 in favour of native
+   hooks as the one boundary abstraction over vessels
+   (`plan-streaming-runner-injection.md` status). So my §8 build order
+   "streaming medium → consumption tally → distance-card" was stale; the kb
+   already said so and I'd contradicted it.
+2. **Claude Code exposes subscription quota as a readable gauge** via the
+   `statusLine` feature: the configured command receives session JSON on stdin
+   carrying `rate_limits.five_hour/seven_day.used_percentage` + `.resets_at`,
+   `context_window.remaining_percentage`, and `cost.total_cost_usd`. Structurally
+   that's *another hook* — a command brr registers in the same
+   `.claude/settings.local.json` it writes hooks into. This overturns my
+   "subscription-quota wall is edge-only" claim: for the Claude vessel both walls
+   plus the context window are level-readable today, no API-key/brnrd needed. The
+   real asymmetry is **per-vessel** (Claude rich, Codex edge-only), not
+   spend-vs-quota.
+
+Also answered the maintainer's "how do I *choose* the facets?" question with a
+selection principle: facets are **derived from the envelope walls** (budget,
+spend, quota, context_window) plus actionable state (coexisting_runs,
+remote_scm), defined **once** in the single projection helper — "by schema," not
+"by convention." This adds a new `context_window` facet and promotes subscription
+`quota` to a level facet for Claude.
+
+Reconciled `design-resident-boundary.md` (§8 rewritten, §7/§1 + Settled/open
+updated) and `design-runner-media.md` (Claude CLI row + quota-signal grades). No
+code this wake. Next concrete build: register the statusLine collector and
+smoke-verify the JSON schema before relying on it (pitfall: fire it before you
+rule on it). Branch `brr/boundary-and-medium-synthesis`, commit 141bfad.
