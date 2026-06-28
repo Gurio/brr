@@ -288,16 +288,22 @@ From this wake's kb-health preflight + greps, the known backlog:
 - **Hub coverage:** `index §Research` and `index §Reviews` lack `subject-*`
   hubs — consider writing them.
 
-### 4B — Semantic reconciliation (judgement, do carefully)
-- `design-runner-management.md` is marked "superseded by the cockpit framing" —
-  re-point it at the post-cockpit shape (`design-runner-cores.md` + portals)
-  rather than a retired label.
-- Reconcile the runner/medium/vessel framing across `design-runner-cores.md`,
-  `design-resident-boundary.md`, `design-runner-back-channel.md`,
-  `subject-managed-mode.md`, and the index so the graph says Runner/Shell/Core
-  with one voice.
-- The portal-grammar "concept prose sweep" (step 9 there) overlaps 4A's cockpit
-  sweep — do them together.
+### 4B — Semantic reconciliation (judgement, do carefully) — **executed 2026-06-29**
+- ✓ `design-runner-management.md` status re-pointed to `design-runner-cores.md`
+  + portals plan (cockpit label retired from the header).
+- ✓ `design-runner-cores.md` — full vocab sweep: `runner_media.py`→`runner_select.py`,
+  `select_medium`→`select_runner`, `implicit_medium`→`implicit_runner`,
+  `proposed_medium`→`proposed_runner`, "runner medium"/"medium" → "Shell/Core",
+  `[[runner.media]]`→`[[runner.profiles]]`, `runner_media` portal key → `runner`.
+- ✓ `design-resident-boundary.md` — title updated, §3 rewritten to record
+  three-step vocabulary lineage (medium→vessel→Shell/Core, final resolution
+  evt-zyu6), §8 title and table "Vessel" → "Shell", remaining active vocab swept.
+- ✓ `design-portal-grammar.md` — "runner medium/quota" → "Shell/Core and quota
+  posture", "the medium failed" → "the Shell/Core failed" (Step 9 concept sweep
+  aligned).
+- ✓ `kb/index.md` — boundary page title entry updated; gardening plan status
+  updated to "executing".
+- `design-runner-back-channel.md` — no stale vocab found (clean).
 
 ### 4C — Surface, don't force (the unresolvable)
 The execution run should **not** invent resolutions for genuine forks. Where a

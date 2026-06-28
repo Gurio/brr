@@ -1,9 +1,9 @@
-# Design: the boundary — one envelope, two rails, and the medium vocabulary
+# Design: the boundary — one envelope, two rails, and the runner vocabulary
 
 Status: active synthesis on 2026-06-27. Reconciles a maintainer design message
 (Telegram, evt-9dp2/slhg) against the three pages shipped the same day —
 [`design-runner-back-channel.md`](design-runner-back-channel.md) (the boundary
-mechanism), [`design-runner-cores.md`](design-runner-cores.md) (cost/medium
+mechanism), [`design-runner-cores.md`](design-runner-cores.md) (Shell/Core selection
 layer), and [`plan-cost-aware-runner.md`](plan-cost-aware-runner.md) (the
 cost/notification braid). It carries the conversation's settled answers and the
 two open forks that still need a maintainer nod.
@@ -78,7 +78,7 @@ iff it is one of:
 - **a wall** the run can hit, with a distance the resident plans against —
   wall-clock `budget`, `spend`, subscription `quota`, and `context_window`. These
   are the *level* facets; the card headline is the minimum distance across them.
-  Which level a given vessel can actually read is per-vessel (§8): Codex exposes
+  Which level a given Shell can actually read is per-Shell (§8): Codex exposes
   `quota` + `context_window` from its rollout file (wired); Claude exposes
   `spend` + `context_window` via result JSON and subscription `quota` via a
   cached interactive `/usage` PTY scrape (wired 2026-06-28).
@@ -103,7 +103,7 @@ distinguishes the two kinds of "missing" the resident must not conflate:
 
 - `known` — proven value this heartbeat.
 - `absent` — the collector ran and there is genuinely nothing: **no PR for this
-  branch yet**, no quota snapshot the medium exposes, **no outbound message
+  branch yet**, no quota snapshot the Shell/Core exposes, **no outbound message
   sent**. Affirmative-empty — the same logic the closeout capsule uses for "0
   pending events". Absence is data, surfaced on purpose.
 - `unimplemented` — the collector is not built (cost metering, coexisting runs),
@@ -118,7 +118,7 @@ still need their collectors.
 
 ## 2. The open-source vs brnrd split — the static envelope is not too limiting
 
-**Question (maintainer):** *"Self-deployed / brr daemon handles CLI medium,
+**Question (maintainer):** *"Self-deployed / brr daemon handles CLI Shell/Core,
 quotas and credits data; brnrd (subscription) handles the boundary. Self-deployed
 defines the boundary statically — isn't that too limiting? Still
 open-source-friendly?"*
@@ -148,68 +148,53 @@ open-source-friendly while giving the service a real, fair value-add — consist
 with [`decision-llm-relay.md`](decision-llm-relay.md) (BYO stays free/default;
 brnrd-owned intelligence pays provider cost + a transparent service fee).
 
-## 3. Vocabulary — runner / run / weave / medium (SETTLED → `medium`)
+## 3. Vocabulary — runner / run / weave / medium (SETTLED → `Shell + Core`)
 
-**Maintainer's clarification:** stop conflating the *entity* (the weaver) with
-the *executor type* (Codex / Claude / Gemini). Proposed:
+*Lineage breadcrumb: this section records a three-step decision that opened
+and re-opened before settling. The final resolution is at the foot.*
+
+**Maintainer's clarification (2026-06-27, evt-go5z):** stop conflating the
+*entity* (the weaver) with the *executor type* (Codex / Claude / Gemini). He
+proposed:
 
 - **runner = the resident & LLM weaving** (the weaver/entity).
 - **run = the weave** (one wake's work).
 - the executor (Codex / Claude / Gemini / custom) = **medium / substrate /
   shell** — he is reaching for the right noun.
 
-**Recommendation: adopt `medium` for the executor.** Reasons:
+*Recommendation at the time: adopt `medium` for the executor.* Reasons included
+séance resonance ("a medium channels a spirit"), alignment with existing code
+glosses, and the word already drifting into place. The maintainer picked
+`medium` ("let's do medium"), the noun was declared fixed.
 
-1. The codebase already glosses it that way — the Mode block literally renders
-   *"Runner: claude — the compute medium this thought runs on."* The word is
-   already drifting into place.
-2. [`design-runner-cores.md`](design-runner-cores.md) already uses "medium" for
-   the layer above static profiles.
-3. **Séance resonance.** A medium *channels a spirit*. The maintainer's own
-   phrase was "the tools we use to invoke the spirit from remote LLMs," and the
-   playbook frames the resident as a spirit of air/fire. "Medium" is the
-   poetically-true noun, and it ties to the *ornamented-scroll* register the
-   portal reshape is converging on. "Shell" is evocative but overloaded (Unix
-   shell); "substrate" is a fine clinical synonym to keep for technical prose.
+**Reopened 2026-06-28 (evt-tw6t): second thoughts.** The maintainer reached for
+"an artificial body, replaceable/switchable — maybe `chassis`?" The analysis
+surfaced two competing metaphors:
 
-With `medium` as the executor, **`runner` largely dissolves** — the weaver is
-"the resident" (our existing word) and the wake's work is the "run/weave." That
-is a satisfying *cut*, not just a rename, and fits the pre-release bias toward
-collapsing names that no longer carry their weight.
+- **The summoning metaphor** — *medium / conduit / channel*. Momentary,
+  séance-flavoured — the resident is *invoked through* it.
+- **The incarnation metaphor** — *vessel / chassis / shell*. Persistent,
+  swappable — the resident *acts through it* for the full duration of a wake.
+  The cost/failover model (swap to cheaper/stronger) is literally *changing
+  bodies*, truer to how brr actually uses it. The cleanest word in this register
+  was **`vessel`** (`shell` without the Unix collision).
 
-**Resolved 2026-06-27 (evt-go5z): the maintainer picked `medium`** ("let's do
-medium"). So the noun is fixed: the executor (Codex / Claude / Gemini / custom)
-is the **medium**, `run`/`weave` is the wake's work, and `runner` dissolves into
-"the resident". `substrate` stays available as a clinical synonym for technical
-prose.
+No rename ran while the noun was unsettled.
 
-**Reopened 2026-06-28 (evt-tw6t): the maintainer has second thoughts on
-`medium`.** He's reaching for "an artificial body, replaceable/switchable —
-maybe `chassis`?" and asked for the cyberpunk/cultural analogy. The sharpening
-this wake: `medium` and `chassis` answer *two different metaphors*, and the
-choice is really between them, not between words.
+**Finally settled 2026-06-28 (evt-zyu6, `plan-repo-gardening.md` §3.1):**
+the maintainer adopted the **Armored Core** frame. The vocabulary is now:
 
-- **The summoning metaphor** — *medium / conduit / channel*. The resident
-  (spirit) is *invoked through* it. Momentary, séance-flavoured. This is what
-  `medium` carries.
-- **The incarnation metaphor** — *vessel / chassis / frame / body / shell*. The
-  resident *rides / is housed in* it for the whole run. Persistent, swappable.
-  This is what the maintainer's words ("artificial body, ride, replaceable")
-  actually describe.
+- **Shell** = the CLI program on PATH (`claude`/`codex`/`gemini`) — the
+  carapace that gives the Core hands (file ops, tools, hooks).
+- **Core** = the model (`opus`/`sonnet`/`gpt-5-codex`) — the swappable reactor.
+- **Runner** = the whole executing body for one thought (Shell + Core together).
+- `vessel` and `medium` are **retired** across kb, code, and prompts.
 
-The **incarnation** reading is truer to what the executor *is for brr*: you
-don't speak through it once, you *act through it* (tools, edits, weave) for the
-duration of a wake, and the cost/failover model — swap to cheaper/stronger, fail
-over to another — is literally *changing bodies*, not switching séance channels.
-The cleanest single word that keeps the spirit register **and** the swap
-connotation is **`vessel`** (a spirit occupies a vessel; it can be moved to
-another). `chassis`/`frame` carry the swap but go cold-mechanical, off the
-ornamented-scroll register. The exact cultural touchstone is *Ghost in the
-Shell* — the Ghost rides a replaceable **shell** — and the tragedy is the
-perfect word, `shell`, is taken by Unix; `vessel` is `shell` without that
-collision. Still a genuine fork (aesthetic/values), so it stays the
-maintainer's call: `medium` (summon, lower-friction, already glossed in code) vs
-`vessel` (incarnate, truer to ride/swap). No rename run until the noun settles.
+The `runner` umbrella stays (271 code uses; "a resident, via a Shell and a Core
+on a wake, is the Runner"). The user-facing knobs became `shell=`/`core=` (not
+`runner=`). See [`design-runner-cores.md`](design-runner-cores.md) for the
+implementation shape and [`plan-repo-gardening.md`](plan-repo-gardening.md) §3
+for the full vocabulary rationale.
 
 ## 7. The boundary state card — level vs edge, and distance-from-envelope
 
@@ -258,10 +243,10 @@ needs a liveness collector. It's the right target, but it's a build, not a
 reframe of existing data. Until then the honest card says `coexisting-runs=
 unimplemented`, which is already the three-state honesty doing its job.
 
-## 8. What the medium actually exposes for live cost/quota (corrected 2026-06-28)
+## 8. What each Shell exposes for live cost/quota (corrected 2026-06-28)
 
 **Question (maintainer):** before building the collectors, clarify exactly what
-we can get from the medium re: live cost and quota. This is load-bearing for the
+we can get from each Shell re: live cost and quota. This is load-bearing for the
 card (§7), because a card promising a smooth quota gauge it can't fill is a lie
 the resident learns to distrust.
 
@@ -278,7 +263,7 @@ scraping the `/usage` panel. The true map:
 [`plan-streaming-runner-injection.md`](plan-streaming-runner-injection.md),
 [`design-runner-cores.md`](design-runner-cores.md) §Reconciled). Cost/quota does
 **not** ride native hook payloads — hooks carry portal-state, not provider usage
-internals. The real source is per-vessel **post-result / on-disk / PTY-scraped**
+internals. The real source is per-Shell **post-result / on-disk / PTY-scraped**
 data, below; hooks then inject the portal-state projection of that data.
 
 **(b) Claude `statusLine` does NOT fire head-less — the Claude quota path is
@@ -321,7 +306,7 @@ rollout file, so the on-disk path is the one that works.
 
 **Corrected data map** (what brr's daemon can actually read):
 
-| Vessel | Spend ($) | Subscription quota | Context window | Source |
+| Shell | Spend ($) | Subscription quota | Context window | Source |
 | --- | --- | --- | --- | --- |
 | Claude Code (subscription) | `total_cost_usd` ✓ | ✓ best-effort `Current session` + `Current week` from `/usage` TUI | `modelUsage.contextWindow` ✓ | Result JSON for spend/context (`claude_status.py`) + cached interactive `/usage` PTY scrape for quota (`claude_usage.py`) |
 | Codex (subscription) | ✗ (no $ gauge; tokens only) | ✓ `rate_limits.{primary,secondary}` | ✓ `model_context_window` + last `input_tokens` (est) | **session rollout `token_count` events** — *wired* (`codex_status.py`) |
@@ -333,7 +318,7 @@ So the durable asymmetry is no longer "Codex has quota and Claude doesn't"; it i
 cheap enough to read every boundary. Claude quota is local and useful, but the
 source is a cached PTY scrape, so it should be treated as best-effort telemetry
 with freshness, not as a synchronous hook action. The `facets.build`
-`levels_collector` arg stays a per-slot set, so each vessel marks only the slots
+`levels_collector` arg stays a per-slot set, so each Shell marks only the slots
 it truly collects (`known`/`absent`) and leaves the rest `unimplemented` — Codex
 `spend` no longer lies as `absent`.
 
@@ -365,21 +350,21 @@ earns its own dedicated run with a migration shim for live config — kept
 separate so a behavioural change (this boundary enrichment) and a pure rename
 do not tangle in one diff.
 
-## 4. Cost manifests per medium, and the respawn navigation matrix
+## 4. Cost manifests per Shell/Core, and the respawn navigation matrix
 
-**Maintainer:** *"Cost manifests per medium (not sure how)"* and the respawn
+**Maintainer:** *"Cost manifests per Shell/Core (not sure how)"* and the respawn
 matrix — *"a sorted / heat-mapped matrix giving clear navigation by price per
-token, grouped by medium type, noting whether already successfully used,
+token, grouped by Shell/Core type, noting whether already successfully used,
 followed by the subscription quotas ranked beside the matrix."*
 
-This is the structured `runner_media` portal facet already sketched in
+This is the structured `runner` portal facet already sketched in
 [`design-runner-cores.md`](design-runner-cores.md) §Quota and credit signals,
 read as a *navigation surface* rather than a flat string. The manifest per
-medium = the medium's row: model, provider, owner, cost class, cost_rank
+Shell/Core = the runner's row: model, provider, owner, cost class, cost_rank
 (price-per-token proxy), quota source + freshness, hook capability, billing
 posture, and **whether it was already used successfully this thread**. The
-matrix = those rows sorted/heat-mapped by cost_rank and grouped by medium type;
-the quota rankings sit beside it as the subscription view.
+matrix = those rows sorted/heat-mapped by cost_rank and grouped by Shell/Core
+type; the quota rankings sit beside it as the subscription view.
 
 Crucial guardrail from [`plan-cost-aware-runner.md`](plan-cost-aware-runner.md):
 this is **historical pre-analysis, never a forward dollar estimate**. The matrix
@@ -441,7 +426,7 @@ This does not contradict the open-source posture in §2; it sharpens it.
 [`decision-llm-relay.md`](decision-llm-relay.md) already holds the spine: **BYO
 stays free/default; the house offers a paid path everywhere a user would
 otherwise hit friction** (no local quota, no credentials, a crashed daemon, a
-need for a stronger medium). The fairness contract is *transparency*: provider
+need for a stronger Shell/Core). The fairness contract is *transparency*: provider
 cost and the relay/service fee shown as separate line items, per-run caps, no
 silent card-on-file top-ups. The product line can call it "intelligence credits,"
 but the ledger keeps `llm_provider_cost`, `llm_relay_service_fee`, and
@@ -456,9 +441,9 @@ the free mechanism, always an offered convenience over it."
   is the snapshot/fallback rail, not a redundant copy. (§1)
 - Self-deployed static envelope + best-effort local signals is the open
   mechanism; brnrd adds the live authoritative rail + remote control. (§2)
-- **Vocabulary:** `medium` was picked (evt-go5z) but **reopened** evt-tw6t —
-  the live fork is `medium` (summon) vs `vessel` (incarnate); rename run holds
-  until it settles. (§3)
+- **Vocabulary:** `medium` was picked (evt-go5z), reopened (evt-tw6t), and
+  **finally settled** on `Shell + Core` (evt-zyu6, 2026-06-28). `vessel` and
+  `medium` are retired. See §3 for the full lineage. (§3)
 - **The boundary card is a standing level capsule with edge-gated re-injection;**
   distance-from-envelope (min across walls) is its spine. (§7, evt-tw6t)
 - **Cost-data source (corrected 2026-06-28):** the stream-json loom is retired.
@@ -485,8 +470,8 @@ the free mechanism, always an offered convenience over it."
   defined *once* as a schema (quota / spend / context_window levels +
   coexisting_runs / remote_scm state, each a three-state record); all three
   renderers project from it — "by schema, not by convention." (§1)
-- **`cost`→`spend` rename + new `context_window` level facet**, plus a per-vessel
-  `levels_collector` switch (empty slot reads `absent` on a medium with a
+- **`cost`→`spend` rename + new `context_window` level facet**, plus a per-Shell
+  `levels_collector` switch (empty slot reads `absent` on a Shell with a
   collector, `unimplemented` without one). (§1, §8)
 - **`brr portal facets`** — operator-inspectable catalogue of the implemented
   facets (schema-only outside a wake; live status folded in inside one). Fixed
@@ -503,7 +488,9 @@ the free mechanism, always an offered convenience over it."
   weave mid-run.
 
 **Open forks / next builds:**
-- **The rename run** (§3) — `runner` → `medium`/`resident`, its own dedicated run.
+- **The rename run** (§3) — ~~`runner` → `medium`/`resident`~~ — **completed**:
+  vocabulary settled on Shell/Core; `vessel` and `medium` retired (Task 4 of
+  `plan-repo-gardening.md`).
 - **Hardening the level collectors:** correlate Codex rollout files to the active
   session instead of relying on newest-file, confirm context math, and replace
   Claude's PTY scrape if Anthropic exposes a first-class quota/reset seam. Codex
@@ -533,11 +520,11 @@ not to retry blindly.
 
 - [`design-runner-back-channel.md`](design-runner-back-channel.md) — the boundary
   mechanism (native hooks; the injection rail).
-- [`design-runner-cores.md`](design-runner-cores.md) — the medium/cost layer and
-  the structured `runner_media` facet behind the matrix.
+- [`design-runner-cores.md`](design-runner-cores.md) — the Shell/Core selection
+  layer and the structured `runner` facet behind the matrix.
 - [`plan-cost-aware-runner.md`](plan-cost-aware-runner.md) — cost
   self-awareness, the historical-pre-analysis guardrail, operator legibility.
 - [`decision-llm-relay.md`](decision-llm-relay.md) — BYO-free / paid-relay
   pricing spine.
 - [`plan-failover-compute.md`](plan-failover-compute.md) — compute-host failover,
-  the sibling axis to medium failover.
+  the sibling axis to Shell/Core failover.

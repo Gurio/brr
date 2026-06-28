@@ -250,17 +250,17 @@ dive-in map) and are stable until something contradicts them.
   a spend-plan consent checkpoint with wallet/audit line items instead of an
   opaque command-string convention.
 - [Repo gardening — initial context, respawn model, imagery, kb/code sweep](plan-repo-gardening.md) —
-  *planning 2026-06-28*. The four-task hub for the gardening crossroads: reweave
+  *executing 2026-06-28–29*. The four-task hub for the gardening crossroads: reweave
   the initial wake context, build the cost-and-capability-aware respawn model,
   settle the imagery/vocabulary (Runner = Shell + Core; keep portal; retire
-  vessel/medium/cockpit), and sweep kb + code. Planned on Claude for a Sonnet
-  execution run.
+  vessel/medium/cockpit), and sweep kb + code. Tasks 3 + 4A + 4B executed on
+  `brr/initial-context-reweave`.
 - [Initial wake-context reweave (gardening Task 1)](plan-initial-context-reweave.md) —
   *planning 2026-06-28*. File-by-file target-shape spec for the prompts + Run
   Context Bundle the resident reads on every wake; written as new-shape +
   rationale so the execution run composes fresh files rather than nudging
   accreted text.
-- [The boundary — one envelope, two rails, and the medium vocabulary](design-resident-boundary.md) —
+- [The boundary — one envelope, two rails, and the runner vocabulary](design-resident-boundary.md) —
   *active synthesis 2026-06-27*. Reconciles a maintainer design message against
   the same-day runner-media / back-channel / cost-aware pages. Settles that the
   **boundary is one concept on two rails of different density** —

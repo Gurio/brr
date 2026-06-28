@@ -2,21 +2,23 @@
 
 **Status: superseded on 2026-06-16 by the portals framing —
 [`plan-resident-portals.md`](plan-resident-portals.md) §G1
-(runner selection & quota-aware fallback).** The maintainer called
-this page "a much poorer framing": it treats runner choice as a
-standalone *capacity-management subsystem* (registry → tracker →
-dispatcher) bolted beside the daemon, when the live wound is narrower and
-the right home is the **resident's portals** — the wake's own control surface, where
-the runner and its quota are one surface the resident reads and the daemon
-falls back / defers along. The reframe is in §G1 there.
+(runner selection & quota-aware fallback) and now also by
+[`design-runner-cores.md`](design-runner-cores.md) (the Shell/Core selection
+layer that was the §G1 "no design home yet" gap).** The maintainer called
+this page "a much poorer framing": it treats runner choice as a standalone
+*capacity-management subsystem* (registry → tracker → dispatcher) bolted beside
+the daemon, when the live wound is narrower and the right home is the
+**resident's portals** — the wake's own control surface, where the runner and its
+quota are one surface the resident reads and the daemon falls back / defers along.
+The reframe is in §G1 of the portals plan and in `design-runner-cores.md`.
 
 This page is kept as a **reference mine**, not a live plan: the
 mechanics below — the capacity tracker, the reactive/proactive
 `work_class` split, the backoff/fallback chain, the subscription-tier
 headroom table, and the `brnrd_managed` consent gate — are the most
-detailed treatment we have and are the raw material a future
-`design-runner-cores.md` (the §G1 "no design home yet" gap) will draw on.
-Read it for the *how*; take the *framing* from the cockpit plan.
+detailed treatment we have and are the raw material `design-runner-cores.md`
+drew on.
+Read it for the *how*; take the *framing* from the portals plan.
 
 Companions: [`subject-managed-mode.md`](subject-managed-mode.md) (brnrd compute
 and credential vault); [`plan-failover-compute.md`](plan-failover-compute.md)

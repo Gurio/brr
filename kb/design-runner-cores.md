@@ -6,14 +6,14 @@ Status: active on 2026-06-27 · foundation shipped 2026-06-28
 > steers fixed the user-facing shape: (1) *model selection is a requirement, not
 > a nicety — implement the right shape now*; (2) *carry low cognitive load —
 > empower the runner to make the informed decision, do not ask the user to
-> hand-tune execution details*, and (3) *expose the selected medium / cost /
-> quota in the status card as governance*. Reconciliation: medium metadata rides
+> hand-tune execution details*, and (3) *expose the selected Shell/Core / cost /
+> quota in the status card as governance*. Reconciliation: Shell/Core metadata rides
 > the **existing profile frontmatter** (`runners.md`), not a new TOML config —
 > this dissolves the config-format fork (`.brr/config` is flat `key=value` and
-> cannot hold the `[[runner.media]]` array the sketch below shows), keeps the
-> only user knobs `runner=` + `runner_policy=`, and makes the *selection policy
-> brr's*. Shipped: `runner_media.py` (schema + implicit legacy shim +
-> deterministic conservative `select_medium` + `RespawnRequest` shape), medium
+> cannot hold the `[[runner.profiles]]` array the sketch below shows), keeps the
+> only user knobs `shell=` / `core=`, and makes the *selection policy
+> brr's*. Shipped: `runner_select.py` (schema + implicit legacy shim +
+> deterministic conservative `select_runner` + `RespawnRequest` shape), Shell/Core
 > metadata on the bundled profiles, tests. Behaviour-neutral — no dispatch
 > wiring yet. Open decisions for the wiring/card/respawn slices are at the foot
 > of this page.
@@ -27,19 +27,19 @@ smooth fallback when local runner quota is gone.
 
 ## Reconciled current state
 
-brr currently has **runner profiles**, not **runner media**:
+brr currently has **runner profiles** (Shell+Core combos), not a separate **media layer**:
 
 - `src/brr/prompts/runners.md` defines static CLI invocations for `claude`,
   `codex`, Gemini intent, and a few Claude aliases.
 - `.brr/config` selects one `runner`, or a fully custom `runner_cmd`.
 - The daemon resolves that runner before prompt assembly, injects
-  `Runner: <medium>` into the Mode block, and can append a trusted quota summary
+  `Runner: <Shell+Core>` into the Mode block, and can append a trusted quota summary
   from `runner.quota.*`, `BRR_RUNNER_QUOTA_*`, or `.brr/runner-quota.json`.
 - The live `portal-state.json` resource facet has the wall/state slots already:
   `quota`, `spend`, `context_window`, `coexisting_runs`, and `remote_scm`. Each
   renders three-state
   (evt-go5z): `known` carries a proven value; `absent` is affirmative-empty (no
-  quota snapshot for this medium, no PR for the branch yet); `unimplemented`
+  quota snapshot for this Shell/Core, no PR for the branch yet); `unimplemented`
   names a not-yet-built collector (`spend` for Codex, `coexisting_runs`). Today
   Codex contributes `quota` + `context_window`; Claude contributes `quota` via a
   cached `/usage` PTY scrape and `spend` + `context_window` via result JSON; and
@@ -49,7 +49,7 @@ brr currently has **runner profiles**, not **runner media**:
   runner boundary via `brr hook <phase>`, so fresh resource state can be woven
   into the resident at seed/stop and, when attention changes, at post-tool.
 
-The missing piece is not "add a model flag." A runner medium has at least:
+The missing piece is not "add a model flag." A Shell/Core profile has at least:
 command syntax, model, auth source, hook capability, quota source, cost class,
 owner (`user` or `brnrd`), fallback eligibility, and billing policy. Hiding those
 inside a shell command would keep the current blindness.
@@ -70,19 +70,21 @@ keys). Some are best-effort (CLI error text, manually supplied snapshot). The
 portal should show the source and freshness rather than pretending all quota
 signals have equal quality.
 
-## Decision: introduce runner media
+## Decision: Shell/Core selection layer
 
-Add a runner-medium layer above static profiles. A profile remains "how to invoke
-this CLI." A medium is "when and why to use this invocation."
+Add a selection layer above static profiles. A profile remains "which Shell to
+invoke and which Core to use." The selection layer is "when and why to prefer
+this Shell/Core."
 
-Sketch:
+Field vocabulary sketch (config intent; adopted encoding is profile frontmatter
+— see note below):
 
 ```toml
 [runner]
 policy = "cost-aware"
 default_class = "economy"
 
-[[runner.media]]
+[[runner.profiles]]
 name = "codex-mini-local"
 profile = "codex"
 model = "gpt-5-codex-mini"
@@ -93,7 +95,7 @@ cost_rank = 10
 quota_source = "codex-local"
 hooks = "codex"
 
-[[runner.media]]
+[[runner.profiles]]
 name = "codex-strong-local"
 profile = "codex"
 model = "gpt-5.1-codex"
@@ -104,7 +106,7 @@ cost_rank = 40
 quota_source = "codex-local"
 hooks = "codex"
 
-[[runner.media]]
+[[runner.profiles]]
 name = "brnrd-codex-relay"
 profile = "codex"
 model = "gpt-5-codex-mini"
@@ -118,49 +120,50 @@ consent = "spend-plan"
 ```
 
 > **Adopted encoding (2026-06-28): metadata on profiles, not a new TOML file.**
-> The TOML `[[runner.media]]` sketch above is the *full field vocabulary*, but
+> The sketch above is the *full field vocabulary*, but
 > `.brr/config` is a flat `key=value` reader (`config.py`) and cannot hold an
 > array of tables. Rather than add a sectioned config parser (blast radius
 > across every config consumer) or a second config file (more surface for the
 > user to learn), the shipped foundation carries each field as an **optional
 > frontmatter key on the existing `runners.md` profile** — which already parses
-> arbitrary keys. A profile *is* a medium; the extra keys cost the user nothing
-> until they want to retune. The richer dedicated-config form can still arrive
-> later for accounts that declare media the host has no profile for (brnrd
-> relay), but the *local* media that selection runs over need no new format.
+> arbitrary keys. A profile *is* a Shell/Core; the extra keys cost the user
+> nothing until they want to retune. The richer dedicated-config form can still
+> arrive later for accounts that declare profiles the host has no entry for
+> (brnrd relay), but the *local* profiles that selection runs over need no new
+> format.
 
 This should align with the existing three-scope config model:
 
-- **Project scope**: preferred policy, known media names, project default class.
+- **Project scope**: preferred policy, known runner profile names, project default class.
 - **Local scope**: which local profiles are installed, machine-specific auth env
   names, `runner_cmd` escape hatches.
 - **Account scope**: brnrd relay enabled/disabled, spending caps, wallet balance,
-  user-wide medium preference.
+  user-wide runner preference.
 
-Legacy compatibility can be narrow: the existing `runner=codex` becomes an
-implicit medium named `codex-local` with unknown cost metadata. Since the product
-is pre-release, do not preserve multiple spellings beyond the useful shim.
+Legacy compatibility can be narrow: the existing `shell=codex` becomes an
+implicit runner profile named `codex-local` with unknown cost metadata. Since the
+product is pre-release, do not preserve multiple spellings beyond the useful shim.
 
 ## Dispatch policy
 
 The healthy default is not "always cheap" and not "always smart." It is a small
 policy table whose inputs are cheap to know before the run:
 
-| Situation | First medium | Escalation |
+| Situation | First choice | Escalation |
 | --- | --- | --- |
-| Small ask, explanation, narrow edit, docs lookup | `economy` local medium | Strong local only if the run asks to respawn or fails for quality, not for missing stdout. |
-| Normal implementation | `economy` or `balanced` local medium, depending on repo default | Strong local on explicit user ask, repeated failed attempt, or resident-authored escalation. |
-| Wide refactor, release, security, billing, destructive operation | `strong` local medium or PLAN first | Spend-plan before brnrd relay or managed paid path. |
-| Local quota exhausted | Next local medium in same or lower cost class if available | brnrd relay only after spend-plan consent. |
-| Provider/CLI outage | Different provider local medium if available | brnrd relay if it is a different failure domain and consent allows it. |
+| Small ask, explanation, narrow edit, docs lookup | `economy` local Shell/Core | Strong local only if the run asks to respawn or fails for quality, not for missing stdout. |
+| Normal implementation | `economy` or `balanced` local Shell/Core, depending on repo default | Strong local on explicit user ask, repeated failed attempt, or resident-authored escalation. |
+| Wide refactor, release, security, billing, destructive operation | `strong` local Shell/Core or PLAN first | Spend-plan before brnrd relay or managed paid path. |
+| Local quota exhausted | Next local Shell/Core in same or lower cost class if available | brnrd relay only after spend-plan consent. |
+| Provider/CLI outage | Different provider local Shell/Core if available | brnrd relay if it is a different failure domain and consent allows it. |
 | No usable local runner | brnrd relay or queued setup guidance | spend-plan plus wallet/top-up route. |
 
 The "respawn is handled by the more expensive model" part should be explicit:
 an economy run may emit a **respawn request** rather than grinding. That request
-is a parked portal: reason, proposed stronger medium, what context should carry
+is a parked portal: reason, proposed stronger Shell/Core, what context should carry
 forward, and the spend/consent posture. The daemon then starts a new run on that
-medium once policy allows it. This keeps cheap models useful without making them
-responsible for deciding invisible billing.
+Shell/Core once policy allows it. This keeps cheap models useful without making
+them responsible for deciding invisible billing.
 
 Avoid reviving an LLM triage stage. The first selector should be deterministic
 and conservative. The resident can escalate after it has read the repo and knows
@@ -183,7 +186,7 @@ The live portal state should carry this as structured data, not only a string:
 ```json
 {
   "resources": {
-    "runner_media": {
+    "runner": {
       "selected": "codex-mini-local",
       "fallbacks": ["codex-strong-local", "brnrd-codex-relay"],
       "quota": {
@@ -262,10 +265,10 @@ should be treated as:
 - no automatic billing or quota claims unless it declares a collector;
 - no brnrd fallback equivalence unless it names provider/model/owner.
 
-A custom runner can join the policy by declaring a medium:
+A custom runner can join the policy by declaring a profile:
 
 ```toml
-[[runner.media]]
+[[runner.profiles]]
 name = "my-local-agent"
 cmd = "my-agent --model cheap"
 owner = "user"
@@ -287,9 +290,9 @@ The remote user should see these as simple choices:
 - `strong` is available for harder work and respawns.
 - `brnrd relay` appears only when local quota/auth cannot carry the task, or
   when the user explicitly picks it.
-- The live card says the selected medium and quota posture.
+- The live card says the selected Shell/Core and quota posture.
 - A spend-plan message gates paid relay or managed compute before spend.
-- The dashboard/CLI can list configured media, current quota source/freshness,
+- The dashboard/CLI can list configured runners, current quota source/freshness,
   relay balance, and fallback policy.
 
 Example gate wording:
@@ -297,7 +300,7 @@ Example gate wording:
 ```text
 Local Codex is out of weekly quota. I can continue with brnrd Codex relay.
 
-Medium: gpt-5-codex-mini via brnrd
+Runner: gpt-5-codex-mini (codex Shell) via brnrd
 Cap: $0.75 for this run
 Billing: provider cost + 12% relay service fee, shown separately
 Balance: $4.20 relay balance
@@ -307,26 +310,26 @@ Approve / Queue until local reset / Configure own runner
 
 ## Implementation sequence
 
-1. **Data model only** *(shipped 2026-06-28, `runner_media.py`)*: runner-medium
-   schema, `implicit_medium()` legacy shim, and a deterministic conservative
-   `select_medium()`. Medium metadata rides the bundled profiles. No dispatch
-   changes yet.
-2. **CLI/display:** `brr runners list` or `brr config get runner.media` shows
-   media, owner, class, hooks, quota source, and known freshness.
+1. **Data model only** *(shipped 2026-06-28, `runner_select.py`)*: Shell/Core
+   profile schema, `implicit_runner()` legacy shim, and a deterministic
+   conservative `select_runner()`. Shell/Core metadata rides the bundled profiles.
+   No dispatch changes yet.
+2. **CLI/display:** `brr runners list` shows profiles, owner, class, hooks, quota
+   source, and known freshness.
 3. **Portal upgrade:** replace the flat `resources.quota` string with structured
-   `runner_media` while preserving the current compact hook line.
+   `runner` resource while preserving the current compact hook line.
 4. **Deterministic selector:** choose economy/balanced/strong by policy and user
    override; keep one-run execution otherwise unchanged.
 5. **Failure classifier:** distinguish quota, auth, provider outage, quality
    escalation, and no-response validation. Only quota/auth/provider errors enter
    fallback policy automatically.
-6. **Respawn portal:** let a resident request a stronger medium with reason and
+6. **Respawn portal:** let a resident request a stronger Shell/Core with reason and
    carry-forward context.
 7. **brnrd relay consent:** spending-plan prompt, wallet balance read, cap
    enforcement, audit rows. Codex/OpenAI first.
 8. **Provider collectors:** async collectors for OpenAI, Anthropic, Gemini, each
    provenance-tagged; never block prompt assembly on network.
-9. **Historical spend:** aggregate completed runs by medium and task shape for
+9. **Historical spend:** aggregate completed runs by runner and task shape for
    historical pre-analysis. Keep the existing guardrail: no projected dollar
    promise for local runs; paid relay gets a cap/quote envelope for consent.
 
@@ -335,8 +338,8 @@ Approve / Queue until local reset / Configure own runner
 These belong in `portal-state.json` and the hook seed/closeout capsule, not only
 in prose:
 
-- selected runner medium, class, model, owner, and fallback chain;
-- runner-medium capability proof (`hooks: codex`, fire-verified version, or
+- selected Shell/Core, class, model, owner, and fallback chain;
+- Shell/Core capability proof (`hooks: codex`, fire-verified version, or
   fallback);
 - local quota posture with source/freshness/confidence;
 - brnrd relay/intelligence balance, per-run cap, and auto-approve policy;
@@ -356,7 +359,7 @@ proceed unless redirected.
 
 1. **Respawn trigger asymmetry — proactive is strongest for Codex; Claude is
    usable but cached.**
-   Cost-aware *vessel change* wants to fire before a wall, but the level seams
+   Cost-aware *Shell/Core change* wants to fire before a wall, but the level seams
    are asymmetric: Codex exposes **cheap live** subscription quota (session
    rollout), while Claude exposes subscription quota through a cached
    interactive `/usage` PTY scrape. So a Claude-first run can see a quota wall
@@ -367,17 +370,17 @@ proceed unless redirected.
    proactive for Claude, reactive fallback everywhere.
 
 2. **Auto-respawn loop vs. parked request — depends on #128.** Fully automatic
-   fallback (`runner_media: [a, b]`, retry on next medium) wants the run/event
+   fallback (`runner: [a, b]`, retry on next Shell/Core) wants the run/event
    model's `defer_until` + re-claim (#128). *Recommend:* ship the **parked
    respawn request** first (the resident emits a `RespawnRequest` — reason,
-   proposed medium, carry-forward — to the outbox; the user re-sends on the
-   chosen medium), which needs no #128. Promote to an automatic chain once #128
-   lands. This keeps the cheap models useful now without the daemon owning
+   `proposed_runner`, carry-forward — to the outbox; the user re-sends on the
+   chosen Shell/Core), which needs no #128. Promote to an automatic chain once
+   #128 lands. This keeps the cheap models useful now without the daemon owning
    invisible billing decisions.
 
 3. **What the deterministic v1 selector keys on.** The selector must stay
    conservative (no revived LLM triage). Today it keys on: explicit override →
-   `runner_policy` → cheapest adequate local medium at/below `default_class`.
+   `runner_policy` → cheapest adequate local Shell/Core at/below `default_class`.
    *Open:* should v1 read *anything* from the event (source, body length) to pick
    a starting class? *Recommend:* **no** — start at the repo `default_class`
    (economy/balanced) and let the resident escalate via a `RespawnRequest` after
@@ -391,12 +394,12 @@ proceed unless redirected.
    exact numbers are brr defaults projects retune in their own `runners.md`.
 
 5. **Card / portal exposure (the governance ask, evt-8q21).** The selected
-   medium, class, model, and quota posture should surface in the status card and
-   `portal-state.json` (a `runner_media` resource block — sketch in
+   Shell/Core, class, model, and quota posture should surface in the status card
+   and `portal-state.json` (a `runner` resource block — sketch in
    "Quota and credit signals" above). *Recommend:* extend the existing `resources`
-   facet with a `runner_media` record (selected + fallbacks + quota source/
-   freshness) and let the hook line carry a compact projection — the next slice,
-   once the dispatch wiring chooses a medium to display.
+   facet with a `runner` record (selected + fallbacks + quota source/freshness)
+   and let the hook line carry a compact projection — the next slice, once the
+   dispatch wiring chooses a Shell/Core to display.
 
 6. **Reset windows (maintainer: "leave for now").** Satisfied for Codex
    (rollout `rate_limits.*.resets_at`, wired) and now best-effort for Claude via
