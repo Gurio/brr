@@ -242,6 +242,14 @@ dive-in map) and are stable until something contradicts them.
   (Loop C) — plus a budget-aware self-chunking discipline. Ships A1
   (medium in the wake bundle), the first A2 quota snapshot ingress, the
   first B1 local fallback loop, and the diffense de-firehose first.
+- [brnrd relay spend-plan and consent gate](plan-relay-spend-consent.md) —
+  *implementation in progress (2026-06-29)*. When local LLM quota is exhausted,
+  offer brnrd-owned relay with a spending plan for user approval. Includes
+  `SpendingPlan` data model (provider cost + relay fee calculation), relay
+  runner selection, and the consent gate that pauses a run before relay spend.
+  Slices 1–2 (spending plan model + relay runner selection) shipped 2026-06-29.
+  Deferred to next wake: daemon integration, portal exposure, and resident
+  respawn consumer.
 - [Runner Shell/Core selection, cost policy, and brnrd relay fallback](design-runner-cores.md) —
   *active on 2026-06-27*. Splits static runner profiles from **RunnerProfiles**
   (profile + model/Core + owner + auth/quota source + hook capability + billing
