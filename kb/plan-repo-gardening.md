@@ -1,6 +1,6 @@
 # Plan: repo gardening — initial context, respawn model, imagery, kb/code sweep
 
-**Status: executing — Tasks 1, 3.3, 4A, 4B done 2026-06-28/29; Task 2 partial (new slice + 2A + corrected 2B + 2D contract + 2F runner portal metadata) done 2026-06-29.** The maintainer
+**Status: executing — Tasks 1, 3.3, 4A, 4B done 2026-06-28/29; Task 2 partial (new slice + 2A + corrected 2B + 2C substrate + 2D contract + 2F runner portal metadata) done 2026-06-29.** The maintainer
 asked this run to *evaluate and plan only*; a later run on a cheaper-but-capable
 model (Sonnet) executes the plan. We are at an architecture crossroads where
 **vessel / medium / runner / core** are mixed across configs, kb, prompts, and
@@ -137,15 +137,21 @@ without a brr update. Plan:
 - Still not done: a true per-Shell model *probe* from CLI output/help. Today the
   registry is bundled data plus project overrides, not a live discovered list.
 
-### 2C — Capability-aware selection (swe-bench / terminal-bench), cached
+### 2C — Capability-aware selection (swe-bench / terminal-bench), cached — **substrate shipped 2026-06-29**
 The maintainer wants cost **and capability** awareness, ideally from a
 benchmark. Plan:
-- Add a small, **cached capability table** keyed by model id (swe-bench-verified
-  / terminal-bench scores), shipped as a data file the resident can refresh,
-  *not* a live network call on the prompt path. Tag freshness/source.
-- The selector's `class` (economy/balanced/strong) becomes *derivable* from
-  capability score + cost_rank rather than hand-set, while keeping hand-set as
-  an override. Keep `cost_rank` as the coarse tie-break ordering hint it is.
+- **Shipped substrate:** `runner-capabilities.json` is packaged as a small
+  source/freshness-tagged cache keyed by model id; `runner_capabilities.py`
+  loads it without network I/O and can derive the coarse
+  economy/balanced/strong class when benchmark scores exist.
+- Generated Core profiles now carry capability metadata
+  (`capability_score`, `capability_source`, `capability_freshness`) through
+  `RunnerProfile` and the `resources.runner` portal block. Hand-set `class`
+  remains authoritative; capability-derived class is only the fallback when the
+  Core entry has no explicit class.
+- Current bundled cache rows intentionally contain provenance placeholders and
+  `null` benchmark scores rather than fabricated numbers. Actual SWE-bench /
+  Terminal-Bench population and refresh policy remain open.
 - **Pushback/caution:** benchmarks go stale and game-able; treat them as a
   *hint to the class assignment*, never a hard selector. The deterministic,
   conservative selector stays the floor (no revived LLM triage). Recommend

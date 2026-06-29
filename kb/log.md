@@ -8811,9 +8811,18 @@ schedule/defer machinery; the daemon-side respawn consumer remains a later
 slice. `brr docs <unknown>` now returns handled-error status `1` instead of
 argparse-style usage status `2`.
 
+Task 2C's substrate also shipped: `runner-capabilities.json` is packaged as a
+small source/freshness-tagged benchmark cache keyed by model id, and
+`runner_capabilities.py` can derive economy/balanced/strong from cached scores
+when a Core entry has no hand-set `class`. Hand-set class remains authoritative;
+the bundled rows carry placeholder provenance with null scores rather than
+invented benchmark claims. Capability metadata now threads through
+`RunnerProfile`, generated Core entries, and the `resources.runner` portal
+block.
+
 Docs updated: `design-runner-cores.md`, `plan-repo-gardening.md`,
 `prompts/runners.md`, and `kb/index.md`. Focused tests passed:
-`pytest tests/test_runner.py tests/test_runner_cores.py tests/test_runner_select.py tests/test_cli.py tests/test_facets.py tests/test_hooks.py tests/test_daemon.py -q`.
+`pytest tests/test_runner_capabilities.py tests/test_runner.py tests/test_runner_cores.py tests/test_runner_select.py tests/test_cli.py tests/test_facets.py tests/test_hooks.py tests/test_daemon.py -q`.
 Full `pytest -q` still stops during collection on unrelated brnrd model/test
 drift (`Project`, `RepoBinding`, and `ChatBinding` imports expected by brnrd
 tests but absent from `brnrd.models`).

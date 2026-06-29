@@ -1,6 +1,6 @@
 # Design: runner Shell/Core selection, cost policy, and brnrd relay fallback
 
-Status: active on 2026-06-27 · foundation shipped 2026-06-28 · selector/Core-registry/portal metadata slices shipped 2026-06-29
+Status: active on 2026-06-27 · foundation shipped 2026-06-28 · selector/Core-registry/capability-cache/portal metadata slices shipped 2026-06-29
 
 > **2026-06-28 — shape adopted + foundation shipped (evt-y11i).** Two maintainer
 > steers fixed the user-facing shape: (1) *model selection is a requirement, not
@@ -342,19 +342,27 @@ Approve / Queue until local reset / Configure own runner
    only brr change when a new bundled model ships. `cores_for_shell()` lets a
    future CLI/display step list Cores per Shell without requiring the binary to
    be on PATH. A true live per-Shell model probe remains open.
-6. **Failure classifier:** distinguish quota, auth, provider outage, quality
+6. **Capability cache substrate** *(shipped 2026-06-29,
+   `runner-capabilities.json` + `runner_capabilities.py`)*: benchmark hints are
+   packaged as a source/freshness-tagged cache keyed by model id, loaded without
+   network I/O. When a Core entry has no hand-set `class`, the selector can
+   derive economy/balanced/strong from cached SWE-bench / Terminal-Bench style
+   scores; hand-set class stays authoritative. Current bundled rows are
+   provenance placeholders with null scores, deliberately avoiding fabricated
+   benchmark claims. Populating and refreshing trusted scores remains open.
+7. **Failure classifier:** distinguish quota, auth, provider outage, quality
    escalation, and no-response validation. Only quota/auth/provider errors enter
    fallback policy automatically.
-7. **Respawn portal:** let a resident request a stronger Shell/Core with reason and
+8. **Respawn portal:** let a resident request a stronger Shell/Core with reason and
    carry-forward context. *(Contract slice shipped 2026-06-29: `RespawnRequest`
    now also carries optional `at` / `defer_until` fields so scheduled respawn
    composes with the existing schedule/defer machinery; daemon consumption
    remains open.)*
-8. **brnrd relay consent:** spending-plan prompt, wallet balance read, cap
+9. **brnrd relay consent:** spending-plan prompt, wallet balance read, cap
    enforcement, audit rows. Codex/OpenAI first.
-9. **Provider collectors:** async collectors for OpenAI, Anthropic, Gemini, each
+10. **Provider collectors:** async collectors for OpenAI, Anthropic, Gemini, each
    provenance-tagged; never block prompt assembly on network.
-10. **Historical spend:** aggregate completed runs by runner and task shape for
+11. **Historical spend:** aggregate completed runs by runner and task shape for
     historical pre-analysis. Keep the existing guardrail: no projected dollar
     promise for local runs; paid relay gets a cap/quote envelope for consent.
 
