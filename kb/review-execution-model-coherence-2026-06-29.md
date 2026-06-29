@@ -120,15 +120,20 @@ Sequenced cheap→deep; each is reversible and the first three are clear edits.
    decisions/definitions/plan-position so coherent work stops feeling scrambled.
    kb/log is the resident's through-line; this is its *user-facing projection*.
 
-### Genuine forks — need a maintainer decision, not an edit
+### Genuine forks — RESOLVED by the maintainer (evt-ogga, 2026-06-29)
 
-- **Daemon-per-account + cheap dispatcher** (route project + Shell/Core from one
-  account-level daemon; forge events → repo `.brr`, message events unified) vs
-  the current daemon-per-repo. This is an architecture decision, not a
-  refactor — it reshapes where plans/runs live and how active-project selection
-  works. Capture as a `decision-` page before any code.
-- **Where inter-run plans live** (abandoned plans, plan changes, concurrent
-  plans, multi-repo). Ties to active-project selection. Same: decide first.
+Both forks below were the maintainer's call; both are now answered and captured
+in [`decision-account-centered-daemon.md`](decision-account-centered-daemon.md).
+The control-surface reshape (steps 1–5 above) is sequenced in
+[`plan-control-surface.md`](plan-control-surface.md).
+
+- **Daemon-per-account + cheap dispatcher** — *resolved: account daemon.* One
+  daemon per account; repo-scoped runs; the cheap repo-based dispatcher can
+  respawn-in-another-repo; cards show the repo; OSS self-deploy invariant holds.
+- **Where inter-run plans live** — *resolved: in the repo, known and visible*
+  (web-visible, card-referenced, daemon-injected between wakes). Cross-repo plans
+  ride the account daemon. Open sub-fork: the physical location (tracked file
+  recommended).
 
 ## Receipts
 

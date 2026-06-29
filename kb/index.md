@@ -33,6 +33,22 @@ dive-in map) and are stable until something contradicts them.
   synthesis of the foreground `brr up` process, gate/file-protocol
   boundary, serial worker lifecycle, local process control, and where
   developer reload fits without becoming broad product UX.
+- [Account-centered daemon decision](decision-account-centered-daemon.md) —
+  *accepted 2026-06-29*. One daemon per **account** (forge identity +
+  laptop), **repo-scoped runs** underneath it; the cheap answer-or-respawn
+  dispatcher stays repo-based but can respawn-in-another-repo; inter-run
+  plans live in-repo, known and visible; a local-first view surface with an
+  optional brnrd projection (OSS self-deploy invariant). Resolves the two
+  forks parked by the execution-model review.
+- [Control surface plan](plan-control-surface.md) — *active*. The
+  "dashboard" the engine shipped without: runner-envelope facet, per-run
+  record + attempt ledger, repo dimension on cards/activity, account daemon +
+  cross-repo dispatch, inter-run plan injection, plain-language config, and a
+  cross-run decision ledger (CS1–CS7, projection surfaces first).
+- [Execution-model coherence review](review-execution-model-coherence-2026-06-29.md) —
+  *2026-06-29*. Found the Core-selection/fallback/escalation/relay engine
+  sound but missing a control surface ("engine without the dashboard");
+  framed the reshape now carried by the two pages above.
 - [Git layer rework design](design-git-layer-rework.md) — *shipped
   on 2026-05-15*. Reframes the deleted tasks-folder gate around what
   it was conflating: daemon-side freshness (pre-task fetch+ff with

@@ -15,6 +15,11 @@ build a cost-and-capability-aware respawn model. This hub holds four tasks.
 - **Task 3 — imagery / vocabulary:** Part 3 below (a naming decision; the
   maintainer invited pushback — given here).
 - **Task 4 — kb + code gardening sweep:** Part 4 below.
+- **Task 5 — control surface over the engine (the "dashboard"):** Part 5 below.
+  The execution-model review found Task 2 shipped the *engine* without the
+  *dashboard*; the two architecture forks it parked are now resolved
+  ([`decision-account-centered-daemon.md`](decision-account-centered-daemon.md))
+  and the work is sequenced in [`plan-control-surface.md`](plan-control-surface.md).
 
 Companions: [`design-portal-grammar.md`](design-portal-grammar.md),
 [`design-resident-boundary.md`](design-resident-boundary.md),
@@ -334,6 +339,31 @@ tone — already committed (dominion `portal-reshape-synthesis`, the `run.md`/
 introspection voice reshape). The vocabulary above sits inside it cleanly:
 the resident (spirit) weaves the scroll; portals are the ornamented seams; the
 Runner (Shell+Core) is the body the spirit is given for a wake. No conflict.
+
+## Part 5 — Control surface over the engine (Task 5)
+
+The execution-model review (2026-06-29) found Task 2 sound but **scrambled-feeling
+because the engine shipped without a control surface over it** — "the engine
+without the dashboard." The maintainer's correction: ship them together. The two
+architecture forks the review parked are now **resolved by the maintainer
+(evt-ogga, 2026-06-29)**:
+
+1. **Daemon-per-account + cheap dispatcher** — *resolved: account daemon is the
+   right shape.* One daemon per account (forge identity + laptop); repo-scoped
+   runs underneath. The cheap dispatcher stays repo-based (default-repo selector)
+   but can return a **respawn-in-another-repo** request the account daemon
+   dispatches. Status cards show the repo. Bypass generalizes the 2A pin-skip rule
+   to a repo axis. **OSS self-deploy invariant holds:** account is an organizing
+   concept, not a cloud dependency.
+2. **Where inter-run plans live** — *resolved: in the repo, known and visible* —
+   web-visible, referenced in status cards, auto-injected/preloaded by the daemon
+   between wakes. Intra-run plans stay wherever the runner wants. Cross-repo plans
+   are the case that needs the account daemon (so the two forks are one shape).
+
+Full architecture: [`decision-account-centered-daemon.md`](decision-account-centered-daemon.md).
+Executable slices (CS1–CS7, the projection surfaces first): [`plan-control-surface.md`](plan-control-surface.md).
+The one open sub-fork is the *physical* inter-run plan location (tracked file vs
+orphaned branch vs gist) — recommended tracked file; confirm before building CS5.
 
 ## Part 4 — kb + code gardening sweep (Task 4)
 
