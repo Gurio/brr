@@ -235,7 +235,7 @@ dive-in map) and are stable until something contradicts them.
 - [Cost-aware execution & an operator-legible control loop](plan-cost-aware-runner.md) —
   *active (2026-06-17; first slices shipping)*. The **cost/notification
   braid** of the portals plan: three coupled loops — the resident
-  *seeing* its own medium/quota/spend (Loop A), runs surviving
+  *seeing* its own Shell/Core, quota, and spend posture (Loop A), runs surviving
   exhaustion via fallback + quota-aware deferral (Loop B), and the user
   holding operational control through a live cost `.card`, a
   plan→approve handshake, and a documented inbox/acknowledge contract
@@ -254,7 +254,9 @@ dive-in map) and are stable until something contradicts them.
   the initial wake context, build the cost-and-capability-aware respawn model,
   settle the imagery/vocabulary (Runner = Shell + Core; keep portal; retire
   vessel/medium/cockpit), and sweep kb + code. Tasks 3 + 4A + 4B executed on
-  `brr/initial-context-reweave`.
+  `brr/initial-context-reweave`; Task 2 has shipped the latency fix,
+  `shell=`/`core=` knobs, generated Core-profile selection, scheduled-respawn
+  contract fields, and runner metadata in `portal-state.json`.
 - [Initial wake-context reweave (gardening Task 1)](plan-initial-context-reweave.md) —
   *planning 2026-06-28*. File-by-file target-shape spec for the prompts + Run
   Context Bundle the resident reads on every wake; written as new-shape +

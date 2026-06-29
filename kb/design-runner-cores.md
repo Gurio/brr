@@ -1,6 +1,6 @@
 # Design: runner Shell/Core selection, cost policy, and brnrd relay fallback
 
-Status: active on 2026-06-27 · foundation shipped 2026-06-28 · 2A/2B slices shipped 2026-06-29
+Status: active on 2026-06-27 · foundation shipped 2026-06-28 · selector/Core-registry/portal metadata slices shipped 2026-06-29
 
 > **2026-06-28 — shape adopted + foundation shipped (evt-y11i).** Two maintainer
 > steers fixed the user-facing shape: (1) *model selection is a requirement, not
@@ -316,8 +316,12 @@ Approve / Queue until local reset / Configure own runner
    No dispatch changes yet.
 2. **CLI/display:** `brr runners list` shows profiles, owner, class, hooks, quota
    source, and known freshness.
-3. **Portal upgrade:** replace the flat `resources.quota` string with structured
-   `runner` resource while preserving the current compact hook line.
+3. **Portal upgrade** *(shipped 2026-06-29)*: replace the flat
+   `resources.quota` string with a structured `resources.runner` governance
+   block while preserving the current compact hook line. The daemon now reads
+   metadata from the same declared/generated profile view the selector uses, so
+   generated Core selections expose model/class/provider/hooks/cost metadata
+   rather than only the base Shell name.
 4. **Deterministic selector + user-facing knobs** *(shipped 2026-06-29)*:
    `resolve_runner()` now reads `shell=`/`core=` from `.brr/config` and uses
    `select_runner()` for cost-aware auto-detection. Legacy `runner=` still
@@ -325,18 +329,27 @@ Approve / Queue until local reset / Configure own runner
    shipped here: `_collect_levels(refresh=False)` on the `_emit_flush` path
    prevents the ~18s PTY `/usage` scrape from blocking tool-boundary flushes;
    the heartbeat path keeps `refresh=True` and owns the cache refresh.
-5. **Dynamic Core registry** *(shipped 2026-06-29, `runner_cores.py`)*:
+5. **Dynamic Core registry** *(shipped 2026-06-29, corrected in dispatch the
+   same day, `runner_cores.py` + `runner.py`)*:
    `available_cores()` returns `RunnerProfile` records for all Cores whose Shell
    binary is on PATH, from a bundled registry. Project `runners.md` entries
-   extend/override the registry via the `extra=` parameter. No hardcoded model
-   names in dispatch — updating the registry is the only brr change when a
-   new model ships. `cores_for_shell()` lets a future CLI/display step list
-   Cores per Shell without requiring the binary to be on PATH.
+   extend/override the registry via the `extra=` parameter. The resolver reads
+   generated invokable profiles derived from this registry (`claude-haiku`,
+   `codex-mini`, etc.) and auto mode prefers concrete Cores over model-less base
+   Shell profiles. `shell=` still exact-pins the named Shell/profile; `core=`
+   can match a full model id or short generated profile alias such as `haiku`.
+   No hardcoded model names live in dispatch — updating the registry is the
+   only brr change when a new bundled model ships. `cores_for_shell()` lets a
+   future CLI/display step list Cores per Shell without requiring the binary to
+   be on PATH. A true live per-Shell model probe remains open.
 6. **Failure classifier:** distinguish quota, auth, provider outage, quality
    escalation, and no-response validation. Only quota/auth/provider errors enter
    fallback policy automatically.
 7. **Respawn portal:** let a resident request a stronger Shell/Core with reason and
-   carry-forward context.
+   carry-forward context. *(Contract slice shipped 2026-06-29: `RespawnRequest`
+   now also carries optional `at` / `defer_until` fields so scheduled respawn
+   composes with the existing schedule/defer machinery; daemon consumption
+   remains open.)*
 8. **brnrd relay consent:** spending-plan prompt, wallet balance read, cap
    enforcement, audit rows. Codex/OpenAI first.
 9. **Provider collectors:** async collectors for OpenAI, Anthropic, Gemini, each

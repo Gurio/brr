@@ -1,6 +1,6 @@
 # Plan: repo gardening — initial context, respawn model, imagery, kb/code sweep
 
-**Status: executing — Tasks 1, 3.3, 4A, 4B done 2026-06-28/29; Task 2 partial (new slice + 2A + 2B) done 2026-06-29.** The maintainer
+**Status: executing — Tasks 1, 3.3, 4A, 4B done 2026-06-28/29; Task 2 partial (new slice + 2A + corrected 2B + 2D contract + 2F runner portal metadata) done 2026-06-29.** The maintainer
 asked this run to *evaluate and plan only*; a later run on a cheaper-but-capable
 model (Sonnet) executes the plan. We are at an architecture crossroads where
 **vessel / medium / runner / core** are mixed across configs, kb, prompts, and
@@ -117,17 +117,25 @@ hour on Codex"), then **respawns** the real work onto the chosen Runner.
   specific is set. Keep low cognitive load: the user pins `shell=`/`core=` for
   the direct case, or sets intent in plain words and brr routes.
 
-### 2B — Extract available models from the Shell itself (no hardcoded staleness)
+### 2B — Extract available models from the Shell itself (no hardcoded staleness) — **corrected 2026-06-29**
 The maintainer wants brr to pick up a new model release on an installed Shell
 without a brr update. Plan:
-- Add a per-Shell **model-probe** (`brr/<shell>_models.py` or fold into the
-  existing `*_status.py`): `claude` and `codex` should expose an installed
-  model list (probe the CLI's own listing/help, cache with TTL like
-  `claude_usage.py`). Gemini stays intent until installed.
-- The probe feeds a **dynamic Core registry** the selector reads, instead of
-  the static `model:` fields in profiles being the only known Cores. Static
-  profile metadata becomes *defaults/overrides*; the probe is the live source.
-- Provenance-tag each Core (probed vs declared) like the quota grades.
+- Shipped foundation: `runner_cores.py` holds the bundled Core registry, tagged
+  with model/provider/class/cost/freshness, plus `available_cores()` for CLI
+  display and `cores_for_shell()` for Shell-filtered inspection.
+- Corrected selector wiring: `runner.resolve_runner()` now reads a merged
+  selection view: active `runners.md` profiles plus generated invokable Core
+  profiles derived from the registry (`claude-haiku`, `codex-mini`, etc.).
+  Generated profiles are created only for Shells declared in the active
+  `runners.md`, so a project-owned profile file does not unexpectedly re-enable
+  bundled Shells it omitted. Auto mode prefers those concrete Core profiles over
+  model-less base Shells; `shell=` still exact-pins the base Shell/profile; and
+  short `core=` aliases such as `core=haiku` match generated Core profile names.
+- Generated Core profiles carry real commands: the model flag is inserted into
+  the base Shell command, hooks/quota metadata are inherited from the Shell, and
+  the daemon uses the same metadata for the `resources.runner` portal block.
+- Still not done: a true per-Shell model *probe* from CLI output/help. Today the
+  registry is bundled data plus project overrides, not a live discovered list.
 
 ### 2C — Capability-aware selection (swe-bench / terminal-bench), cached
 The maintainer wants cost **and capability** awareness, ideally from a
@@ -144,12 +152,13 @@ benchmark. Plan:
   shipping 2B (model discovery) before 2C (scoring) — discovery is the
   load-bearing half; scoring is polish.
 
-### 2D — Scheduling-aware respawn
+### 2D — Scheduling-aware respawn — **contract shipped 2026-06-29**
 "Run in half an hour on Codex" = a scheduled respawn. This already has a home:
 the dominion `schedule.md` (`at:`/`every:`) and #128's `defer_until`. Plan: the
 `RespawnRequest` gains an optional `at:`/`defer_until` so a respawn can be both
-medium-routed and time-deferred. No new mechanism — compose the two existing
-ones.
+Runner-routed and time-deferred. No new mechanism — compose the two existing
+ones. **Shipped:** `RespawnRequest` now carries optional `at` and `defer_until`
+fields. The daemon-side respawn consumer is still a later slice.
 
 ### 2E — Show running + scheduled runs on the brnrd overview
 `plan-brnrd-dashboard-mvp.md` has **no run-listing view today** (grep: none).
@@ -161,12 +170,16 @@ entries + parked `RespawnRequest`s). This is a dashboard slice to add to
 flag it there so the dashboard plan owns the UI and this plan owns the data
 contract (what a run/scheduled-wake record must expose).
 
-### 2F — Portal/structured-state upgrade (already sequenced)
+### 2F — Portal/structured-state upgrade (already sequenced) — **runner metadata wired**
 `design-runner-cores.md` step 3 ("replace flat `resources.quota` string with
 structured `runner_media`") and its "Standing portal candidates" are the
 governance-exposure half (the maintainer's "expose selected medium/cost/quota
 in the card"). Keep that sequence; rename `runner_media` → `runner`/`core` per
-Part 3.
+Part 3. **Current state:** `portal-state.json` already carries
+`resources.runner`; this run fixed the generated-Core path so the block can show
+the selected Core's model/class/provider/hooks/cost metadata instead of only the
+base Shell name. The compact hook line still renders the wall/state facets, not
+the governance block.
 
 ## Part 3 — Imagery & vocabulary (Task 3) — decision + pushback
 

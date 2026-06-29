@@ -8788,3 +8788,32 @@ Executed Task 2 slices from `plan-repo-gardening.md` on `brr/initial-context-rew
 
 **`design-runner-cores.md`:** status updated; implementation sequence steps
 renumbered with steps 4 (selector+knobs) and 5 (Core registry) marked shipped.
+
+## [2026-06-29] feat | Task 2 — generated Core selection and scheduled respawn contract
+
+Continued `plan-repo-gardening.md` Task 2 on `brr/initial-context-reweave`.
+
+The dynamic Core registry is now wired into real runner resolution, not only
+CLI display. `runner.resolve_runner()` reads a merged selection view: active
+`runners.md` profiles plus generated invokable Core profiles derived from
+`runner_cores.py` (`claude-haiku`, `codex-mini`, etc.). Generated profiles are
+created only for Shells declared in the active `runners.md`, so a project-owned
+profile file stays authoritative; auto mode prefers concrete Core profiles over
+model-less base Shells; `shell=` remains an exact pin; and short `core=` aliases
+such as `core=haiku` match generated Core profile names.
+
+Generated Core profiles now carry actual commands: the model flag is inserted
+into the base Shell command, hooks/quota metadata are inherited from the Shell,
+and the daemon exposes the same generated metadata through
+`resources.runner` in `portal-state.json`. `RespawnRequest` gained optional
+`at` and `defer_until` fields so scheduled respawn composes with existing
+schedule/defer machinery; the daemon-side respawn consumer remains a later
+slice. `brr docs <unknown>` now returns handled-error status `1` instead of
+argparse-style usage status `2`.
+
+Docs updated: `design-runner-cores.md`, `plan-repo-gardening.md`,
+`prompts/runners.md`, and `kb/index.md`. Focused tests passed:
+`pytest tests/test_runner.py tests/test_runner_cores.py tests/test_runner_select.py tests/test_cli.py tests/test_facets.py tests/test_hooks.py tests/test_daemon.py -q`.
+Full `pytest -q` still stops during collection on unrelated brnrd model/test
+drift (`Project`, `RepoBinding`, and `ChatBinding` imports expected by brnrd
+tests but absent from `brnrd.models`).
