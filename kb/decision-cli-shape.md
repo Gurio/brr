@@ -1,5 +1,14 @@
 # Decision: brr CLI shape
 
+> **Superseded framing (2026-06-29):** this page treats `brr` as primary and
+> `brnrd` as a promoted *sibling*. After the brand rename
+> ([`decision-brnrd-rename.md`](decision-brnrd-rename.md), sub-fork resolved to
+> (b)), **`brnrd` is the primary command/brand and `brr` survives as the short
+> local/runtime-facing verb** shipped from the same wheel. The seven-verb
+> structure below still holds — it just hangs under `brnrd` (with `brr` as the
+> local alias). Read the verb taxonomy here; read the rename decision for which
+> name is primary.
+
 **Status: accepted 2026-05-26** (locked in PR #40 MR review,
 locking pass IV — `brnrd` promoted to a **sibling top-level
 binary** alongside `brr`, shipped from the same package;

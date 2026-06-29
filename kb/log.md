@@ -9094,3 +9094,41 @@ Folded in evt-izfm (quota note): confirmed I see injected inbox events — kept 
 wake light per the 40% quota caution.
 
 Branch: brr/initial-context-reweave.
+
+## [2026-06-29] decision | confirmations etched + control-surface plan handoff sharpened
+
+Maintainer (evt-qhk6) confirmed four open points from the account-centered reshape
+and asked whether the remaining-work plan is clearly laid out for the next
+implementation run. Etched the confirmations and audited the plan:
+
+- **brr survives as the local verb (rename sub-fork → (b)).** Resolved the open
+  (a)/(b) fork in `decision-brnrd-rename.md`: brnrd is brand/package/service;
+  `brr` persists as the short local/runtime-facing verb and absorbs the runtime
+  names (`.brr/`, `brr-home`), so migration **step 4 (runtime-state rename) drops
+  out entirely** — the brand rename lands with no flag-day on installs' dominions.
+  PyPI-collision worry noted low (brr ships from the brnrd wheel via
+  `[project.scripts]`, not a separate package). Added a superseded-framing banner
+  to `decision-cli-shape.md` (brnrd primary, brr local alias).
+- **Dominion consolidates to a per-account repo.** Maintainer: "move brr-home
+  orphaned branch per repo to the brr-home / dominion repo per account? love it."
+  Etched in `decision-account-centered-daemon.md` → Account-scoped store as a
+  *consolidation, not a sibling*: one resident per account ⇒ one dominion per
+  account. The account dominion repo unifies the resident's memory (old `brr-home`
+  role) + the account store (cross-repo plans, run-state registry, config/registry,
+  dispatch inbox). Repo-specific memory becomes a repo-tagged section within it.
+  Name a minor open detail (`brr-home` vs `brnrd-home`, no migration cost — new repo).
+- **Account repo auto-create is default + overridable; dispatch inbox lives there.**
+  Confirmed both: auto-create on first `brr up`/install with an override to
+  designate an existing repo (or stay local); the message-event dispatch inbox is
+  account state → account repo.
+- **Plan handoff sharpened.** `plan-control-surface.md`: added an "Entry point for
+  the next implementation run" section — all genuine forks resolved, nothing in
+  CS1–CS4 waits on a maintainer call, so the next wake starts at **CS1** (collapse
+  the two Core catalogs first → project the runner mandate facet) with explicit
+  acceptance criteria. Updated CS2 (run-state home → account dominion repo; ledger
+  *rendering* lands regardless, *persistence* waits on CS4), CS4 (folds in the
+  account repo + auto-create + dispatch inbox), and CS5 (form=orphaned branch and
+  cross-repo=account repo now resolved; only the narrow repo-scoped-plan-home cut
+  —account dominion vs per-repo `brr-plans`— remains, recommend the former).
+
+Branch: brr/initial-context-reweave.
