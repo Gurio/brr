@@ -1,6 +1,6 @@
 # Plan: repo gardening — initial context, respawn model, imagery, kb/code sweep
 
-**Status: executing — Tasks 1, 3.3, 4A, 4B done 2026-06-28/29; Task 2 partial (new slice + 2A + corrected 2B + 2C substrate + 2D contract + 2F runner portal metadata) done 2026-06-29.** The maintainer
+**Status: executing — Tasks 1, 3.3, 4A, 4B done 2026-06-28/29; Task 2 partial (new slice + 2A + corrected 2B + 2C substrate + 2D contract + 2E dashboard-plan handoff + 2F runner portal metadata) done 2026-06-29.** The maintainer
 asked this run to *evaluate and plan only*; a later run on a cheaper-but-capable
 model (Sonnet) executes the plan. We are at an architecture crossroads where
 **vessel / medium / runner / core** are mixed across configs, kb, prompts, and
@@ -166,7 +166,7 @@ Runner-routed and time-deferred. No new mechanism — compose the two existing
 ones. **Shipped:** `RespawnRequest` now carries optional `at` and `defer_until`
 fields. The daemon-side respawn consumer is still a later slice.
 
-### 2E — Show running + scheduled runs on the brnrd overview
+### 2E — Show running + scheduled runs on the brnrd overview — **dashboard plan handoff done 2026-06-29**
 `plan-brnrd-dashboard-mvp.md` has **no run-listing view today** (grep: none).
 The presence registry (`presence.py`) and schedule (`schedule.py`) hold the
 data locally. Plan: add an **"Activity" view** to the dashboard inventory
@@ -174,7 +174,12 @@ data locally. Plan: add an **"Activity" view** to the dashboard inventory
 entries + parked `RespawnRequest`s). This is a dashboard slice to add to
 `plan-brnrd-dashboard-mvp.md`'s view inventory, consuming the brnrd protocol —
 flag it there so the dashboard plan owns the UI and this plan owns the data
-contract (what a run/scheduled-wake record must expose).
+contract (what a run/scheduled-wake record must expose). **Done at the planning
+layer:** `plan-brnrd-dashboard-mvp.md` now has Activity as View 9, puts it in
+Slice 3, and records the uniform activity-record fields the backend should
+expose. Remaining work is implementation: brnrd protocol endpoint, dashboard
+route/template/tests, and later mutation actions (cancel / reschedule / approve
+respawn).
 
 ### 2F — Portal/structured-state upgrade (already sequenced) — **runner metadata wired**
 `design-runner-cores.md` step 3 ("replace flat `resources.quota` string with

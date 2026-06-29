@@ -256,8 +256,8 @@ dive-in map) and are stable until something contradicts them.
   vessel/medium/cockpit), and sweep kb + code. Tasks 3 + 4A + 4B executed on
   `brr/initial-context-reweave`; Task 2 has shipped the latency fix,
   `shell=`/`core=` knobs, generated Core-profile selection, the capability-cache
-  substrate, scheduled-respawn contract fields, and runner metadata in
-  `portal-state.json`.
+  substrate, scheduled-respawn contract fields, the Activity dashboard-plan
+  handoff, and runner metadata in `portal-state.json`.
 - [Initial wake-context reweave (gardening Task 1)](plan-initial-context-reweave.md) —
   *planning 2026-06-28*. File-by-file target-shape spec for the prompts + Run
   Context Bundle the resident reads on every wake; written as new-shape +

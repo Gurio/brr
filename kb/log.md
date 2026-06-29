@@ -8820,8 +8820,15 @@ invented benchmark claims. Capability metadata now threads through
 `RunnerProfile`, generated Core entries, and the `resources.runner` portal
 block.
 
+Task 2E's dashboard-planning handoff is also complete:
+`plan-brnrd-dashboard-mvp.md` now includes Activity as View 9, places it in
+Slice 3, and records the uniform activity-record fields for running runs,
+scheduled wakes, and parked respawn requests. The actual brnrd protocol
+endpoint and dashboard implementation remain future work.
+
 Docs updated: `design-runner-cores.md`, `plan-repo-gardening.md`,
-`prompts/runners.md`, and `kb/index.md`. Focused tests passed:
+`plan-brnrd-dashboard-mvp.md`, `prompts/runners.md`, and `kb/index.md`.
+Focused tests passed:
 `pytest tests/test_runner_capabilities.py tests/test_runner.py tests/test_runner_cores.py tests/test_runner_select.py tests/test_cli.py tests/test_facets.py tests/test_hooks.py tests/test_daemon.py -q`.
 Full `pytest -q` still stops during collection on unrelated brnrd model/test
 drift (`Project`, `RepoBinding`, and `ChatBinding` imports expected by brnrd
