@@ -8991,3 +8991,33 @@ spending plan for user approval before spend. Implemented slices 1–3 of
 
 **Companions**: `decision-llm-relay.md` (pricing), `design-runner-cores.md`
 (fallback chain), `plan-relay-spend-consent.md` (this plan).
+
+**Slice 4: Portal exposure** (completed 2026-06-29):
+- Extended `resources.runner` governance block in `portal-state.json` to expose
+  relay_consent fields: reason, model, provider, costs, cap, balance
+- `facets.py`: added relay_consent parameter to _runner_block() and build()
+- `daemon.py`: wired relay_consent through _resources_facet() and
+  _write_live_portal_state()
+- Portal now carries relay spending plan details for resident to read before approval
+- Tests: added test_build_runner_block_can_expose_relay_consent() (all 12 facets tests pass)
+
+**Summary: slices 1-4 complete, 3 deferred to next wake**
+Shipping payload paths are now wired. When a run exhausts local quota:
+1. Daemon detects relay opportunity (slice 3 check)
+2. Spending plan is calculated (slice 1 model)
+3. Relay candidate is selected (slice 2 selection)
+4. Details are exposed in portal-state (slice 4 portal)
+5. Resident reads spending plan from portal and emits approval (slice 5, deferred)
+
+Deferred slices 5-7 for next wake:
+- Slice 5: Resident respawn consumer (handle relay_consent=approved)
+- Slice 6: Wallet balance read (brnrd account integration)
+- Slice 7: Audit and billing (ledger line items, cap enforcement)
+
+**Commits**:
+- 3923dc8 feat: implement spending plan data model and relay runner selection
+- 42bba88 test: add comprehensive tests for spending plan module
+- a47a975 log: record relay spend-consent implementation (slices 1-3)
+- ac8ad30 feat: expose relay consent in portal-state.json (slice 4)
+
+**Branches**: brr/initial-context-reweave (4 commits ahead of origin)
