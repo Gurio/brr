@@ -277,6 +277,10 @@ least I can get away with."
   (`Run Context Bundle`, `Run ID`). The follow-up #128 rename slice now
   removes the legacy `task-...` id string and `.brr/tasks/` storage in
   favour of `run-*` ids and `.brr/runs/<run-id>/run.md` manifests.
+- **B1 local fallback** — classified quota/auth/provider failures now retry the
+  same run in the same worktree on a conservative local fallback Runner when one
+  exists. The policy excludes paid relay, stays at the same or a cheaper class,
+  and records the switch in `attempt_failed` / `retrying` packets for the card.
 
 ## Sequence after this run (pickup list)
 
@@ -297,8 +301,8 @@ capability, fallback eligibility, and billing posture.
    framing shipped; the dominion playbook still needs the same trim).
 4. **C3 — operator notification + `brr docs operator` doc** (the
    user-facing acknowledge contract; the maintainer's explicit ask).
-5. **B1/B2 — fallback chain + quota deferral** (highest reliability
-   leverage; wants runner media plus #128's run/event substrate).
+5. **B2 — quota deferral and reset-window routing** (the local fallback chain
+   exists; still defer instead of retrying when a hard reset window is known).
 6. **C2 — plan→approve with a historical cost pre-analysis** (the
    duo-loop primitive; wants #128 threading).
 7. **A3 — per-run historical spend analysis** (feeds C1/C2; coarse first).

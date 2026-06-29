@@ -240,8 +240,8 @@ dive-in map) and are stable until something contradicts them.
   holding operational control through a live cost `.card`, a
   plan→approve handshake, and a documented inbox/acknowledge contract
   (Loop C) — plus a budget-aware self-chunking discipline. Ships A1
-  (medium in the wake bundle), the first A2 quota snapshot ingress, and
-  the diffense de-firehose first.
+  (medium in the wake bundle), the first A2 quota snapshot ingress, the
+  first B1 local fallback loop, and the diffense de-firehose first.
 - [Runner Shell/Core selection, cost policy, and brnrd relay fallback](design-runner-cores.md) —
   *active on 2026-06-27*. Splits static runner profiles from **RunnerProfiles**
   (profile + model/Core + owner + auth/quota source + hook capability + billing
@@ -257,7 +257,8 @@ dive-in map) and are stable until something contradicts them.
   `brr/initial-context-reweave`; Task 2 has shipped the latency fix,
   `shell=`/`core=` knobs, generated Core-profile selection, the capability-cache
   substrate, scheduled-respawn contract fields, the Activity dashboard-plan
-  handoff, and runner metadata in `portal-state.json`. The first
+  handoff, runner metadata in `portal-state.json`, failure classification, and
+  automatic local fallback on quota/auth/provider failures. The first
   proposal-scaffolding cleanup slice compressed the accepted
   licensing/defense, monorepo-structure, and Fly Machines env pages into
   current-state synthesis.

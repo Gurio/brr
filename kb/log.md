@@ -8911,3 +8911,20 @@ registry entry, stay `null` with provenance instead of receiving guessed scores.
 
 The capability-score tests were updated for the populated cache. The design and
 gardening pages now mark population shipped while leaving refresh policy open.
+
+## [2026-06-29] implement | Automatic local runner fallback policy
+
+Continued `plan-repo-gardening.md` Task 2 on `brr/initial-context-reweave`.
+
+The runner failure classifier now feeds a conservative automatic fallback loop.
+When a run fails with `quota_exhausted`, `auth_error`, or `provider_error`, the
+daemon can retry the same event in the same prepared worktree on another local
+Runner. The policy excludes paid relay, requires the fallback to be in the same
+or a cheaper class than the failed Runner, avoids same quota/auth domains where
+possible, and requires a different provider for provider failures.
+
+Progress packets now expose the switch: `attempt_failed` carries
+`will_fallback` / `fallback_runner`, and the following `retrying` packet carries
+`from_runner` / `runner` so cards can render the fallback instead of a generic
+retry. Paid relay consent, quota-reset deferral, and proactive quality
+escalation remain open.

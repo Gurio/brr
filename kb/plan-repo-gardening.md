@@ -1,6 +1,6 @@
 # Plan: repo gardening — initial context, respawn model, imagery, kb/code sweep
 
-**Status: executing — Tasks 1, 3.3, 4A, 4B done 2026-06-28/29; Task 2 partial (new slice + 2A + corrected 2B + live help probe + 2C substrate + 2D respawn consumer + 2E Activity implementation + 2F runner portal metadata + failure classification) done 2026-06-29; Task 4 proposal-scaffolding cleanup done for `decision-licensing-and-defense`, `decision-monorepo-structure`, and `plan-env-fly-machines` on 2026-06-29.** The maintainer
+**Status: executing — Tasks 1, 3.3, 4A, 4B done 2026-06-28/29; Task 2 partial (new slice + 2A + corrected 2B + live help probe + 2C substrate + 2D respawn consumer + 2E Activity implementation + 2F runner portal metadata + failure classification + automatic local fallback) done 2026-06-29; Task 4 proposal-scaffolding cleanup done for `decision-licensing-and-defense`, `decision-monorepo-structure`, and `plan-env-fly-machines` on 2026-06-29.** The maintainer
 asked this run to *evaluate and plan only*; a later run on a cheaper-but-capable
 model (Sonnet) executes the plan. We are at an architecture crossroads where
 **vessel / medium / runner / core** are mixed across configs, kb, prompts, and
@@ -209,8 +209,21 @@ auth error, provider error, generic runner error, or clean no-output. The
 classification rides both `attempt_failed` and terminal `failed` packets, and
 the card labels quota/auth/provider failures distinctly instead of collapsing
 them into `runner_error`. The prior "session limit" failure mode is now
-`quota_exhausted`. This is classification only; automatic fallback policy and
-paid relay consent remain separate slices.
+`quota_exhausted`.
+
+### 2H — Automatic local fallback policy — **shipped 2026-06-29**
+The daemon now consumes the 2G classifier for a first automatic recovery loop.
+When a runner fails with `quota_exhausted`, `auth_error`, or `provider_error`,
+brr retries the same run in the same prepared worktree on a conservative local
+fallback Runner when one exists. The policy excludes paid relay profiles, avoids
+silent cost escalation by requiring the fallback to be in the same or a cheaper
+class than the failed Runner, and avoids likely-repeat domains (quota/auth
+failures use quota source first, provider second; provider failures require a
+different provider). The run packets record the decision:
+`attempt_failed` carries `will_fallback` + `fallback_runner`, and the following
+`retrying` packet carries `from_runner` + `runner`, so cards can show the switch
+instead of a generic retry. Paid relay consent, wallet/cap enforcement,
+quota-reset deferral, and proactive quality escalation remain separate slices.
 
 ## Part 3 — Imagery & vocabulary (Task 3) — decision + pushback
 

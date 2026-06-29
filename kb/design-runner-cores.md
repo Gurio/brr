@@ -1,6 +1,6 @@
 # Design: runner Shell/Core selection, cost policy, and brnrd relay fallback
 
-Status: active on 2026-06-27 · foundation shipped 2026-06-28 · selector/Core-registry/capability-cache/portal metadata slices shipped 2026-06-29
+Status: active on 2026-06-27 · foundation shipped 2026-06-28 · selector/Core-registry/capability-cache/portal metadata/local-fallback slices shipped 2026-06-29
 
 > **2026-06-28 — shape adopted + foundation shipped (evt-y11i).** Two maintainer
 > steers fixed the user-facing shape: (1) *model selection is a requirement, not
@@ -355,13 +355,21 @@ Approve / Queue until local reset / Configure own runner
    verified Terminal-Bench 2.0 rows populate only when the agent matches the
    Shell. Non-exact, unverified, or missing rows stay `null` with provenance;
    refresh policy remains open.
-7. **Failure classifier** *(classification shipped 2026-06-29)*: the daemon
+7. **Failure classifier + automatic local fallback** *(classification and
+   local fallback shipped 2026-06-29)*: the daemon
    distinguishes timeout, quota exhaustion, auth error, provider failure,
    generic runner error, and clean no-output validation. The classification
    rides `attempt_failed` and terminal `failed` packets so cards render
-   quota/auth/provider failures distinctly. Still open: quality escalation and
-   automatic fallback policy. Only quota/auth/provider errors should enter
-   fallback policy automatically once the fallback loop exists.
+   quota/auth/provider failures distinctly. It also drives the first automatic
+   fallback loop: on `quota_exhausted`, `auth_error`, or `provider_error`, brr
+   retries the same run in the same prepared worktree on a conservative local
+   fallback Runner when one exists. The policy excludes relay, requires the
+   fallback to be in the same or a cheaper class than the failed Runner, avoids
+   same quota/auth domains where possible, and requires a different provider for
+   provider failures. `attempt_failed` records `will_fallback` +
+   `fallback_runner`; the following `retrying` packet records `from_runner` +
+   `runner` so cards can show the switch. Still open: quality escalation,
+   quota-reset deferral, and paid relay consent.
 8. **Respawn portal** *(consumer shipped 2026-06-29)*: a resident can drop an
    outbox message with `respawn: true`, `shell=` / `core=`, reason,
    carry-forward body, and optional `at` / `defer_until`. The daemon queues a
@@ -412,14 +420,14 @@ proceed unless redirected.
    absent. *Recommend:* accept this as v1 — cheap proactive for Codex, cached
    proactive for Claude, reactive fallback everywhere.
 
-2. **Auto-respawn loop vs. parked request — depends on #128.** Fully automatic
-   fallback (`runner: [a, b]`, retry on next Shell/Core) wants the run/event
-   model's `defer_until` + re-claim (#128). *Recommend:* ship the **parked
-   respawn request** first (the resident emits a `RespawnRequest` — reason,
-   `proposed_runner`, carry-forward — to the outbox; the user re-sends on the
-   chosen Shell/Core), which needs no #128. Promote to an automatic chain once
-   #128 lands. This keeps the cheap models useful now without the daemon owning
-   invisible billing decisions.
+2. **Automatic local fallback vs. respawn requests.** The daemon now owns the
+   unambiguous operational loop inside the current run: classified
+   quota/auth/provider failures can retry on a conservative local fallback
+   Runner without user intervention. The resident-authored `RespawnRequest`
+   remains the right surface for quality escalation, explicit Shell/Core choice,
+   scheduled handoff, or anything that would spend paid relay credits. The open
+   promotion is not "retry on local fallback" anymore; it is quota-reset
+   deferral plus spend-plan-gated relay.
 
 3. **What the deterministic v1 selector keys on.** The selector must stay
    conservative (no revived LLM triage). Today it keys on: explicit override →
