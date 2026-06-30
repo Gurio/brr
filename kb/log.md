@@ -9346,3 +9346,44 @@ green (100 passed); full suite green (1209 passed, 1 existing
 FastAPI/Starlette deprecation warning).
 
 Branch: brr/resident-voice-reshape.
+
+## [2026-06-30] refactor | second cut — trim the dominion playbook seed to a "note on the workshop"
+
+Maintainer nodded the second cut proposed in the prior wake's reply: the
+identity-core split (2026-06-30) graduated *identity* invariants out of the
+seed; this graduates the *operational manual* out too. His staleness argument
+is the driver — contract drift is the same danger as identity drift: if the
+code changes the self-inject syntax or the `gate: forge` protocol and that
+contract lives in the resident's dominion copy, the copy silently lies, because
+`dominion.py` re-reads the dominion copy on every wake but never re-reads the
+repo seed.
+
+Cut `prompts/dominion-playbook.md` from 9131 → ~6.3 KiB. Dropped the sections
+that describe contracts the code owns: **Your Runner** (graduated to
+`daemon-substrate.md`, which already referenced the Runner — now carries the
+full Shell+Core definition), **Context Layers** (the injected-block enumeration
+is visible in the wake itself; only the authority-precedence judgement stays),
+**Delivery** and **Publishing Your Change** (already stated in `run.md` +
+`daemon-substrate.md` + the live Run Context Bundle delivery contract). Folded
+the "A Thought" continuity instinct into the opening. Kept the genuinely living
+judgement: two-memories/bridging, dominion-as-working-tree, the
+environment-shaping rung ladder, conversation judgement, "keep this place
+useful." Added a **"Where the contracts live"** pointer section so the resident
+knows where to look for the always-fresh authoritative versions instead of
+owning a drifting copy — the *note on the workshop*, not the *manual to the
+levers* (the maintainer's framing).
+
+Per his reminder, updated **both** the repo seed and the resident's dominion
+`playbook.md` (reconciled byte-identical, since the dominion copy had not yet
+layered personal content on the post-split seed). Updated the
+orientation-layering plan row. Verification: targeted `test_prompts.py` +
+`test_dominion.py` green (100), full suite green (1209 passed, 1 existing
+FastAPI/Starlette deprecation warning). A test pins the seed's closing phrase
+"build it like it's yours" and the budget headroom — both still hold.
+
+Open thread carried forward (from the prior wake's ergonomics note): nothing in
+the wake signals when a dominion file has drifted from its repo-seeded origin —
+a "dominion diverged from seed" indicator is a standing-portal candidate that
+would turn this whole staleness class into a live signal. Worth a ticket.
+
+Branch: brr/resident-voice-reshape.
