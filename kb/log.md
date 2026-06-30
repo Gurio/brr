@@ -9095,30 +9095,6 @@ wake light per the 40% quota caution.
 
 Branch: brr/initial-context-reweave.
 
-## [2026-06-30] implement | account dominion becomes wake-time resident home
-
-Completed the CS4 dominion rehome after the operator migration:
-
-- Wake-time self-inject, matched pitfalls, `schedule.md`, thread-of-record hints,
-  and capture-at-sleep now prefer `repos/<repo>/dominion/` inside the local
-  account dominion repo. The old repo-local `.brr/dominion` stays readable and
-  capturable as a legacy fallback so partially migrated installs do not wake
-  blank.
-- Fresh default account state now uses the `brnrd` namespace under XDG state
-  (`$XDG_STATE_HOME/brnrd/accounts/<account>/dominion`), while an existing
-  `$XDG_STATE_HOME/brr/...` account home remains a migration fallback. The
-  account repo is local-first; remote/GitHub durability is explicit opt-in.
-- Updated the resident playbook seed, bundled docs, AGENTS template, and current
-  KB shape so they describe the account-scoped local-first dominion rather than
-  a repo-stored `brr-home` orphan branch as the active model.
-- Added regression coverage for account dominion path selection, account-path
-  schedules, account-home capture, final run-state capture ordering, and the new
-  brnrd default namespace.
-
-Full suite green: 1185 passed (one existing Starlette/httpx deprecation warning).
-
-Branch: brr/initial-context-reweave.
-
 ## [2026-06-29] decision | confirmations etched + control-surface plan handoff sharpened
 
 Maintainer (evt-qhk6) confirmed four open points from the account-centered reshape
@@ -9237,5 +9213,45 @@ Gardening: cleared the three peer-orphan pages (`design-runner-management`,
 inbound links from their natural parents (`design-runner-cores`,
 `decision-pricing-shape`). Oversized-page splits and the `design-diffense`
 proposal-scaffolding compression remain a future gardening chunk.
+
+Branch: brr/initial-context-reweave.
+
+## [2026-06-30] implement | account dominion becomes wake-time resident home
+
+Completed the CS4 dominion rehome after the operator migration:
+
+- Wake-time self-inject, matched pitfalls, `schedule.md`, thread-of-record hints,
+  and capture-at-sleep now prefer `repos/<repo>/dominion/` inside the local
+  account dominion repo. The old repo-local `.brr/dominion` stays readable and
+  capturable as a legacy fallback so partially migrated installs do not wake
+  blank.
+- Fresh default account state now uses the `brnrd` namespace under XDG state
+  (`$XDG_STATE_HOME/brnrd/accounts/<account>/dominion`), while an existing
+  `$XDG_STATE_HOME/brr/...` account home remains a migration fallback. The
+  account repo is local-first; remote/GitHub durability is explicit opt-in.
+- Updated the resident playbook seed, bundled docs, AGENTS template, and current
+  KB shape so they describe the account-scoped local-first dominion rather than
+  a repo-stored `brr-home` orphan branch as the active model.
+- Added regression coverage for account dominion path selection, account-path
+  schedules, account-home capture, final run-state capture ordering, and the new
+  brnrd default namespace.
+
+Full suite green: 1185 passed (one existing Starlette/httpx deprecation warning).
+
+Branch: brr/initial-context-reweave.
+
+## [2026-06-30] fix | control-surface checkpoint + diffense gardening
+
+Closed the stale CS4 checkpoint after the account store moved from
+`$XDG_STATE_HOME/brr` to `$XDG_STATE_HOME/brnrd`: `plan-control-surface.md` now
+records CS1-CS4 as shipped, including durable run-state docs, web-visible
+`run_state_url`, and resident wake-time dominion injection/capture from
+`repos/<repo>/dominion/` inside the account dominion repo. CS5-CS7 remain the
+later control-surface topics.
+
+Took the next gardening chunk by compressing `design-diffense.md` out of
+proposal scaffolding: the accepted page now uses a rejected-approaches appendix
+and a current implementation-edge ledger instead of "Alternatives" / "Open
+questions" proposal sections. `plan-repo-gardening.md` marks that cleanup done.
 
 Branch: brr/initial-context-reweave.

@@ -1,6 +1,7 @@
 # Plan: control surface — the dashboard the engine shipped without
 
-Status: active (opened 2026-06-29). Successor home for the reshape direction in
+Status: active (opened 2026-06-29; CS1-CS4 shipped by 2026-06-30, CS5-CS7
+remain). Successor home for the reshape direction in
 [`review-execution-model-coherence-2026-06-29.md`](review-execution-model-coherence-2026-06-29.md)
 §3. Architecture: [`decision-account-centered-daemon.md`](decision-account-centered-daemon.md).
 The *engine* half lives in [`plan-repo-gardening.md`](plan-repo-gardening.md)
@@ -29,22 +30,17 @@ and marks the active Runner, answering "what may be selected?" for both the
 user-facing surface and the resident's respawn decisions.
 
 ### CS2 — Persist + surface the per-run record
-**Attempt-ledger rendering shipped 2026-06-29.** Progress cards now retain and
-render failed runner attempts, quota/provider reasons, and fallback targets as a
-compact attempt ledger.
-
-The remaining CS2 half is to persist a **per-run status doc** (the run-state
-object) carrying runner/core, **repo**, boundary, elapsed, commits, plan
-position, attempt history. The card links to it. **Home reconciled (evt-puhl,
-evt-qhk6):** the maintainer wants a larger, durable, beautifully-rendered
-run-state object — so this lives in the **account dominion repo** (the
-per-account home the resident's dominion consolidated into), the local-first
-brnrd-projectable store, not an ephemeral gist and not a GitHub repo created
-without opt-in. See
+**Shipped across 2026-06-29/30.** Progress cards retain and render failed runner
+attempts, quota/provider reasons, and fallback targets as a compact attempt
+ledger. The larger **per-run status doc** (the run-state object) is persisted
+under the **account dominion repo** with runner/core, repo, boundary, elapsed,
+commits, plan position, and attempt history. The card records a forge-renderable
+`run_state_url` when the account dominion has a remote, and otherwise falls back
+to the doc basename so remote chat surfaces never leak host-local paths. Home
+reconciled (evt-puhl, evt-qhk6): "gist-per-run" meant "a per-run state doc
+somewhere web-visible"; the accepted home is the local-first account dominion
+repo, not an ephemeral gist and not a forge repo created without opt-in. See
 `decision-account-centered-daemon.md` → "Account-scoped store".
-("gist-per-run" was a placeholder for "a per-run state doc somewhere
-web-visible.") Only the durable persistence half waits on the account repo
-(CS4).
 
 ### CS3 — Repo dimension on runs/cards/activity
 **Shipped 2026-06-29 for the local run-state surface.** Repo labels now flow
@@ -139,31 +135,32 @@ this is its **user-facing projection**. Review reshape step 5; composes with CS5
 
 ## Sequencing
 
-CS1, CS2's card-rendering half, and CS3 shipped first because they were pure
-projection / additive and made the existing engine legible without touching the
-process model. CS4 is now the next architecture change (account daemon + account
-dominion repo) and gates CS2's durable per-run status docs and CS5's cross-repo
-half. CS6/CS7 are the richer UX and come last. Chunk across wakes per the
-gardening plan's established cadence.
+CS1, CS2, and CS3 shipped first because they were pure projection / additive and
+made the existing engine legible without touching the process model. CS4 then
+moved the architecture to the account daemon + account dominion repo, unlocking
+CS2's durable run-state docs and the cross-repo home CS5 will build on. CS5 is
+the next implementation topic; CS6/CS7 are the richer UX and come last. Chunk
+across wakes per the gardening plan's established cadence.
 
-## Entry point for the next implementation run
+## Current checkpoint
 
-The pure-projection runway is complete: CS1 shipped, CS2's attempt-ledger
-rendering shipped, and CS3's repo label dimension shipped. CS4's first local
-account-context slice has now landed: account registry, account dispatch inbox,
-multi-repo event selection, direct repo-local forge routing, account run-state
-docs, and the manual dominion move instructions.
+The pure-projection runway is complete: CS1 shipped, CS2's attempt-ledger and
+durable run-state-doc halves shipped, and CS3's repo label dimension shipped.
+CS4 is complete for the local-first account surface: account registry, account
+dispatch inbox, multi-repo event selection, direct repo-local forge routing,
+account run-state docs, web-visible run-state URL projection, manual dominion
+move instructions, and resident wake-time dominion rehome all landed. The
+operator moved the account store from `$XDG_STATE_HOME/brr` to
+`$XDG_STATE_HOME/brnrd` on 2026-06-30, and the live wake picked up the new
+account dominion path.
 
 No remaining CS4 fork waits on a maintainer decision: account daemon, `brr` as
-the local verb, account dominion repo, auto-create-with-override, and account
-dispatch inbox are all accepted. The run-state doc link is now web-visible
-(`run_state_url`). The one remaining CS4 step — moving the resident's wake-time
-dominion injection/capture onto the account dominion path — is **gated on the
-operator running the `brr docs account-daemon` migration**, not on code. Only
-CS5's narrow repo-scoped-plan-home cut and CS6/CS7's UX details remain later
-decisions.
+the local verb, account dominion repo, auto-create-with-override, account
+dispatch inbox, and account-dominion resident memory are accepted and wired.
+Only CS5's narrow repo-scoped-plan-home cut and CS6/CS7's UX details remain
+later decisions.
 
-Concrete CS4 entry:
+CS4 shipped through four concrete cuts:
 
 1. Add the account config/registry layer (`forge identity`, `repo registry`,
    default repo, account dominion repo location/override) while preserving the
@@ -176,11 +173,12 @@ Concrete CS4 entry:
 4. Rehome durable run-state docs into the account dominion repo; the card can
    then link the larger run-state object that CS2 deferred.
 
-Acceptance for CS4: one account daemon can route at least two registered repos;
-message events can target a repo through the dispatch inbox; forge events keep
-their direct repo route; existing single-repo local installs still work; manual
-operator instructions exist for moving this project's current dominion into the
-new account home when the shape is functional.
+Acceptance for CS4 is now met: one account daemon can route at least two
+registered repos; message events can target a repo through the dispatch inbox;
+forge events keep their direct repo route; existing single-repo local installs
+still work; manual operator instructions exist for moving this project's current
+dominion into the new account home; and wake-time resident memory now reads from
+the account dominion path with the repo-local path as a legacy fallback.
 
 ## Companion pages
 
