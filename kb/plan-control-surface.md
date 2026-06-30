@@ -19,51 +19,40 @@ the first three are pure projection (no architecture change) and land first.
 ## Slices
 
 ### CS1 — Runner mandate facet (highest leverage, pure projection)
-Add `resources.runner.catalog` to `portal-state.json`: the available Shells+Cores
-(name, class, cost_rank, quota/availability, `selected: true` on the active one).
-The data already exists in `runner_cores.available_cores()` — it is simply not
-projected. One source feeds both the user-facing card/web view and the resident's
-respawn decisions. This is the review's finding #1 (the single highest-leverage
-fix) and answers "we don't know what we allow to select and what was selected"
-for the *selectable* half (the *selected* half is already in the portal).
-
-Also inject the mandate into the **wake bundle** (the resident is told its own
-Runner but not the mandate it can escalate into — review §2, the resident-side
-of the same gap).
-
-**Collapse the two Core catalogs first** (review finding #2 / reshape step 2):
-retire the static `claude-bare-api-only-*` triplet in `prompts/runners.md` whose
-Cores duplicate the `_BUNDLED_CORES` registry rows (same cost_ranks, differ only
-by auth). Model `--bare`/`ANTHROPIC_API_KEY` as an **auth-variant flag on a
-registry Core**, not a separate triplet of profiles. The mandate should project
-one source, so this collapse precedes the facet. **Maintainer approval to delete
-the bare-API path is granted** (evt-ogga — "no run relies on bare-API … you have
-my approval"). Scope note: behaviour-touching, ~31 references across 8 test
-files use the triplet as fixtures — land the auth-variant model first, then
-migrate the fixtures; don't blind-delete. Worth its own focused wake.
+**Shipped 2026-06-29.** `claude-bare-api-only-*` profiles are generated from
+the Core registry plus an auth-variant base profile, so the old static triplet in
+`prompts/runners.md` no longer duplicates `_BUNDLED_CORES`. The runner mandate
+now projects through both `resources.runner.catalog` in `portal-state.json` and
+the Run Context Bundle's "Runner Mandate" section. The selectable Runner/Core
+view uses one source (`available_runner_catalog()` over the generated profiles)
+and marks the active Runner, answering "what may be selected?" for both the
+user-facing surface and the resident's respawn decisions.
 
 ### CS2 — Persist + surface the per-run record
-- Render the **attempt ledger** on the card (don't let `attempt_failed` reasons
-  vanish — `run_progress` already models `phase_history`/`attempt`/`fallback X->Y`;
-  this is rendering/persistence, not new data).
-- Persist a **per-run status doc** (the run-state object) carrying runner/core,
-  **repo**, boundary, elapsed, commits, plan position, attempt history. The card
-  links to it. **Home reconciled (evt-puhl, evt-qhk6):** the maintainer wants a
-  larger, durable, beautifully-rendered run-state object — so this lives in the
-  **account dominion repo** (the per-account home the resident's dominion
-  consolidated into), the durable brnrd-projectable store, not an ephemeral gist.
-  See `decision-account-centered-daemon.md` → "Account-scoped store". ("gist-per-run"
-  was a placeholder for "a per-run state doc somewhere web-visible.") Note the
-  attempt-ledger *rendering* half is pure card work and lands in CS2 regardless;
-  only the durable persistence half waits on the account repo (CS4).
+**Attempt-ledger rendering shipped 2026-06-29.** Progress cards now retain and
+render failed runner attempts, quota/provider reasons, and fallback targets as a
+compact attempt ledger.
+
+The remaining CS2 half is to persist a **per-run status doc** (the run-state
+object) carrying runner/core, **repo**, boundary, elapsed, commits, plan
+position, attempt history. The card links to it. **Home reconciled (evt-puhl,
+evt-qhk6):** the maintainer wants a larger, durable, beautifully-rendered
+run-state object — so this lives in the **account dominion repo** (the
+per-account home the resident's dominion consolidated into), the durable
+brnrd-projectable store, not an ephemeral gist. See
+`decision-account-centered-daemon.md` → "Account-scoped store".
+("gist-per-run" was a placeholder for "a per-run state doc somewhere
+web-visible.") Only the durable persistence half waits on the account repo
+(CS4).
 
 ### CS3 — Repo dimension on runs/cards/activity
-Thread a `repo` field through `RespawnRequest`, presence, schedule, and
-portal-state so every run/card/activity record **names its repo** (the
-maintainer's "the status should also show the repo"). This is migration step 1
-from the decision page — a repo dimension *before* the account dimension, so the
-view surfaces above can show repo without the process-model change yet. The 2E
-activity view already uses `repo_id`; extend cards and per-run records to match.
+**Shipped 2026-06-29 for the local run-state surface.** Repo labels now flow
+through task/run metadata, conversation run rows, live portal-state `run.repo`,
+progress-card rendering, presence, schedule-created events, and respawn metadata.
+This completes migration step 1 from the decision page — a repo dimension before
+the account dimension, so run/card/activity surfaces can say which repo they
+belong to without the process-model change yet. Cross-repo dispatch still belongs
+to CS4.
 
 ### CS4 — Account daemon + cross-repo dispatcher
 Lift the daemon from per-repo to per-account (decision page, migration step 2):
@@ -108,42 +97,41 @@ this is its **user-facing projection**. Review reshape step 5; composes with CS5
 
 ## Sequencing
 
-CS1 → CS2 → CS3 are pure projection / additive and land first (they make the
-existing engine legible without touching the process model). CS4 is the
-architecture change (account daemon) and gates CS5's cross-repo half. CS6/CS7 are
-the richer UX and come last. Chunk across wakes per the gardening plan's
-established cadence.
+CS1, CS2's card-rendering half, and CS3 shipped first because they were pure
+projection / additive and made the existing engine legible without touching the
+process model. CS4 is now the next architecture change (account daemon + account
+dominion repo) and gates CS2's durable per-run status docs and CS5's cross-repo
+half. CS6/CS7 are the richer UX and come last. Chunk across wakes per the
+gardening plan's established cadence.
 
 ## Entry point for the next implementation run
 
-All the genuine forks that blocked this work are now resolved (account daemon,
-brr-as-local-verb, account dominion repo + auto-create-overridable + dispatch
-inbox). Nothing in CS1–CS4 waits on a maintainer decision; only CS5's narrow
-repo-scoped-plan-home cut and CS6/CS7's UX do. So the next implementation wake can
-start immediately. Concretely:
+The pure-projection runway is complete: CS1 shipped, CS2's attempt-ledger
+rendering shipped, and CS3's repo label dimension shipped. The next
+implementation wake starts at **CS4: account daemon + account dominion repo**.
+No CS4 fork waits on a maintainer decision: account daemon, `brr` as the local
+verb, account dominion repo, auto-create-with-override, and account dispatch
+inbox are all accepted. Only CS5's narrow repo-scoped-plan-home cut and CS6/CS7's
+UX details remain later decisions.
 
-**Start with CS1 (highest leverage, pure projection, no architecture change).**
-It is two sub-steps, in order:
+Concrete CS4 entry:
 
-1. **Collapse the two Core catalogs first.** Retire the static
-   `claude-bare-api-only-{sonnet,opus,fable}` triplet in `prompts/runners.md`;
-   model `--bare`/`ANTHROPIC_API_KEY` as an **auth-variant flag on a registry Core**
-   in `runner_cores._BUNDLED_CORES`, not a separate profile triplet. Maintainer
-   approval to delete the bare-API path is already granted (evt-ogga). Scope:
-   behaviour-touching, ~31 references across 8 test files use the triplet as
-   fixtures — land the auth-variant model, then migrate the fixtures; don't
-   blind-delete. **Its own focused wake.**
-2. **Project the runner mandate facet.** Add `resources.runner.catalog` to
-   `portal-state.json` from `runner_cores.available_cores()` (name, class,
-   cost_rank, quota/availability, `selected: true` on the active one), and inject
-   the same mandate into the **wake bundle** so the resident sees what it may
-   escalate into (not just its own Runner).
+1. Add the account config/registry layer (`forge identity`, `repo registry`,
+   default repo, account dominion repo location/override) while preserving the
+   local-only OSS invariant.
+2. Make `brr up` resolve an account context first, then select `repo_root` per
+   run rather than assuming the daemon belongs to one checkout.
+3. Land the message-event dispatcher path: account dispatch inbox in the account
+   dominion repo, cheap routing to a target repo, forge events still
+   repo-addressed at the gate.
+4. Rehome durable run-state docs into the account dominion repo; the card can
+   then link the larger run-state object that CS2 deferred.
 
-Acceptance for CS1: one source (`available_cores()`) feeds both the portal facet
-(user/card-facing) and the wake-bundle injection (resident-facing); the bare-API
-triplet is gone; tests migrated and green. Then CS2 (attempt-ledger rendering is
-free; durable per-run persistence waits for CS4's account repo) → CS3 (repo
-dimension on runs/cards/activity) → CS4 (account daemon + account repo) → CS5/6/7.
+Acceptance for CS4: one account daemon can route at least two registered repos;
+message events can target a repo through the dispatch inbox; forge events keep
+their direct repo route; existing single-repo local installs still work; manual
+operator instructions exist for moving this project's current dominion into the
+new account home when the shape is functional.
 
 ## Companion pages
 

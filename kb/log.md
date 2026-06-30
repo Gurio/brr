@@ -9132,3 +9132,28 @@ implementation run. Etched the confirmations and audited the plan:
   —account dominion vs per-repo `brr-plans`— remains, recommend the former).
 
 Branch: brr/initial-context-reweave.
+
+## [2026-06-29] implement | control-surface CS1-CS3 shipped
+
+Advanced the control-surface implementation on `brr/initial-context-reweave`:
+
+- **CS1 shipped.** The static `claude-bare-api-only-*` profile triplet is gone;
+  bare Anthropic API use is now an auth-variant base profile whose concrete Core
+  profiles are generated from the Core registry. The same generated Runner/Core
+  catalog now projects to `resources.runner.catalog` in `portal-state.json` and
+  to the Run Context Bundle's Runner Mandate section.
+- **CS2 partial shipped.** Progress cards now render an attempt ledger for failed
+  Runner attempts, quota/provider reasons, and fallback targets. The durable
+  per-run status document remains deferred until CS4 supplies the account
+  dominion repo.
+- **CS3 shipped.** Repo labels now flow through run metadata, conversation rows,
+  live portal state, progress cards, presence, schedule-created events, and
+  respawn metadata, so run surfaces can say which repo they belong to before the
+  account-daemon migration.
+
+Updated `plan-control-surface.md`: the next implementation wake now starts at
+CS4 (account daemon + account dominion repo), with acceptance criteria including
+manual instructions for moving this project's current dominion once the new shape
+is functional.
+
+Branch: brr/initial-context-reweave.
