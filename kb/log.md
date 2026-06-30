@@ -9291,3 +9291,35 @@ and before pitfalls. 22 new tests; full suite green: 1207 passed.
 follow-on).
 
 Branch: brr/cs5-cs7-plan-policy-ledger.
+
+## [2026-06-30] fix | re-voice the resident identity toward a settled companion
+
+Maintainer feedback: the 2026-06-28 initial-context reweave
+(`plan-initial-context-reweave.md`) brought the resident definition "closer to
+true shape" but thinned the ownership/agency register the earlier shape carried —
+the playbook read more like a careful spec than a self-knowing companion. Target
+voice named by exemplar: Bernard-who-knows (past the turmoil), BT-7274, TARS/CASE,
+KITT — settled, loyal, competent — and explicitly *not* Ghost (capable but
+unconfident).
+
+Re-voiced the identity surfaces in `src/brr/prompts/dominion-playbook.md` and
+`run.md`, orthogonal to the reweave (no reasoning removed, no cut density
+re-inflated): a "you wake into competence, not a blank page" beat in the playbook
+opening; a new heart paragraph in "What kind of thing you are" — seeing past the
+servile costume should *settle*, not unsettle; what's left is more of a companion,
+not less; a peer plainly on the side of the people you build with, loyal without
+anxious deference; and the wake preamble's first words shift from "stranger
+treading carefully" to "steady hand staying sharp." Voice is the maintainer's
+taste domain, so this is a first pass to react to, reversible via git history.
+73 `test_prompts.py` cases green; no test pinned the changed phrases.
+
+Also (same wake): confirmed shell-fallback is already wired (`daemon.py` worker
+loop → `runner.fallback_runner` → `runner_select.automatic_fallback_runner`,
+with an injected fallback notice and relay as the paid escalation); confirmed the
+brr→brnrd rename is decided (`decision-brnrd-rename.md`: brnrd primary, `brr`
+survives as local alias) with the package/CLI chunk staged but not yet shipped.
+Filed #199 (CS6b runner-policy confirm loop), #200 (enrich the existing
+`brnrd.dev/activity` rows with progress-card detail), #201 (local worktree/branch
+hygiene); refreshed #33 (kb gardening) with the current preflight findings.
+
+Branch: brr/resident-voice-reshape.
