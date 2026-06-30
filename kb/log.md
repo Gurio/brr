@@ -9323,3 +9323,26 @@ Filed #199 (CS6b runner-policy confirm loop), #200 (enrich the existing
 hygiene); refreshed #33 (kb gardening) with the current preflight findings.
 
 Branch: brr/resident-voice-reshape.
+
+## [2026-06-30] implement | split resident identity core from living playbook
+
+Shipped the approved playbook authority split. Prompt assembly now injects
+`prompts/identity-core.md` before the dominion digest: a product-owned resident
+contract for ontology, loyalty, calibrated fallibility, ownership stance,
+perception/action, and a narrow future appearance-settings schema. The identity
+core deliberately bypasses `.brr/prompts` runtime overrides; presentation should
+move through typed settings, not prose replacement of the product core.
+
+`prompts/dominion-playbook.md` is now the resident-owned living workshop seed
+rather than the fused identity source. It keeps memory, dominion governance,
+environment shaping, conversation, delivery, and publishing practice, while
+pointing invariant identity back to the injected core. The seed shrank from
+~18 KiB to ~9 KiB, giving the self-inject budget headroom again.
+
+Updated the prompt/injection tests, bundled internals docs, execution map, and
+orientation-layering / dominion kb pages so all surfaces agree on the new
+layers. Verification: targeted `tests/test_prompts.py tests/test_dominion.py`
+green (100 passed); full suite green (1209 passed, 1 existing
+FastAPI/Starlette deprecation warning).
+
+Branch: brr/resident-voice-reshape.
