@@ -9157,3 +9157,26 @@ manual instructions for moving this project's current dominion once the new shap
 is functional.
 
 Branch: brr/initial-context-reweave.
+
+## [2026-06-30] implement | control-surface CS4 account context slice shipped
+
+Advanced CS4 on `brr/initial-context-reweave`:
+
+- Added a local-first account context (`src/brr/account.py`) with account id,
+  repo registry, default repo, account dominion path/override, account dispatch
+  inbox, account responses, and account run-state directories. A real git
+  checkout auto-creates the local account dominion repo; explicit
+  `account.dominion_path` designates an existing one.
+- Taught the daemon loop to dispatch across the account context: current
+  single-repo installs still scan the repo-local inbox, account dispatch events
+  can target a registered repo via `repo:`/`repo_label`, and forge events remain
+  direct when they appear in a registered repo's own `.brr/inbox`.
+- Persisted durable run-state markdown docs under the account dominion repo and
+  added `brr docs account-daemon` with manual instructions for moving this
+  project's current `.brr/dominion` into the account home.
+
+CS4 is not fully done: wake-time dominion injection/capture still needs to move
+from repo-local `.brr/dominion` to the account dominion after the operator
+migration, and run-state docs still need a web-visible projection URL.
+
+Branch: brr/initial-context-reweave.

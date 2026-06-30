@@ -71,6 +71,22 @@ account-scoped **dispatch inbox** (message-event queue the cheap dispatcher read
 lives in that repo. The resident's dominion consolidates into it — no longer a
 per-repo `brr-home` branch. See decision page → "Account-scoped store".
 
+**First implementation slice shipped 2026-06-30.** The local daemon now resolves
+an account context (`src/brr/account.py`) before dispatch: the current checkout
+remains the default repo, `account.repo.<label>=<path>` registers additional
+repos, `account.default_repo` selects the fallback, and a local account dominion
+repo owns `account/repos.json`, `dispatch/inbox`, `dispatch/responses`, and
+`run-state/<repo>/<run>.md`. The main loop scans repo-local inboxes plus the
+account dispatch inbox, routes account message events by `repo:`/`repo_label`,
+and keeps forge events direct when they appear in a registered repo's own inbox.
+Run-state markdown documents are persisted under the account dominion. Manual
+operator instructions for moving this repo's current `.brr/dominion` live in
+`brr docs account-daemon`.
+
+Remaining CS4 work: move wake-time dominion injection/capture from the old
+repo-local worktree to the account dominion path after the operator migration,
+and project account run-state docs as web-visible URLs instead of local paths.
+
 ### CS5 — Inter-run plan home + injection
 A web-visible plan store; the daemon preloads/auto-injects it into the wake the
 way Recent Activity is injected (perception=injection, not a polling tax), and
@@ -107,12 +123,17 @@ gardening plan's established cadence.
 ## Entry point for the next implementation run
 
 The pure-projection runway is complete: CS1 shipped, CS2's attempt-ledger
-rendering shipped, and CS3's repo label dimension shipped. The next
-implementation wake starts at **CS4: account daemon + account dominion repo**.
-No CS4 fork waits on a maintainer decision: account daemon, `brr` as the local
-verb, account dominion repo, auto-create-with-override, and account dispatch
-inbox are all accepted. Only CS5's narrow repo-scoped-plan-home cut and CS6/CS7's
-UX details remain later decisions.
+rendering shipped, and CS3's repo label dimension shipped. CS4's first local
+account-context slice has now landed: account registry, account dispatch inbox,
+multi-repo event selection, direct repo-local forge routing, account run-state
+docs, and the manual dominion move instructions.
+
+No remaining CS4 fork waits on a maintainer decision: account daemon, `brr` as
+the local verb, account dominion repo, auto-create-with-override, and account
+dispatch inbox are all accepted. The next CS4 implementation wake should move
+the resident's wake-time dominion injection/capture onto the account dominion
+path and then make the run-state doc link web-visible. Only CS5's narrow
+repo-scoped-plan-home cut and CS6/CS7's UX details remain later decisions.
 
 Concrete CS4 entry:
 
