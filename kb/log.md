@@ -9554,3 +9554,55 @@ paths past the gate boundary, the abstraction leaked.
 
 Ship order for fastest working-both-ways: 1 → 2 → 3, validate, then 4/5/6 as
 separate wakes. Linked from index.md and the design page.
+
+## [2026-07-01] implement | home-scopes phases 1–3: project/account homes, brnrd CLI, knowledge checkout
+
+Implemented the first validation slice from `plan-home-scopes-execution.md`.
+
+Phase 1: `account.resolve_context` now selects a brnrd **home** directly:
+unconnected repos land in `projects/<repo-slug>-<path-hash>/home`, connected
+account lanes land in `accounts/<account-id>/home`, and the universal
+`accounts/default` fallback is gone. `BRNRD_HOME` / `home.path` are the explicit
+home override; the retired `BRR_*` account-dominion env aliases are no longer
+read. The local pair/connect flow now persists `account_id` so the account lane
+has a real home key instead of a guessed default.
+
+Phase 2: the installed console script is now `brnrd = brr.cli:main`; no `brr`
+entry point is emitted by the package. Top-level `brnrd connect`, `brnrd bind
+<repo> <gate>`, and `brnrd add <repo>` are wired. Native service templates use
+`brnrd daemon up --foreground`, and copied setup commands in README / bundled
+docs / dashboard UI were updated where they would otherwise tell a user to run
+the removed binary.
+
+Phase 3: added `brr.knowledge` as the home→checkout→repo-KB→repo-docs source
+chain. Wake prompts get a bounded `Knowledge Sources` slice; `brnrd kb <query>`
+searches the long tail and materializes a writable `.brnrd-kb/` checkout beside
+the worktree, adding it to `.git/info/exclude` so project status stays clean.
+
+Validation: `pytest` passed (1224 tests, 1 existing FastAPI/httpx warning).
+Editable reinstall produced only the `brnrd` console entry point in the active
+environment; a leftover `brr` pyenv shim points at another Python version and
+fails here, so it is outside this package's emitted scripts. Maintainer
+validation of the bind lane and add/account lane remains the next gate before
+Phase 4.
+
+## [2026-07-01] fix | brnrd Telegram webhook self-registration
+
+Maintainer reported that the hosted `@brnrd_bot` route on brnrd.dev had stopped
+delivering while the native Telegram gate still worked. Live checks showed the
+local cloud gate could authenticate and long-poll brnrd.dev, but there were no
+cloud events queued for its daemon token; the backend had a tested Telegram
+webhook receiver but no repo-owned startup/deploy step that called Telegram
+`setWebhook`, so a manual webhook reset or token-side drift could silently break
+ingress.
+
+Added a backend startup hook that, when `BRNRD_TELEGRAM_BOT_TOKEN`,
+`BRNRD_TELEGRAM_WEBHOOK_SECRET`, and an HTTPS `BRNRD_PUBLIC_BASE_URL` are set,
+registers Telegram's webhook to `<public-base>/v1/webhooks/telegram` with the
+configured secret token. Local HTTP and explicit `BRNRD_TELEGRAM_AUTO_WEBHOOK=0`
+skip the call. Documented the deployment contract in
+`plan-brnrd-inbox-prototype.md`.
+
+Validation: targeted Telegram/cloud/backend tests passed, then full `pytest`
+passed (1226 tests, 1 existing FastAPI/httpx warning). The live brnrd.dev
+process needs a deploy/restart of this code for the self-heal to run.
