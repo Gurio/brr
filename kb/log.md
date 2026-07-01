@@ -9627,3 +9627,21 @@ pre-pair backlog does not become new tasks after binding.
 
 Validation: targeted Telegram/web/dashboard/cloud tests passed, then full
 `pytest` passed (1229 tests, 1 existing FastAPI/httpx warning).
+
+## [2026-07-01] fix | brnrd connect surfaces Telegram pair link
+
+Maintainer then hit the terminal-first version of the same seam: after browser
+approval, `brnrd connect https://brnrd.dev` printed only "connected" and "start
+the daemon", so `@brnrd_bot` still had no visible chat-bind instruction in the
+flow the user was watching. Live checks from this repo's daemon token could
+authenticate to brnrd.dev and showed an empty hosted inbox for the repo, so the
+missing reply was upstream of local cloud draining.
+
+The pair-status poll now returns a `telegram_pair` payload alongside the daemon
+token. It reuses the unexpired `TG-…` code already minted by the web approval
+page, or creates one when the API approve path did not, and the local cloud
+gate prints the Telegram deep link during `brnrd connect`.
+
+Validation: targeted pairing/cloud/Telegram tests passed, then the brnrd
+inbox/web/dashboard/Telegram/cloud cluster passed (59 tests, 1 existing
+FastAPI/httpx warning).

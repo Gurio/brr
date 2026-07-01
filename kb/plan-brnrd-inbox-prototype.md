@@ -140,6 +140,7 @@ one.
 | GET | `/auth/github/start` | — | starts GitHub OAuth with state + PKCE cookies |
 | GET | `/auth/github/callback` | state + PKCE cookies | creates/updates the GitHub-backed account and sets the `brnrd_session` cookie |
 | GET/POST | `/connect/{code}` | session cookie | the device-flow approve page (lists projects, calls `approve_core`, then offers a Telegram chat-pair link for the same repo) |
+| GET | `/v1/accounts/pair/{code}` | poll secret | the CLI poll; once approved, returns the daemon token and a `telegram_pair` payload for the same repo, reusing the approval-page code when one already exists |
 
 Routing home: a bound chat's message enqueues with an opaque
 `reply_to = {platform, chat_id, topic_id, message_id}`. When the
@@ -161,7 +162,10 @@ Code-reuse notes for the slice:
   the API approve endpoint so the web `/connect/{code}` page mints the
   exact same daemon token by the exact same path. `telegram_pair_core`
   does the same for reusable Telegram pair-code creation, used by the
-  API, the dashboard repo action, and the daemon-approval success page.
+  API, the dashboard repo action, the daemon-approval success page, and
+  the CLI's final poll. The poll path reuses an active unconsumed
+  `TG-…` code instead of minting a competing link, so a terminal-first
+  user sees the same chat-bind step that the browser displayed.
 - `account_for_github_identity` / `issue_session_token` back the OAuth
   callback: GitHub id is the stable account key; login/email are
   refreshed on each login; the session token remains a brnrd bearer
