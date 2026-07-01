@@ -149,15 +149,39 @@ gate self-loops.
 1. Remove any built-in author/keyword allow-list that the gate *requires* to
    function; make filtering an optional narrowing config, default off (ingest
    all).
-2. Drop inbound events whose author is `brnrd-bot`. This is the loop-breaker and
-   the reason it depends on posting under a distinct identity, not on the user's
-   behalf.
-3. Migrate outbound: comments/PRs post as `brnrd-bot`, not on the maintainer's
-   behalf. (Infra: the bot user/app must be claimed first — maintainer task,
-   see migration below.)
+2. Drop inbound events whose author matches a configurable **`self_login`** —
+   do **not** hardcode `brnrd-bot`. Source it from the login the daemon posts as:
+   the gate already resolves and stores this at setup (`state_dict["bot_login"]`
+   from `GET /user` in `gates/github/state.py`), so the value exists on both
+   lanes. Managed lane sets it to `brnrd-bot`; bind lane sets it to whatever
+   account the daemon's token belongs to. This is the loop-breaker.
+3. Migrate outbound: comments/PRs post under `self_login`, not "on the
+   maintainer's behalf". Managed lane: the `brnrd-bot` user/app (infra must be
+   claimed first — maintainer task, see migration below). Bind lane: the token's
+   own account (already how the OSS gate posts today).
 
 **Verify.** A GitHub comment by the maintainer produces one event; the
-resident's reply (posted as `brnrd-bot`) produces **zero** re-entrant events.
+resident's reply (posted under `self_login`) produces **zero** re-entrant events.
+
+**Bind lane vs managed lane (identity source).** The `brnrd-bot` GitHub user and
+the brnrd GitHub App private key are **managed-mode infra**, server-side only —
+never shipped to an OSS `pip install` and never required on the bind lane. So a
+bind-lane operator ships no app keys and invites no brnrd-bot. Two working
+shapes, and the choice is the read-all widening:
+- **Personal PAT + keyword filter ON** (zero extra setup, ≈ today's
+  `brr auth github`): resident reacts to `@brnrd`/`/brnrd` mentions only and
+  never mentions itself, so no self-loop. Human and resident share one login, so
+  `self_login` filtering would also swallow the human's genuine comments — the
+  lean "read-all" widening is **not** safe here. Keep filtering on; lose only
+  proactive-on-every-issue behaviour.
+- **Own machine-account PAT + read-all** (lean/proactive gate, still no brnrd
+  infra): create a second GitHub account you own, give the daemon its PAT, and
+  `self_login` resolves to it. Resident and human are now distinct authors and
+  the self-filter works exactly as in managed mode.
+The design-page claim *"without a distinct identity no reliable filter exists"*
+([`design-brnrd-github-bot-user.md`](design-brnrd-github-bot-user.md)) applies
+verbatim to the bind lane: read-all needs two identities, whoever owns them.
+`brnrd-bot` is just the managed lane's supplied second identity.
 
 ### Phase 5 — agent-facing prose retirement (`brr` → `brnrd`)
 
@@ -211,8 +235,13 @@ the new shape once Phases 1–3 land:
 6. **Account lane, if/when you want multi-repo:** `brnrd connect <service-url>`
    then `brnrd add <repo>` per repo. This is additive — it does not disturb the
    bind-lane repo.
-7. **Infra (parallel, for Phase 4):** claim GitHub `brnrd-bot` + the app so the
-   GH gate can post under it. Until then, keep GH filtering on.
+7. **GH gate identity (parallel, for Phase 4 — only if you add a GitHub gate to
+   the bind lane).** You do *not* need the managed `brnrd-bot`/app for the bind
+   lane. Either keep GH keyword-filtering **on** and post under your own PAT
+   (self-loop broken by the resident never mentioning itself), or spin up a
+   second GitHub machine account you own, give the daemon its PAT, and turn on
+   read-all with `self_login` = that account. The managed `brnrd-bot` + app is an
+   account-lane concern, claimed when you stand up the hosted dispatcher.
 
 Uninstall the old `brr` command after Phase 2: `pip install -e .` replaces the
 entry points; if a stale `brr` shim lingers on PATH from an earlier editable
