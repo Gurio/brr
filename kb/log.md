@@ -9554,3 +9554,34 @@ paths past the gate boundary, the abstraction leaked.
 
 Ship order for fastest working-both-ways: 1 → 2 → 3, validate, then 4/5/6 as
 separate wakes. Linked from index.md and the design page.
+
+## [2026-07-01] implement | home-scopes phases 1–3: project/account homes, brnrd CLI, knowledge checkout
+
+Implemented the first validation slice from `plan-home-scopes-execution.md`.
+
+Phase 1: `account.resolve_context` now selects a brnrd **home** directly:
+unconnected repos land in `projects/<repo-slug>-<path-hash>/home`, connected
+account lanes land in `accounts/<account-id>/home`, and the universal
+`accounts/default` fallback is gone. `BRNRD_HOME` / `home.path` are the explicit
+home override; the retired `BRR_*` account-dominion env aliases are no longer
+read. The local pair/connect flow now persists `account_id` so the account lane
+has a real home key instead of a guessed default.
+
+Phase 2: the installed console script is now `brnrd = brr.cli:main`; no `brr`
+entry point is emitted by the package. Top-level `brnrd connect`, `brnrd bind
+<repo> <gate>`, and `brnrd add <repo>` are wired. Native service templates use
+`brnrd daemon up --foreground`, and copied setup commands in README / bundled
+docs / dashboard UI were updated where they would otherwise tell a user to run
+the removed binary.
+
+Phase 3: added `brr.knowledge` as the home→checkout→repo-KB→repo-docs source
+chain. Wake prompts get a bounded `Knowledge Sources` slice; `brnrd kb <query>`
+searches the long tail and materializes a writable `.brnrd-kb/` checkout beside
+the worktree, adding it to `.git/info/exclude` so project status stays clean.
+
+Validation: `pytest` passed (1224 tests, 1 existing FastAPI/httpx warning).
+Editable reinstall produced only the `brnrd` console entry point in the active
+environment; a leftover `brr` pyenv shim points at another Python version and
+fails here, so it is outside this package's emitted scripts. Maintainer
+validation of the bind lane and add/account lane remains the next gate before
+Phase 4.

@@ -1,6 +1,7 @@
 # Plan: home-scopes execution (bind/add, one command, KB checkout)
 
-Status: active (2026-07-01) — execution plan for
+Status: active (2026-07-01; phases 1–3 implemented, awaiting maintainer
+validation) — execution plan for
 [`design-home-scopes-and-knowledge.md`](design-home-scopes-and-knowledge.md)
 (rounds 1–3, all folded). This page is the *how*; the design is the *why*.
 
