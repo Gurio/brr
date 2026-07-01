@@ -1,6 +1,149 @@
 # Design: home scopes and knowledge placement
 
-Status: active (2026-07-01 design round; round 2 folded in below)
+Status: active (2026-07-01 design round; rounds 2 and 3 folded in below —
+round 3 governs where it sharpens round 2)
+
+## 2026-07-01 round 3 — full brr retirement, issues-as-channel, KB-as-checkout, lean GH gate (evt-mo3g)
+
+The maintainer read round 2 ("I like the shape, go ahead") and added four
+sharpenings. Each folds in here; where round 3 differs from rounds 1–2, round 3
+governs.
+
+### Retire `brr` completely — including the agent-facing surface
+
+Round 2 elected option (a) (one command, `brnrd`). The maintainer's nuance is
+that the plan still left a residue: *"brr is gonna be left as an agent-facing
+compatibility layer … safer to get rid of it completely, especially since the
+bind/add unification partly makes it obsolete."*
+
+He is right, and the residue is real. Even after (a) drops the `brr` command and
+alias, `brr` still lives in the **agent-facing prose** — the resident/runner
+prompts (`run.md`, `daemon-substrate.md`, `identity-core.md`, `AGENTS.md`) speak
+"brr's daemon", "brr hosts you", "the brr runner". That prose *is* an
+agent-facing compatibility layer: the product renamed, but the way the daemon
+addresses its own resident did not. Round 3 closes it — `brnrd` everywhere the
+resident and runner are addressed, not only in the user-facing CLI.
+
+Why bind/add makes this safe (the maintainer's own point): `brr` earned its keep
+as the name for "the repo-based local daemon." The [bind/add event-source
+model](#event-source-is-the-primary-axis-bind-vs-add) dissolves exactly that
+concept — the local-first path is now `brnrd bind <repo> <gate>`, served by the
+same transport-agnostic loop as `brnrd add`. There is no longer a distinct
+"brr thing" for the name to point at. The concept that justified the short verb
+is gone, so the verb goes with it.
+
+The **one** deliberate remnant stays scoped and named: the on-disk `.brr/`
+runtime dir, whose rename is a state migration deferrable on its own schedule
+(round 2's reconciliation, unchanged). That is a directory name in local state,
+not an agent-facing surface — keeping it does not re-create a "brr compatibility
+layer" in how the daemon talks to the resident. So: retire the command, the
+alias, and the agent-facing prose now; let `.brr/` → `.brnrd/` land whenever a
+state-migration wake is cheap. This is a prose-and-prompt migration pass, and
+should be scheduled as its own wake (the prompts are the bulk of the surface).
+
+### Issues are a first-class co-maintainer channel (perception *and* action)
+
+Round 2 named cross-repo KB and repo docs as knowledge layers. The maintainer
+adds the one a human co-maintainer actually lives in: **forge issues** (and PR
+threads). *"A perceived resident co-maintainer has to take initiative and use the
+same-as-human information channels."*
+
+This is not just another knowledge store — it reframes the resident's stance.
+Issues are **both**:
+
+- **Perception**: open issues, their discussion, labels, and cross-references are
+  live project state the resident should read as orientation, the same way a
+  human maintainer skims the tracker before deciding what to do. This belongs in
+  the knowledge-source chain alongside home KB and repo docs.
+- **Action with initiative**: a co-maintainer does not only *answer* an issue it
+  was mentioned on — it *opens* issues for problems it noticed, comments to move
+  threads forward, triages, and links related work. This is the ownership stance
+  from the identity core, expressed on the forge.
+
+Concretely this extends the gate model below: the `gh` CLI (the action channel)
+already lets the resident read and write issues; what round 3 adds is the
+**intent** — issues are a standing surface the resident is expected to perceive
+and act on proactively, not a request queue it waits on. A future "issue radar"
+portal (open issues assigned to / mentioning the resident, plus staleness) is the
+natural standing-portal form of this; logged under portal candidates below.
+
+### KB access is a *checkout*, not a copy or a read-only mount
+
+Round 2's access ladder was inject → mount (read-only, containers) → query. The
+maintainer proposes a cleaner unifying shape for the reachable-tree rung: *"maybe
+not copy-to-repo or mount-to-container but **checkout** into a repo? … The KB
+should be tracked and versioned, and the runner should be able to commit there —
+otherwise it is not a live KB, it is a library no one maintains. It is just maybe
+not part of each project repo."*
+
+This is a genuine improvement and round 3 adopts it. The flaw in "mount for
+reachability" is that a mount is **read-only reference** — the runner can read the
+KB but cannot tend it, so it rots into exactly the unmaintained library the whole
+design is trying to avoid. A **checkout** is read-write and versioned: the home
+knowledge is its own git repo (the brnrd home already *is* git-backed), checked
+out where the runner can reach it, and **the runner commits its edits back**.
+That is what makes it a *live* KB — maintenance is just commits, the same receipt
+model the dominion already uses.
+
+Reconciliation with round 2's "never copy into the tree" — it still holds, and
+checkout is how it holds:
+
+- The KB is a **separate versioned repo**, not files copied into the project
+  repo. "Not part of each project repo" is the maintainer's own framing and is
+  exactly right: one KB repo (or the home's knowledge tree as a repo), checked
+  out beside or under the worktree at a **gitignored** path, never committed into
+  the project's own history.
+- **Perception (injection) stays the primary path** — the runner still *sees* the
+  relevant KB woven into the wake without spending a turn. The checkout is the
+  reachable-and-writable substrate for the long tail and for edits, replacing the
+  read-only mount rung, not the injection rung.
+- Commits to the KB checkout push to the KB repo's remote (when configured),
+  exactly as dominion commits do. That is what "tracked and versioned, runner can
+  commit" buys: the KB accrues history and survives across wakes and hosts.
+
+So the revised ladder: **inject** (perception, primary) → **checkout** (a
+versioned KB repo the runner reads *and commits to*, gitignored beside the
+worktree, host or container alike) → **query** (`brnrd kb …` for the tail). The
+read-only mount is retired in favour of the checkout, which subsumes it and adds
+write.
+
+### Keep the GitHub gate lean, and fix the self-reaction loop at the identity layer
+
+The maintainer sharpened the GH-gate section with four asks: **read all
+comments**, keep **filtering optional**, **don't react to self-comments**, and
+fix that today's comments are **posted on behalf of the user (him)** when a gate
+is bound to a repo the old way.
+
+The unifying resolution — and it ties directly to the "thin, uniform gate"
+principle round 2 already set: the gate should ingest **all** comments (no
+built-in author/keyword allow-list required to function), with filtering as an
+**optional** narrowing, not a precondition. That keeps the gate a pure,
+uniform event transport.
+
+But "read everything" collides head-on with the self-reaction loop the maintainer
+flags: if the resident's own comments re-enter as events, an unfiltered gate
+loops. His two sub-points are the fork, and (a) is the clean answer:
+
+- **(a) Post as `brnrd-bot`, not on the user's behalf.** This is precisely what
+  [`design-brnrd-github-bot-user.md`](design-brnrd-github-bot-user.md) already
+  specs — a distinct `brnrd-bot` machine identity. With it, self-filtering is
+  *trivial and reliable*: drop events authored by `brnrd-bot`. The loop is broken
+  by identity, not by heuristics. Round 3 makes this a **dependency**, not just a
+  UX nicety: the lean "read all comments" gate *requires* a distinct bot identity
+  to be safe. Today's "comments posted as the user" is the thing to retire —
+  it conflates human and resident authorship and makes the loop unfilterable.
+- **(b) Heuristic self-filtering without a distinct identity is unreliable** — the
+  maintainer's own worry, and correct. When resident and human share one author,
+  no author check can separate them; you fall back to fragile content matching.
+  So (b) is not a real alternative to (a); it is what you are stuck with *until*
+  (a) ships. Ship (a).
+
+Net: gate reads all comments; filtering optional; self-authored events dropped by
+`brnrd-bot` authorship; migrate off "post on behalf of the user." The GH gate
+still does not grow — the fix lives in the **identity** the gate posts under, not
+in gate logic. This also makes the "issues as a co-maintainer channel" point
+above safe: a resident that proactively opens and comments on issues *must* post
+under its own identity, or every initiative it takes becomes a self-event.
 
 ## 2026-07-01 round 2 — event-source axis, one command, docs split (evt-cayp)
 

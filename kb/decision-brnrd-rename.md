@@ -11,6 +11,18 @@ separate the command name from the on-disk runtime dir, so `.brr/` can rename to
 (round 2). Execution staged across dedicated migration wakes (see migration
 below).
 
+**Round-3 sharpening (evt-mo3g, 2026-07-01):** the maintainer flagged that (a)
+still left `brr` alive as an *agent-facing compatibility layer* — the resident/
+runner prompts (`run.md`, `daemon-substrate.md`, `identity-core.md`, `AGENTS.md`)
+still address the resident as "brr". That prose is now in scope for retirement
+too: `brnrd` everywhere the resident and runner are addressed, not only the
+user-facing CLI. Justification he named: the [bind/add
+model](design-home-scopes-and-knowledge.md) dissolves the "brr = repo-based local
+daemon" concept, so nothing is left for the short verb to point at. The **only**
+deliberate remnant is the on-disk `.brr/` runtime dir (a state migration, not an
+agent-facing surface). The agent-facing prose pass is a dedicated wake — see
+round 3 in the home-scopes design.
+
 Amends [`decision-cli-shape.md`](decision-cli-shape.md) (which had `brr` and
 `brnrd` as sibling binaries from one package, with `brr` primary). Rests on
 [`decision-account-centered-daemon.md`](decision-account-centered-daemon.md)

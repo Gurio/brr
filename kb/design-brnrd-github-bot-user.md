@@ -18,6 +18,17 @@ brnrd-bot
 
 The GitHub App remains the authority for repo access and event delivery. The bot user exists to make GitHub's native UI feel right.
 
+**Second load-bearing reason (evt-mo3g, 2026-07-01):** the bot user is also what
+makes a *lean* GitHub gate safe. The gate should read **all** comments with
+filtering optional (see [home-scopes design](design-home-scopes-and-knowledge.md)
+round 3), which collides with the resident's own comments re-entering as events —
+a self-reaction loop. When the resident posts under a distinct `brnrd-bot`
+identity instead of "on behalf of the user", self-events are dropped by a trivial
+`author == brnrd-bot` check. Without a distinct identity, resident and human
+share one author and no reliable filter exists. So `brnrd-bot` is a **dependency**
+of the lean gate and of the resident acting proactively on issues, not only a UX
+nicety — and "post as the user" is the thing to retire.
+
 ## Why the App alone is not enough
 
 The `brnrd-dev[bot]` issue-seeding experiment proved that an installed GitHub App can author repo activity, but it did not make the App appear in normal `@` autocomplete. That matches the public model: App-authored actions are attributed to the App installation, while collaborator-like UI surfaces are user/team-oriented.

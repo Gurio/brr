@@ -9482,3 +9482,39 @@ it differs from round 1):
   is pure event transport (connect token); the agent's *action* on the forge is a
   separate, richer channel (the `gh` CLI). Perception/action split at the gate
   boundary — keep gates thin and uniform, richness in the agent's tools.
+
+## [2026-07-01] plan | home-scopes round 3: full brr retirement, issues-as-channel, KB-as-checkout, lean GH gate
+
+Maintainer read the round-2 home-scopes design and added four sharpenings
+(evt-mo3g). Folded into `design-home-scopes-and-knowledge.md` as a round-3
+section that governs where it differs from rounds 1–2:
+
+- **Retire brr completely, including the agent-facing surface.** Option (a)
+  dropped the command and alias, but `brr` still lived in the resident/runner
+  prompts (`run.md`, `daemon-substrate.md`, `identity-core.md`, `AGENTS.md`) —
+  an agent-facing compatibility layer in how the daemon addresses its own
+  resident. Round 3 puts that prose in scope: `brnrd` everywhere the resident is
+  addressed. Justified by bind/add dissolving the "brr = repo-based local daemon"
+  concept, so nothing remains for the short verb to point at. Only deliberate
+  remnant: the on-disk `.brr/` dir (a deferrable state migration, not an
+  agent-facing surface). Scheduled as its own prose/prompt migration wake.
+  Breadcrumbed on `decision-brnrd-rename.md`.
+- **Issues are a first-class co-maintainer channel** — perception *and* action.
+  Beyond cross-repo KB and repo docs, the resident should read the tracker as
+  orientation and take initiative on it (open/triage/comment), the same channel a
+  human maintainer uses. Reframes stance, not just storage; the `gh` CLI is
+  already the action channel, round 3 adds the intent. "Issue radar" is the
+  natural standing-portal form.
+- **KB access = checkout, not copy or read-only mount.** Maintainer's improvement:
+  a read-only mount rots into an unmaintained library; a versioned checkout the
+  runner *commits to* is a live KB. Revised ladder: inject (perception, primary) →
+  checkout (a separate versioned KB repo, gitignored beside the worktree, runner
+  reads and commits) → query (`brnrd kb`). Reconciles with round 2's "never copy
+  into the tree" — the KB is its own repo, not part of each project repo.
+- **Lean GH gate + fix the self-reaction loop at the identity layer.** Gate reads
+  all comments, filtering optional; self-authored events dropped by `brnrd-bot`
+  authorship. The maintainer's fork resolved to (a): post as `brnrd-bot`, not on
+  the user's behalf — makes self-filtering trivial and reliable; (b) heuristic
+  filtering without a distinct identity is what you're stuck with until (a) ships.
+  Makes `brnrd-bot` a dependency of both the lean gate and proactive issue action.
+  Breadcrumbed on `design-brnrd-github-bot-user.md`.
