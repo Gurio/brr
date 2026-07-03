@@ -9932,3 +9932,27 @@ Focused verification: `test_post_delivery_attend_*`,
 `test_daemon_prompt_carries_next_move_and_linger`.
 
 Branch: main.
+
+## [2026-07-03] implement | Seam bench v1 — lesser-light runners as measuring instruments
+
+From the maintainer's proposal: the resident can read the wake scroll from
+inside, but only an economy core reveals where the seams are actually weak —
+haiku/mini break exactly where Fable routes around silently. `brr bench`
+packages that as a one-command probe cycle: sandbox repo + sandboxed
+`BRNRD_HOME` (real orientation stack, isolated account), `python -m brr up`
+spawned against it, scripted lead event through the real inbox protocol,
+optional follow-ups injected at first signal, then a harvested transcript
+scored by deterministic probes (`response`, `next_move`, `card`, `interim`,
+`fold`, `single_run`) into `report.md` + `transcript.md`. The exact
+`prompt.md` each spawned runner saw rides along as the flight recorder.
+
+Key mechanics discovered while wiring: a folded follow-up leaves a
+`write_partial` + `status: done`, not a terminal response — the fold probe
+reads partials and targeted `interim_response` records; `card_composed`
+packets carry the note under `text`. Scenarios v1: `simple-ask`,
+`followup-fold`. Design + open seams (cost capture, cross-core diff,
+bench-driven pitfalls): [`design-bench-loop.md`](design-bench-loop.md).
+Tests cover the deterministic core only — a bench run spends real quota by
+design.
+
+Branch: brr/bench-loop.
