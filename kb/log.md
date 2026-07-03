@@ -9775,3 +9775,30 @@ not a failure. Both seams now exist; orphaned same-thread fragments should
 be gone either way.
 
 Branch: brr/director-voice.
+
+## [2026-07-03] design+fix | weave round 6: bundle register audit; claude_usage learns Fable buckets
+
+Second complete pass over the initial context (maintainer's coherence
+questions: boot-sequence shape, accord with the Shell's own layers,
+embedded-not-overriding). Findings recorded as a round-6 inventory in
+design-weave-register.md; two fixed in the same run: the bundle's
+`- Delivery:`/`- Budget:`/`- Runtime recovery:` bullets rendered under
+`### Runner Mandate` instead of `### Mode` whenever a catalog exists
+(prompts.py reorder), and AGENTS.md §Orientation cited the fallback-path
+block name "Recent in this conversation" instead of the primary
+Communication-snapshot render. AGENTS.md voice direction proposed (house
+voice yes, register density yes, resident intimacy and glyph-load-bearing
+no — it must load-bear solo for foreign agents and adopter seeds); the
+full pass parked as its own commit.
+
+claude_usage: the TUI grew a `Current week (Fable)` bucket that clobbered
+the all-models weekly number (5% → reported 8%). Parser now keys week
+buckets by label — primary week stays all-models, per-model buckets land
+in `week_models` and append to the quota summary ("Fable week 89% left").
+Probe is ~3.5s post-optimization, so cache TTL dropped 300s → 120s
+(`BRR_CLAUDE_USAGE_TTL` overrides); capture lingers 0.5s after
+session+week parse to catch the trailing model bucket. Live-fired ✓.
+Pacing implication noted in design-director-loop.md: per-Core weekly
+quota is now readable data for the quota-aware pacing pass.
+
+Branch: brr/director-voice.

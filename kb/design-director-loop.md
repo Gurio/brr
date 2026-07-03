@@ -217,6 +217,14 @@ follow-up that arrives 40 seconds after the reply — today that spawns a
 cold run), not as long residency. The quota-aware pacing piece deserves its
 own design pass; it is policy on existing telemetry, not new infrastructure.
 
+Telemetry update (2026-07-03): the Claude `/usage` PTY probe is down from
+~18s to ~3.5s, its cache TTL dropped 300s → 120s (`BRR_CLAUDE_USAGE_TTL`
+to override), and the parser now keeps per-model weekly buckets separate —
+the TUI added a `Current week (Fable)` line that previously clobbered the
+all-models number. Pacing policy can now read a per-Core weekly constraint
+(the binding one for a Fable-cored director), fresh to ~2 minutes, without
+new collection work.
+
 ## Forks left to the maintainer
 
 - None hard-blocking for phases 1–2. Phase 3's physical file location has a

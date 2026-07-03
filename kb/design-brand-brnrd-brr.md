@@ -107,7 +107,9 @@ wake was the repo side actually *sounding* like anything. Maintenance rule
 going forward: **voice edits to the prompt layers are register work, not
 content work** — done by a strong model, reviewed by ear, never delegated to
 a model that can't hear the difference (the maintainer's constraint, and
-correct).
+correct). The working-notation side of this — the resident's own weave
+between injected state and delivered reply — has its own line of rounds in
+[the weave register](design-weave-register.md).
 
 ## Forks left to the maintainer
 

@@ -153,6 +153,69 @@ adjacent facts left to resonate instead of being connected by
 explanatory tissue. That is exactly what the reweaved `run.md` orient
 block does, so the answer shipped as the file rather than as pastiche.
 
+## Round 6 — bundle register audit + boundary notes (2026-07-03)
+
+Maintainer: another complete pass on the initial context — is the Run
+Context Bundle's register right, does it accord with the portals and the
+boundary interweave; durable notes over edits this turn (the maintainer
+liked the round-5 pre-edit inventory form — keep pushing that direction
+without stripping warmth). Inventory, whole-context read of run
+`run-260703-1002-3llr`:
+
+```
+1. prompts.py bundle assembly: `- Delivery:` / `- Budget:` / `- Runtime
+   recovery:` appended *after* the Runner Mandate block → rendered under
+   `### Runner Mandate` whenever a catalog exists. Mode facts under the
+   wrong header, every catalog wake. ✗ → fixed this run (reorder; only
+   presence pins existed, no ordering pins).
+2. Mode → Runner line: `key: value` head trailing into a two-sentence
+   consequence essay; quota summary parenthesized into the runner label.
+   With per-model week buckets (Fable) the label grows. Phase-2 form:
+   `- Quota:` its own line; consequence compressed (`failure ⇒ manual
+   reroute → chunk + commit early`).
+3. `### Runner Mandate` header vs body "catalog" — one thing, two names.
+   Pick one; `catalog` is the code's name.
+4. Delivery contract: still the heaviest prose-per-fact block in the
+   scroll (round-5 item 6 stands). Sharper cut now visible: most bullets
+   are *invariant rules* (stdout discipline, basename-only paths, `.brr/`
+   hygiene, commit receipt) duplicating run.md's stance with paths
+   interpolated; only paths / budget / branch are live values. Phase-2
+   shape: rules → static preamble (run.md or a portals prompt), bundle
+   renders a compact `key: value` value block. Pins in test_prompts.py
+   (stdout/outbox/card phrases) move in the same commit.
+5. AGENTS.md §Orientation cited the bundle block "Recent in this
+   conversation" — the fallback path's name; the primary render is
+   `### Communication snapshot` → "Recent turns (woven…)". Same
+   small-lie class as round-5 item 4. ✗ → fixed this run.
+6. Shell furniture observed in-wake: the claude Shell injected task-tool
+   reminders ("consider TaskCreate…") ×3 mid-run — harness noise the
+   daemon model doesn't use. Not brnrd's string to rewrite; candidate: a
+   line in daemon-substrate.md naming shell-injected reminders as
+   furniture to weigh, not obey. ? open.
+7. Hook-boundary framing (`[brr portal update]`) not exercised this wake;
+   phase-2 item 1 stands unreviewed.
+```
+
+**Embedded, not overriding** (maintainer's accord question): the stack
+reads compatibly with the Shell's own orientation layers because they own
+different strata — the Shell speaks tool mechanics and harness reminders;
+brnrd speaks identity, memory, and delivery choreography. The friction
+seams found are furniture-level (item 6) and the stdout-closeout vs
+shell-preamble habit, already governed by run.md's closeout rule. No point
+found where brnrd instructs *against* a Shell contract; the "lesser" voice
+rides inside the Shell's frame rather than fighting it.
+
+**AGENTS.md voice** (maintainer on the fence, leaning "completely
+different voice has no justification"): direction proposed — converge to
+the *house voice*, not to the register. AGENTS.md is the one layer a
+foreign ad-hoc agent (Cursor, bare Codex) and every adopter seed may read
+*alone*, with no identity-core or weave.md above it: it must load-bear
+solo. So: settled/dry/exact voice yes (it is already halfway there —
+"Tickets are dated snapshots, not specs"); register *density* in
+enumerable sections yes; first-person resident intimacy no;
+glyph-load-bearing meaning no. The full pass is its own commit — template
+blast radius, `brnrd init` ships this file to adopters.
+
 ## Receipts
 
 - Round-3 voice pass: [brand space](design-brand-brnrd-brr.md),
