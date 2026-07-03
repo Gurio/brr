@@ -116,6 +116,13 @@ dive-in map) and are stable until something contradicts them.
   *shipped*. Opt-in brr self-development reload mode: editable install
   plus quiescent re-exec between tasks when brr package files change;
   kept explicit via `--dev-reload` / `dev_reload=true`, not a default.
+- [Seam bench design](design-bench-loop.md) — *active, v1 shipped
+  2026-07-03*. The resident's self-experimentation loop: `brr bench run`
+  spawns a lesser-light runner (haiku/mini) against scripted events in a
+  sandboxed repo + `BRNRD_HOME`, injects mid-run follow-ups, and scores
+  deterministic seam probes (card, fold, next-move, single-run) into a
+  report + woven transcript. The lesser core is the measuring instrument
+  for the interaction seams a strong core routes around silently.
 - [Agent ergonomics observability design](design-agent-ergonomics.md) —
   *active (probe + log/response slices shipped; owner routing 2026-06-03)*.
   A three-layer back-channel routed by **run ownership** (a
