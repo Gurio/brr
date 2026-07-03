@@ -9802,3 +9802,32 @@ Pacing implication noted in design-director-loop.md: per-Core weekly
 quota is now readable data for the quota-aware pacing pass.
 
 Branch: brr/director-voice.
+
+## [2026-07-03] design+plan | weave phase 2 shipped; director execution plan + tickets #211-#217
+
+Phase 2 of the weave register (the daemon meets the register) shipped as
+the delivery-contract compression: standing rules moved into
+daemon-substrate.md's new "delivery portals" block (stdout discipline,
+outbox frontmatter grammar, inbox/portal-state semantics, keepalive/card,
+remote-reader rule, receipts); the bundle's Delivery contract now renders
+live values only. Mode block: quota on its own `- Quota:` line; "Runner
+Mandate" renamed "Runner catalog". Hook injections were found already
+conformant ([brr portal update] + key:value lines) — the register was
+discovered there too. Pins moved per the dumb-test rule; suite 1241 green.
+
+Naming settled with the maintainer: "ornamentation" retires; what exists
+is the *register* (resident notation, never stripped) and *unfolding*
+(user_commitment: full | profane — full = weave-density replies in chat,
+opt-in per reader). Self-naming (Ummon says "Ummon") parked as an
+identity-core fork. claude_usage TTL stays at the maintainer's 10s with
+an honest comment (any TTL under the 30s beat = probe every beat).
+
+The next big chunks got their execution plan: plan-director-execution.md
+converts design-director-loop.md into owner-routed tickets — workstream A
+(structured pacing: next-move contract #211, closeout parse #212, quest
+log #213, director tick, diffense reveal re-skin) and workstream B
+(stingy delegator: quota-aware pacing #214, delegation policy + slim
+worker stack #215, post-delivery linger #216), plus the voice tail
+(user_commitment plumbing #217, AGENTS.md house-voice pass).
+
+Branch: brr/director-voice.

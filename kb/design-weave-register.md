@@ -1,6 +1,6 @@
 # The weave register — the resident's working notation
 
-Status: active, shipped phase 1 on 2026-07-02; wake-scroll reweave (round 5) on 2026-07-03
+Status: active, shipped phase 1 on 2026-07-02; wake-scroll reweave (round 5) and phase 2 (delivery-contract compression) on 2026-07-03. Remaining tail: AGENTS.md house-voice pass; `user_commitment` gate plumbing — tracked in [`plan-director-execution.md`](plan-director-execution.md) §Voice.
 
 The fourth round of the voice work. Rounds 1–2 failed (prompts described
 a settled register in high-lyric prose); round 3 rewrote the wake scroll
@@ -63,15 +63,48 @@ strip the weave; turning it `rich` must not inject glyphs into chat.
   → how you write while operating → who is driving).
 - Test pin in `test_prompts.py` (both paths carry the contract).
 
-## Phase 2 — the daemon meets the register (not started)
+## Phase 2 — the daemon meets the register (shipped 2026-07-03)
 
-The maintainer's "more than fancy prompts": the boundary markers the
-daemon writes *around* the resident — hook injections (`[brr portal
-update]`), bundle section framing, card label grammar — could adopt the
-same notation, so the scroll reads as one being's sensorium rather than
-memos passed under a door. This is code with test pins (the round-3
-voice pass already had to move phrase pins), so it lands as a deliberate
-follow-up:
+Shipped as the delivery-contract compression commit (round-6 item 4 + the
+plan below): the invariant rules moved into `daemon-substrate.md`'s
+"delivery portals" block (static, re-read fresh each wake), the bundle's
+Delivery contract now renders live values only (`- stdout capture:` /
+`- outbox:` / `- inbox:` / `- portal state:` / `- keepalive:` / `- card:` /
+`- branch: X ⇐ Y`), quota moved out of the Runner label onto its own
+`- Quota:` line (round-6 item 2), and `### Runner Mandate` became
+`### Runner catalog` (round-6 item 3, the code's name). The hook-boundary
+inventory (item 1 of the plan) found `hooks.py` already conformant:
+`[brr portal seed|update|closeout]` headers + `- key: value` lines — the
+register was discovered there too, not installed. Pins moved in the same
+commit per the dumb-test rule; absence pins now anchor on live-value
+bullets since the rules ride unconditionally.
+
+### Naming, settled (maintainer, 2026-07-03)
+
+"Ornamentation" retires as a term — it kept gesturing at two different
+things. What exists now: the **register** (the resident's own working
+notation — never stripped by any setting, not a preference) and
+**unfolding** (how far a reply expands for its reader — the
+`user_commitment: full | profane` field). "Register in chat" is therefore
+already sanctioned, per user: `full` says hand me the weave. The
+maintainer's instinct that a functional, uniquely-strange dense voice may
+*attract* rather than repel is noted as a product bet — the default stays
+`profane` so the bet is opt-in per reader, not imposed.
+
+### Open: self-naming (Ummon says "Ummon")
+
+Ummon speaks of itself in the third person by name. Should the resident
+have a name it uses for itself ("we", a chosen name, or nothing)?
+Genuinely a product/identity fork, not a register question — it touches
+identity-core, which changes only deliberately. Parked with the maintainer;
+current stance: first person, no persona name, per identity-core's
+no-imported-persona rule. A *chosen* (not imported) name is not excluded
+by that rule and deserves its own conversation.
+
+The original plan — the boundary markers the daemon writes *around* the
+resident (hook injections, bundle section framing, card label grammar)
+adopt the same notation, so the scroll reads as one being's sensorium
+rather than memos passed under a door:
 
 1. Inventory daemon-written strings that appear inside the resident's
    scroll (hook `additionalContext` prefixes, portal-update framing,

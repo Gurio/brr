@@ -218,12 +218,16 @@ cold run), not as long residency. The quota-aware pacing piece deserves its
 own design pass; it is policy on existing telemetry, not new infrastructure.
 
 Telemetry update (2026-07-03): the Claude `/usage` PTY probe is down from
-~18s to ~3.5s, its cache TTL dropped 300s → 120s (`BRR_CLAUDE_USAGE_TTL`
-to override), and the parser now keeps per-model weekly buckets separate —
-the TUI added a `Current week (Fable)` line that previously clobbered the
-all-models number. Pacing policy can now read a per-Core weekly constraint
-(the binding one for a Fable-cored director), fresh to ~2 minutes, without
-new collection work.
+~18s to ~3.5s, its cache TTL now 10s (maintainer's call — under the 30s
+heartbeat any TTL means "probe every beat", so 10s is the freshest the
+beat can deliver; `BRR_CLAUDE_USAGE_TTL` to override), and the parser now
+keeps per-model weekly buckets separate — the TUI added a `Current week
+(Fable)` line that previously clobbered the all-models number. Pacing
+policy can now read a per-Core weekly constraint (the binding one for a
+Fable-cored director), fresh to one beat, without new collection work.
+
+Execution tickets for this design:
+[`plan-director-execution.md`](plan-director-execution.md).
 
 ## Forks left to the maintainer
 
