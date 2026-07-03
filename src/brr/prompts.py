@@ -608,9 +608,26 @@ def build_init_prompt(repo_root: Path) -> str:
     return f"{setup}\n\n{template}"
 
 
-def build_run_prompt(task: str, repo_root: Path) -> str:
-    """Build the prompt for ``brnrd run`` — run.md + recent context + task."""
+def _read_preamble_with_weave(repo_root: Path) -> str:
+    """Read ``run.md`` plus the working-register contract (``weave.md``).
+
+    The weave rides every runner path — one-shot and daemon alike — because
+    it governs the resident's *own* working surfaces (card notes, stderr
+    narration, dominion scratch), which exist under any host. It sits right
+    after the host-agnostic operational preamble and before any host-specific
+    machinery so read order mirrors authority: how you operate, how you
+    write while operating, then who is driving.
+    """
     preamble = read_prompt("run.md", repo_root)
+    weave = read_prompt("weave.md", repo_root)
+    if weave.strip():
+        preamble = f"{preamble.rstrip()}\n\n{weave.strip()}"
+    return preamble
+
+
+def build_run_prompt(task: str, repo_root: Path) -> str:
+    """Build the prompt for ``brnrd run`` — run.md + weave + context + task."""
+    preamble = _read_preamble_with_weave(repo_root)
     return _join_prompt_parts(
         preamble, repo_root, f"---\nTask: {task}", task_text=task,
     )
@@ -657,7 +674,7 @@ def build_daemon_prompt(
     host-agnostic playbook deliberately leaves out. ``brnrd run`` skips it:
     a one-shot has no daemon to fire schedules or drain an outbox.
     """
-    preamble = read_prompt("run.md", repo_root)
+    preamble = _read_preamble_with_weave(repo_root)
     substrate = read_prompt("daemon-substrate.md", repo_root)
     if substrate.strip():
         preamble = f"{preamble.rstrip()}\n\n{substrate.strip()}"
@@ -868,7 +885,7 @@ def _build_run_context_bundle(
         "back, like the PLAN→approve handoff). This list is the injected "
         "summary of that grammar; the full control-file protocol and the shape "
         "of an average daemon run live in the portals manual — run "
-        "`brr docs portals` when a step is unfamiliar. Use these portals to "
+        "`brnrd docs portals` when a step is unfamiliar. Use these portals to "
         "stay in the conversation: keep visible state honest, fold queued "
         "input at plan boundaries when it belongs in this run, and check for a "
         "last-minute follow-up before terminal delivery."
@@ -916,7 +933,7 @@ def _build_run_context_bundle(
             "`runner_policy: propose` parks a runner-policy change for "
             "operator approval before the daemon writes the account dominion "
             "policy file. See "
-            "`brr docs portals` for the full field list and choreography."
+            "`brnrd docs portals` for the full field list and choreography."
         )
         sections.append(
             f"- A live inbox view at `{outbox_path}/inbox.json` is refreshed "

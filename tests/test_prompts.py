@@ -119,7 +119,8 @@ class TestPromptBuilding:
 
         assert "Resident Identity Core" in prompt
         assert "product-owned identity contract" in prompt
-        assert "Appearance settings" in prompt
+        assert "Voice And The Seam" in prompt
+        assert "user_commitment" in prompt
         assert "Your dominion (working memory)" in prompt
         assert prompt.index("Resident Identity Core") < prompt.index(
             "Your dominion (working memory)"
@@ -233,9 +234,9 @@ class TestPromptBuilding:
         assert "Review pack (diffense)" in prompt
         assert "brr review --check" in prompt
         # The heavy publish plumbing is now inspected, not injected: the
-        # block points at `brr docs review-pack` instead of re-narrating
+        # block points at `brnrd docs review-pack` instead of re-narrating
         # the relay/gist/frontmatter procedure every diffense wake.
-        assert "brr docs review-pack" in prompt
+        assert "brnrd docs review-pack" in prompt
         # The pack path is explicit and absolute in the shared runtime dir
         # so it survives worktree teardown.
         assert "Review pack path: /repo/.brr/diffense/task-9/pack.json" in prompt
@@ -361,7 +362,9 @@ class TestPromptBuilding:
             "ship it", "evt-1", "/tmp/resp.md", tmp_path,
             run_id="task-9",
         )
-        assert "mid-thought" not in prompt
+        # "mid-thought" now rides unconditionally in daemon-substrate's
+        # delivery-contract line (round-5 reweave), so the outbox-specific
+        # absence pin is the directory contract itself.
         assert "outbox directory" not in prompt
 
     def test_daemon_prompt_states_budget_and_keepalive(self, tmp_path):
@@ -392,7 +395,7 @@ class TestPromptBuilding:
         prompt = build_daemon_prompt(
             "ship it", "evt-1", "/tmp/resp.md", tmp_path, run_id="task-9",
         )
-        assert "How brr drives you" in prompt
+        assert "How the daemon drives you" in prompt
         assert "single-flight" in prompt
         assert "schedule.md" in prompt  # self-scheduled wakes live here now
 
@@ -400,8 +403,18 @@ class TestPromptBuilding:
         """`brnrd run` is a one-shot: no daemon to fire schedules or drain an
         outbox, so it doesn't carry the driver's manual."""
         prompt = build_run_prompt("ship it", tmp_path)
-        assert "How brr drives you" not in prompt
+        assert "How the daemon drives you" not in prompt
         assert "schedule.md" not in prompt
+
+    def test_prompts_include_weave_register(self, tmp_path):
+        """Both runner paths carry the working-register contract (weave.md):
+        the resident's dense native notation for the surfaces only it and
+        the machinery read. Host-agnostic, so the one-shot path gets it too."""
+        assert "your working register" in build_run_prompt("ship it", tmp_path)
+        prompt = build_daemon_prompt(
+            "ship it", "evt-1", "/tmp/resp.md", tmp_path, run_id="task-9",
+        )
+        assert "your working register" in prompt
 
     def test_daemon_prompt_lists_pending_events_and_fold_in_contract(self, tmp_path):
         prompt = build_daemon_prompt(
@@ -834,7 +847,7 @@ class TestPromptBuilding:
         # The portals manual is inspected, not injected: the daemon prompt
         # carries a one-line pointer to it (the protocol choreography lives
         # there, not re-narrated in full on every wake).
-        assert "brr docs portals" in prompt
+        assert "brnrd docs portals" in prompt
 
     def test_daemon_prompt_frames_delivery_as_conversational(self, tmp_path):
         prompt = build_daemon_prompt(
@@ -869,7 +882,7 @@ class TestPromptBuilding:
         for form in ("*inbound*", "*outbound*", "*parked*"):
             assert form in prompt
         assert "injected summary" in prompt
-        assert "brr docs portals" in prompt
+        assert "brnrd docs portals" in prompt
 
 
 # ── Phase 3 guardrails: revisit-signal handling ──────────────────────
@@ -912,8 +925,8 @@ class TestRevisitSignalGuardrails:
         # the stance lives in the resident playbook and AGENTS.md →
         # Stewardship, which this section leans on instead of
         # re-enumerating trigger phrases.
-        assert "engage with the substance" in prompt
-        assert "ownership stance" in prompt
+        assert "judgement on the substance" in prompt
+        assert "trust the intent rather than scanning for trigger words" in prompt
 
     def test_run_prompt_biases_to_resolve_and_act(self):
         prompt = _read_bundled_run_prompt()
@@ -952,25 +965,25 @@ class TestDaemonModeGuardrails:
         # AGENTS.md remains the entry point when the host did not inject
         # the playbook, but daemon wakes should not be told to re-open a
         # contract already present in their outer context.
+        assert "Injected in most daemon wakes" in prompt
+        assert "daemon wake" in prompt
         assert (
-            "entry point for agents that do not already have the playbook injected"
+            "only when it's absent, stale, or the task touches it"
             in prompt
         )
-        assert "daemon wake" in prompt
-        assert "injected copy as the contract" in prompt
         assert "Read the `AGENTS.md` playbook at the repo root" not in prompt
-        # The bundle's Mode section is the authoritative "where am I?".
-        assert "Mode" in prompt
+        # The bundle is the authoritative "where am I?" (its Mode block).
+        assert "mode, run metadata" in prompt
         # Injected Recent Activity counts toward the kb/log.md step so
         # daemon runs don't re-read the log when the prompt already
         # carries an extract. Checked as separate anchors so the
         # paragraph can rewrap without breaking the guardrail.
         assert "Recent Activity (from kb/log.md)" in prompt
-        assert "satisfies" in prompt
-        assert "kb/log.md startup step" in prompt
+        assert "the log startup read" in prompt
+        assert "only for older history" in prompt
         # The run context file is recovery detail, not routine reading.
-        assert "Runtime recovery" in prompt
-        assert "recovery detail" in prompt
+        assert "runtime-recovery context file" in prompt
+        assert "only for what the" in prompt
 
 
 class TestIntrospectionMode:
