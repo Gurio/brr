@@ -400,6 +400,48 @@ Steps:
 | Build | None — Python-only, no JS bundler at MVP |
 | Deploy | Bundled with brnrd backend; served from same Upsun app per `design-brnrd-protocol.md` → "Upsun deployment notes" |
 
+## Gap: Current Planned State view (2026-07-04, evt-…v7me thread)
+
+The maintainer asked (telegram, unprompted) for a durable, account-scoped,
+web-visible surface showing "workstreams and plans for them and the state of
+things according to plan — the forks, the blocks, the decisions" — distinct
+from a single run's status. Naming it here so the ask has a handle: **Current
+Planned State (CPS)**.
+
+**This is not new architecture — it already shipped as CS5 + CS7**
+(`plan-control-surface.md`): `plans/<repo-slug>/active.md` +
+`plans/_cross-repo/active.md` (tactical, "what we're doing now") and
+`ledger/decisions.md` (strategic, "what we've decided and why"), both in the
+account dominion repo, both injected into every wake already. What's
+genuinely missing is **this dashboard's view of them** — the view inventory
+above (Slices 1-4) never scoped a route for the two files. Adding one is
+small: read two markdown files per account (repo-scoped + cross-repo) out of
+the account dominion repo the same way CS2's `run_state_blob_url` already
+resolves a per-run doc, render as-is (they're already prose the resident
+writes for a human). No new backend shape.
+
+**Genuinely open, not yet designed:**
+- **Archival convention.** The maintainer's "occasionally create another file
+  which is parked... maybe a stripped-down view of its contents" has no
+  counterpart in CS5 today — `active.md` is retired by emptying/deleting it,
+  nothing archives it first. A `plans/<repo-slug>/archive/<date>-<slug>.md`
+  convention (resident-written, same as `active.md`) would close this without
+  new mechanism — the growth bound the maintainer wants ("has to have some
+  time to leave so we don't grow it indefinitely") is then a resident
+  discipline (archive + trim `active.md`), not a new store.
+- **The "vehicles" framing.** The maintainer's bus-vs-subway metaphor (cheap
+  breadth vs. costly precision) already exists as data: the runner catalog's
+  `cost_rank`/`class` spectrum (`design-runner-cores.md`) *is* the resource
+  economy — CPS would be the place that renders spend against it, not invent
+  a second one.
+- **Aesthetic direction (Persona-5-adjacent, married to Zachtronics-style
+  resource management later; CLI-plain for now).** Ties to
+  `design-director-loop.md` (game pacing as product thesis, already active)
+  and the "would Theo/Fireship approve the UI" ask — a real fork, not
+  resolved here: skin now vs. ship the CPS view plain and skin once Slice
+  1-3 exist to skin. No maintainer decision requested yet; flagging so it
+  doesn't get designed twice.
+
 ## Out of scope
 
 - **Connectors view** — no connectors exist; see
