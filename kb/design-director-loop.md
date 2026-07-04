@@ -232,6 +232,64 @@ Fable-cored director), fresh to one beat, without new collection work.
 Execution tickets for this design:
 [`plan-director-execution.md`](plan-director-execution.md).
 
+## B1 — quota-aware pacing policy (decided 2026-07-04)
+
+The policy half of [#214](https://github.com/Gurio/brr/issues/214), written
+against the telemetry that landed 2026-07-03 (per-Core weekly buckets, 10s
+TTL). Scrutiny while writing it: `_merge_level_snapshots`
+(`daemon.py:2436`) currently forwards the `quota` key from a Shell's level
+snapshot wholesale but the snapshot itself
+(`claude_usage.parse_usage_text`, `codex_status.parse_token_count`) only
+ever put a rendered *string* summary in that dict — the numeric
+`used_percentage` fields computed a few lines earlier
+(`session_used_percentage`, `week_used_percentage`, `week_models[label]`)
+never made it past the parser function. So today there is genuinely no
+programmatic access to "how low is the binding bucket" downstream of the
+collector — only a human-readable line. B2 needs to close that gap before
+any pacing decision can read a number instead of parsing prose.
+
+**Binding bucket.** The lowest live remaining-percent among: session,
+week (all-models), and any active per-model week bucket (Codex: primary +
+secondary rate-limit windows). "Remaining" always means `100 -
+used_percentage`; a shell with no collector for a slot contributes
+nothing (never guessed).
+
+**Two floors, account policy, not hardcoded** (mirrors the
+`delivery.post_delivery_attend_seconds` convention — dotted key, sane
+default, `.brr/config` overridable):
+
+- `pacing.quota_low_floor_pct` (default `20.0`) — below this, `every:`
+  schedule entries stretch: the due-check uses `interval *
+  pacing.quota_stretch_factor` (default `3.0`) instead of the entry's
+  stated interval, so a standing loop backs off without being silenced.
+- `pacing.quota_critical_floor_pct` (default `8.0`) — below this, `every:`
+  entries do not fire at all this beat (ambient loops pause). Recovery
+  above the floor resumes normal cadence on the next beat; no separate
+  "resume" bookkeeping needed since the check re-evaluates live each beat.
+
+**What is never discretionary:** `at:` one-shot entries (deadlines,
+reminders) and anything gate-addressed (a real user waiting on a reply).
+Quota pressure bends *ambient* initiative, never a promise already made to
+someone.
+
+**Respawn core class.** Downshifting is resident policy (B3), not a new
+daemon mechanism — B1 only supplies the number the resident's own
+delegation judgment reads (the Mode block's `Quota:` line already carries
+it). A daemon-side automatic override of a resident's explicit `shell:`/
+`core:` respawn choice is out of scope here; it would second-guess a
+judgment call the resident is better placed to make with the full picture
+(task shape, not just quota).
+
+**B2 scope (plumbing, delegable):** thread the buckets through
+(`claude_usage`/`codex_status` → `quota` dict → `_merge_level_snapshots` →
+`_fire_due_schedules`), add the floor/stretch config readers, apply the
+stretched interval (or the pause) only to `kind == "every"` entries before
+calling `schedule.due_entries`, and surface the binding percent + which
+floor (if any) is active in `resources` so a mid-run boundary can see the
+same number the scheduler used. Full spec: `plan-director-execution.md`
+§B1–B2 depends-on note; exact touch points named in the B2 delegation
+brief (kb/log.md, this date).
+
 ## Forks left to the maintainer
 
 - None hard-blocking for phases 1–2. Phase 3's physical file location has a
