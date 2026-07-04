@@ -9993,3 +9993,75 @@ Verification: `test_available_runner_catalog_excludes_profiles_missing_auth_env`
 `test_runner_catalog_renders_only_unusual_availability`; full suite 1252 passed.
 
 Branch: brr/runner-catalog-trim.
+
+## [2026-07-04] implement | Workstream B shipped — quota pacing + delegation, delegation itself dogfooded
+
+Maintainer reranked to Workstream B (`kb/plan-director-execution.md`),
+"probably both tickets," and asked to delegate the delegable halves while
+building the delegation policy — a live case study, not just an
+implementation pass. Both #214 (B1+B2) and #215 (B3+B4) shipped on
+`brr/director-stream-b`.
+
+**B1** (design/prompt, direct): decided the quota-pacing policy —
+binding bucket = lowest remaining% across session/week/per-model week; two
+account-policy floors (`pacing.quota_low_floor_pct`=20 stretches `every:`
+cadence, `pacing.quota_critical_floor_pct`=8 pauses it); `at:` deadlines and
+gate-addressed replies stay non-discretionary. Named the real gap B2 had to
+close: `_merge_level_snapshots` only ever forwarded a rendered *string*,
+never the `remaining_percentage` numbers the parsers already computed.
+Detail: `design-director-loop.md` §B1.
+
+**B3** (prompt, direct): named the two execution stacks in
+`prompts/dominion-playbook.md` §Delegation — resident (full, default) vs
+worker (task + files + result contract, no dominion write). `worker: true`
+alongside `respawn: true` opts a spawned run into the slim stack; a bare
+respawn (e.g. `quality: escalate`) keeps the full one. Mirrored into the
+live dominion playbook so the policy governed this run's own delegation
+calls immediately, not just future ones.
+
+**B2 and B4 were delegated**, not hand-rolled — two subagents,
+`isolation: worktree`, launched in parallel against written briefs carrying
+exact file:line pointers, the decided policy, and the existing test pattern
+to mirror. Both came back correct and tested:
+
+- **B2**: `claude_usage`/`codex_status` now expose numeric remaining-percent
+  per bucket; new `runner_quota.binding_quota_remaining_pct`; `_fire_due_schedules`
+  stretches/drops `every:` entries under the floors (`due_entries` stays pure
+  — the bending happens to the entry list passed in, via `dataclasses.replace`);
+  `resources.quota.pacing` surfaces the same number mid-run. The delegate
+  flagged its own soft spot rather than hiding it: the scheduler-tick quota
+  read has no single "current run" to key off, so it reads a shared
+  `brr_dir`-level cache nothing writes to yet — correct and tested, inert
+  live until a follow-up feeds that cache.
+- **B4**: `worker: true` frontmatter → `task.meta["worker"]` (via the
+  existing `Run.from_event` meta-copy path, no new plumbing needed there) →
+  `build_daemon_prompt` swaps in a new `prompts/worker.md` preamble and skips
+  the resident injected blocks (identity core, dominion, plans, policy,
+  ledger, pitfalls, kb health, introspection); `daemon-substrate.md` stays
+  (a worker still runs under the daemon). Default path confirmed
+  byte-identical via the existing pinned suite.
+
+Both worktrees merged clean (`ort` auto-merge, no conflicts despite both
+touching `daemon.py` — isolation meant no shared-file race during the actual
+edits). Full suite 1288 passed after both merges (was 1273 before this run).
+
+**On the delegation itself**: the brief was the expensive part, not the
+implementation turn — excavating the exact hooks (`_merge_level_snapshots`
+silently dropping numeric fields, the `Run.meta` wire path for a new
+frontmatter key, the existing test fixtures to mirror) took longer than
+either agent spent building against them. Matches the design's own
+scrutiny (`design-director-loop.md` §orchestrator/worker): delegation pays
+off on bounded, well-specified work; naming the bounds is still the
+resident's job, and a vague brief would have cost more in rework than it
+saved in hand-rolling.
+
+Verification: full suite 1288 passed; both new respawn-frontmatter cases
+(`worker: true` sets the flag, bare `respawn: true` omits it) and both
+prompt-assembly cases (worker excludes resident stack, default unchanged)
+pass; B2's schedule/facets/parser tests (critical pause, low stretch, no-op
+without a resolvable runner, `at:` always fires) pass.
+
+Branch: brr/director-stream-b. Also folded in: `.gitignore` now excludes
+`.claude/` (Claude Code session settings + isolated subagent worktrees,
+previously untracked noise with real risk of a careless `git add -A`
+sweeping nested worktree checkouts into a commit).
