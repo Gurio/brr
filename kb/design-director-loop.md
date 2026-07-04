@@ -361,6 +361,58 @@ same number the scheduler used. Full spec: `plan-director-execution.md`
 §B1–B2 depends-on note; exact touch points named in the B2 delegation
 brief (kb/log.md, this date).
 
+## Cache TTL vs compaction, and B6's data problem revisited (2026-07-04)
+
+Maintainer question (telegram): does idle wall-clock time itself get billed
+while a permission-gated session waits on a user reply, and is TTL-eviction
+the same thing as compaction? Two separate mechanisms, worth naming apart:
+
+- **Cache TTL eviction** (~5m Anthropic, similar order for Codex) is
+  time-based: no request arrives within the window ⇒ the *next* request is a
+  cache miss, priced as a full uncached input read. Idle time itself is not
+  metered — nothing is billed while no call is made. The cost is deferred,
+  not incurred, and it only lands as "more expensive," never as "charged for
+  waiting."
+- **Compaction** (context summarization when the window fills) is
+  capacity-based, triggered by accumulated tokens, unrelated to how long the
+  session sat idle. Conflating the two overstates the cost of a long
+  permission-gated wait — the real tax is only the next-call cache miss, and
+  only if the wait outlasted the TTL.
+
+This confirms rather than revises §Hot-idle residency above (the 5-minute
+cliff framing there was already right).
+
+**B6 ("blocked on data... a week+ of observed per-runner burn"): partially
+already unblocked.** Checked `$CODEX_HOME/sessions/**/rollout-*.jsonl` on
+the operator's machine: 69 of 88 recent rollout files (2026-06-20 through
+2026-07-04 — the actual dogfooding window, not a guess) have `cwd` under
+this repo's worktrees, and every one carries `token_count` events with
+`rate_limits.primary`/`secondary` (used_percent, window_minutes, resets_at)
+timestamped per turn. That is a real ~2-week time series of Codex quota
+burn already sitting on disk, retroactively minable — no forward waiting
+period needed for the Codex half of B6. A one-off script over existing
+rollout files, not new collection, not a bench.
+
+Claude side has no equivalent: `claude_usage`'s PTY scrape of `/usage`
+returns only the current snapshot, nothing persisted historically. Claude
+session transcripts (`~/.claude/projects/**/*.jsonl`) do carry per-turn
+token/cost usage, which could reconstruct relative burn *rate* but not
+percent-of-weekly-cap (that arithmetic lives inside Anthropic's own
+`/usage` rendering, not in the transcript). So: Codex's half of B6 can be
+answered now from history; Claude's half still needs forward logging
+(cheapest shape: persist the already-computed `claude_usage` snapshot to a
+durable log on each heartbeat, starting now, rather than waiting on a new
+collection mechanism).
+
+**No new bench needed for this.** The maintainer's "do we need a bench?"
+reads as a different question than [`design-bench-loop.md`](design-bench-loop.md)
+answers — that bench measures prompt/protocol seam-following under a
+lesser-light runner (card discipline, fold-in, next-move), not quota
+economics. What B6 needs is data extraction (Codex: retroactive script over
+rollout files; Claude: a forward log line) and then a policy pass over that
+data — not a scenario harness that spends quota to observe behavior we can
+already read off disk.
+
 ## Forks left to the maintainer
 
 - None hard-blocking for phases 1–2. Phase 3's physical file location has a

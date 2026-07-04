@@ -10098,3 +10098,43 @@ forward against days-remaining-in-week. Blocked on data (a week+ of observed
 per-runner burn), not code — named rather than guessed at.
 
 Branch: brr/director-stream-b.
+
+## [2026-07-04] research | Caching mechanics clarified; B6 data gap partially closed without a bench
+
+Maintainer asked (telegram) whether idle wall-clock time during a
+permission-gated wait gets billed, whether TTL-eviction and compaction are
+the same trigger, and whether B6's "blocked on data" needs a bench.
+Answered in `design-director-loop.md` §"Cache TTL vs compaction, and B6's
+data problem revisited": TTL eviction (time-based, ~5m) and compaction
+(capacity-based, context-window fill) are distinct; idle time itself is
+never metered, only the next call after a TTL lapse pays a cache-miss
+price. Confirms the existing §Hot-idle residency framing, doesn't revise it.
+
+The concrete finding: checked `$CODEX_HOME/sessions/**/rollout-*.jsonl` on
+the operator's machine — 69 of 88 recent rollout files (spanning
+2026-06-20 to 2026-07-04, the actual dogfooding window) are this repo's,
+and every one carries timestamped `rate_limits` snapshots. That's B6's
+"week+ of observed burn" already on disk for Codex; no forward wait or
+bench needed there, just a retroactive extraction script. Claude has no
+equivalent persisted history (`claude_usage`'s PTY scrape is present-only)
+— its half of B6 needs a forward log line added now, not a new collector.
+`design-bench-loop.md`'s seam-bench answers a different question
+(protocol-following under a lesser core) and doesn't apply here.
+
+Also: small wording fix landed in `daemon-substrate.md` and
+`src/brr/docs/portals.md` — the post-delivery-attending → next-run
+handoff is now explicitly framed as "an unblock, not a restart" (same
+conversation/dominion/kb re-read, only the process renews), per the
+maintainer's pushback that "restart" language undersells the continuity
+that's actually preserved.
+
+Release-prep list from the same message (website polish, packaging, repo
+grooming, kb pricing/PII scrub, kb→home placement, GitHub App + bot
+identity) not started this run — confirmed real and non-trivial (pricing
+strategy lives in `decision-pricing-shape.md`/`design-billing.md`, personal
+financial/legal-entity detail in `plan-financial-growth.md`, PII scattered
+across ~15 kb pages) and the kb→home placement question already has an
+active design track (`design-home-scopes-and-knowledge.md`). Left as a
+fork for the maintainer to sequence rather than guessed at inline.
+
+Branch: brr/director-stream-b.
