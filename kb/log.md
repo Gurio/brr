@@ -10138,3 +10138,36 @@ active design track (`design-home-scopes-and-knowledge.md`). Left as a
 fork for the maintainer to sequence rather than guessed at inline.
 
 Branch: brr/director-stream-b.
+
+---
+
+## [2026-07-04] research | "Current Planned State" is CS5+CS7 already shipped; dashboard view is the actual gap
+
+Maintainer's telegram burst (6 follow-ups) proposed an account-scoped,
+web-visible surface for workstreams/plans/forks/blocks/decisions, distinct
+from per-run status, gamified toward a Persona-5/Zachtronics direction, plus
+asked for tighter token-efficient reading habits, a Stripe/pricing timeline
+push, and a voice loosen-up. Checked against the kb before building anything:
+the plan/decision surface he's describing **already shipped** as CS5 (`plans/
+<repo-slug>/active.md`, `plans/_cross-repo/active.md`) and CS7 (`ledger/
+decisions.md`) in `plan-control-surface.md` — both injected every wake
+already. The real gap is that `plan-brnrd-dashboard-mvp.md`'s view inventory
+never scoped a route rendering those two files; added that gap plus two open
+questions (archival convention for "parked" plan files; skin-now-vs-later
+fork for the Persona-5 aesthetic) as a new section there rather than
+inventing a parallel page. The bus-vs-subway cost metaphor is likewise
+already data, not a new idea: the runner catalog's `cost_rank`/`class`
+spectrum (`design-runner-cores.md`).
+
+Bumped GH #53 (Stripe billing integration) with the 2-month timeline and a
+new Stripe-Connect-for-user-side-profit-sharing question flagged as scope,
+not committed. Named but did not open a ticket for hosted-mode execution
+liability (distinct from #80, which is the *local* Docker trust-model
+doc — the maintainer's ask this time is the *hosted* ToS/liability posture,
+unscoped, needs its own decision before a ticket is worth writing).
+
+"The teachers are really features" (evt-…z148) stayed unresolved — no
+"teacher" reference anywhere in kb or this thread's visible history; asked
+the maintainer which transcript that refers to rather than guessing.
+
+Branch: brr/director-stream-b.
