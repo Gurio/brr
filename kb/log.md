@@ -10657,5 +10657,20 @@ phase even after `.card` correctly explained the event was queued on
 purpose. Fixed in `_pending_events_for_agent` (excludes
 `respawned_by_run`/`respawned_from_event` events — a system-to-system
 handoff, not a foldable follow-up), with a regression test; 1307 tests
-pass. PR #242. Branches: brr/frontend-svelte-scaffold-2026-07-06 (#241),
-brr/fix-respawn-pending-attention-2026-07-06 (#242).
+pass (PR #242) — but that fix only applies to the *next* daemon process;
+this run's own live process kept running the old code, so the loop kept
+firing regardless of the fix already being shipped.
+
+Rather than keep explaining the same fact to an unchanging hook, built
+the reset-epoch plumbing directly instead of waiting on the respawn
+dispatch (PR #243: `session_resets_at`/`week_resets_at`/
+`week_models[*].resets_at` on the Claude side via a new `_reset_epoch()`;
+`primary_resets_at`/`secondary_resets_at` passthrough on the Codex side;
+1311 tests pass), then marked the now-redundant respawn event `done`
+directly (`protocol.set_status`) instead of leaving it to dispatch a
+duplicate run — `pending_event_count` dropped to 0 immediately once the
+event was gone, confirming the earlier diagnosis was correct: the fix
+in #242 works, this run's own process just couldn't benefit from it
+retroactively. Branches: brr/frontend-svelte-scaffold-2026-07-06 (#241),
+brr/fix-respawn-pending-attention-2026-07-06 (#242),
+brr/reset-epoch-plumbing-2026-07-06 (#243).
