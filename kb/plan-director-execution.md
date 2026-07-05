@@ -36,19 +36,28 @@ for the four states; no parser. Resident-owned because it is voice +
 guardrail judgment, and it must not bloat the just-compressed contract.
 Effort: one short wake.
 
-### A2 — closeout parse + option folding (small code) — owner: delegable — [#212](https://github.com/Gurio/brr/issues/212)
+### A2 — closeout parse + option folding — owner: resident — [#212](https://github.com/Gurio/brr/issues/212) — *scope shrunk 2026-07-05*
 
-Phase 2. Optional outbox/stdout frontmatter key `next:` carrying
-`state / options / recommended`. Daemon parses into the run record; gate
-delivery renders options as a numbered list; a short follow-up reply
-("2", "B") on the same conversation key within N hours prepends the chosen
-option text to the spawned run's prompt. Touch points: `daemon.py` closeout
-path, gate rendering, `docs/portals.md`, tests mirroring the existing
-outbox-frontmatter tests. No new store — rides the run record.
-Depends on: A1 (contract wording settles the field names).
-Effort: 1–2 focused wakes. Spec is complete enough for an economy core.
+Originally spec'd as daemon-side parsing: an outbox/stdout frontmatter
+`next:` key, a run-record store, gate rendering as a numbered list, a
+short reply resolved back into the chosen option. Shrunk after the
+resident traced `conversations.py`'s existing recent-turns selection
+(`_select_snapshot_turns` → `_format_recent_conversation`, 2026-07-05,
+[#212 comment](https://github.com/Gurio/brr/issues/212#issuecomment-4885439895)):
+it already threads the resident's own prior reply — numbered options
+included — back into the next wake's bundle as a dialogue turn, no
+frontmatter or store needed. Maintainer confirmed the same day: skip
+inline-keyboard buttons for now (free-form numbered text wins in most
+cases), keep the ticket open but generic — a placeholder for the day
+native-button UX becomes an actual want, not a live spec to build against.
+Remaining shape: free-form text only, options listed compactly at the very
+end of the message (`daemon-substrate.md` §next move tightened
+2026-07-05 to say this explicitly, plus a stronger "check the literal last
+line before sending" guard — see the log entry on next-move compliance
+evidence). No daemon code, no new store; A1's existing pins already cover
+the four closing states.
 
-### A3 — the quest log / ranked move list — owner: delegable, resident reviews — [#213](https://github.com/Gurio/brr/issues/213)
+### A3 — the quest log / ranked move list — owner: delegable, resident reviews — [#213](https://github.com/Gurio/brr/issues/213) — *closed 2026-07-05*
 
 Phase 3, and the already-decided inter-run plan home
 ([`decision-account-centered-daemon.md`](decision-account-centered-daemon.md)
@@ -70,6 +79,15 @@ re-rank discipline being a named, reliable prompt rule (not just "a
 resident did it once") and confirming the daemon's injection actually
 surfaces it live (untested this run — the next wake should show an "Active
 inter-run plan" block, which would confirm the pipe end-to-end).
+
+**Closed 2026-07-05:** both remaining gaps closed themselves in. The
+injection confirmed live across every wake since 07-04 — this run's own
+bundle carries the "Active inter-run plan" block, sourced from
+`plans/Gurio__brr/active.md`. Re-rank discipline is no longer "a resident
+did it once": the plan has now been re-derived and re-ranked at three
+separate closeouts (07-04, and both 07-05 director-tick firings), each
+one updating rank order or dropping shipped items rather than staying
+static. Maintainer closed the ticket this run on that evidence.
 
 ### A4 — director tick (opt-in schedule entry) — owner: resident
 
