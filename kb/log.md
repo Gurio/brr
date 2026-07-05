@@ -10412,3 +10412,32 @@ rather than guessed at.
 same evidence.
 
 Branch: brr/response-text-leak-and-next-move-discipline.
+
+## [2026-07-05] fix | Pending-event injection framed as action, not telemetry — caught live mid-run
+
+Direct continuation of the same-day next-move/response-leak run: while
+composing that reply, three more same-thread follow-ups arrived pointing
+at a live example in progress — two earlier follow-ups had already been
+read (correctly, via the `PostToolBatch` system-reminder) and used, but
+never surfaced on `.card`, an 8-minute silent gap on the only surface the
+maintainer was watching. Maintainer's diagnosis: "pending events and
+missing user update should scream at your attention... so you are
+compelled to react," and named the likely cause precisely — a missing
+reaction usually means the injection either didn't fire or wasn't
+*framed* as something needing action.
+
+Traced to `src/brr/hooks.py::format_delta` (used by every hook phase):
+the pending-event line was `"[header] N pending event(s), M undelivered
+outbox file(s)."` — pure data, no imperative, indistinguishable from
+telemetry once habituated to seeing it every batch. Fixed: when
+`pending > 0`, the line gets an explicit tail — `"Address each below —
+fold in, or say on .card why it stays queued — before your next plan
+boundary or closeout."` The zero-pending affirmative line (`kb/log.md`
+2026-06-23 decision — silence is ambiguous, "0 pending" is not) is
+unchanged. `src/brr/prompts/run.md`'s daemon-runs bullet gets the same
+lesson in prose. Regression test:
+`tests/test_hooks.py::test_post_tool_pending_events_are_framed_as_action_not_telemetry`.
+Full suite: 1296 passed.
+
+Same branch/PR as the response-leak and next-move fixes:
+brr/response-text-leak-and-next-move-discipline, PR #232.
