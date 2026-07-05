@@ -391,6 +391,52 @@ existing `_remaining_percent` fields — small, additive, deferred rather
 than bundled into this slice's diff. brnrd-token/raw-provider-token ledger
 (item 1's second half) is untouched — no such ledger exists yet.
 
+## Frontend stack confirmed + scaffolded, reset-epoch delegated (2026-07-06)
+
+Same-thread follow-up: "Agreed on frontend proposed stack" confirms the
+prior run's pick — **SvelteKit + Tailwind**, backend stays the existing
+`dashboard_stats`/`_quota_views` JSON, no separate auth/data layer. That
+resolved the stack half of the prior "next-move" fork; the
+delegation-vs-in-thread half (also part of that fork) wasn't explicitly
+re-confirmed by that one line, so it's decided here as the reversible,
+already-recommended default (option 1: go as scoped) rather than bounced
+back for a second round-trip — the maintainer had floated codex-shell
+delegation himself the same thread, one message earlier.
+
+Shipped this run:
+- `frontend/` — `sv create` scaffold (minimal template, TS, Tailwind,
+  prettier, eslint), swapped from `adapter-auto` to `adapter-static` with
+  `fallback: 'index.html'` and project-wide `ssr = false`
+  (`src/routes/+layout.ts`): a static SPA build, not a Node server of its
+  own, matching the "backend stays FastAPI JSON" decision. `npm run build`
+  and `npm run lint` both clean. Not wired into `src/brnrd_web/` yet and
+  not linked from the live dashboard nav — scaffold only, per the prior
+  run's own audit that standing up the replacement is its own slice.
+- Reset-epoch plumbing (the gap named in the entry above) queued as a
+  **codex-shell respawn** — the first real test of worker-stack delegation
+  to another Shell, per the maintainer's own suggestion. Task spec covers
+  both collectors and turned out asymmetric on inspection: Codex already
+  parses a raw `resets_at` epoch internally and only had to stop discarding
+  it (pure passthrough); Claude's TUI-scraped reset is free text with two
+  *different* shapes between windows (session: `"11:59pm (Europe/
+  Berlin)"`, no date; week: `"Jul 10, 12am (Europe/Berlin)"`, dated) — so
+  that half needs a real next-occurrence-in-timezone computation, not a
+  lookup. Recorded so whoever reviews that PR isn't surprised the two
+  halves aren't the same shape of diff. Not yet landed — tracked as a
+  pending respawn, not a shipped result.
+
+**Budget/quota note, same thread:** a same-thread follow-up worried this
+implementation might outrun the run's time budget or get killed by quota.
+Checked rather than assumed: `.keepalive` already lets a run stretch to the
+daemon's hard cap (`max(budget*4, budget+3600)` = 4h for this run's
+1h soft budget) with no harness change, and slicing into separate
+commits/respawns (already the plan here) is the standing mitigation for
+anything longer than that — confirmed back in-thread rather than quietly
+bumping `runner.timeout_seconds`.
+
+Next: land the respawned reset-epoch PR, review it, then slice 2 = the
+window-track view itself, built inside `frontend/` against real numbers.
+
 ## Read next
 
 - [`design-resident-boundary.md`](design-resident-boundary.md) §7 — the
