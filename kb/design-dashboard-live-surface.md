@@ -339,6 +339,58 @@ above, plus one approval:
    still needs slice-sizing (per the existing ~1 week/view estimate) before
    it's a build turn, but the maintainer-side fork is closed.
 
+## Shipped (2026-07-06): #237 slice 1 — daemon→dashboard quota-publish plumbing
+
+"Alright, merged, let's build it" (same-thread follow-up, after PR #239
+merged) read as: start the dashboard live-surface work, slice 1 first —
+per `active.md`'s own next-step note, #237 (the dead quota card) is the
+prerequisite for the window-track visual, so it went first rather than
+the visual itself.
+
+Mirrors the Activity/Plans publish shape a third time, as the ticket
+asked:
+
+- `src/brr/gates/cloud.py::_quota_snapshot` — daemon-side collector. Codex
+  reads live (`codex_status.load_levels()`, no caching needed — same
+  pattern `_collect_levels` already uses). Claude reads the most recently
+  cached `/usage` scrape via a new
+  `runner_quota.latest_claude_usage_outbox_dir(brr_dir)` helper — the real
+  gap named in `plan-director-execution.md` §B2 ("`_fire_due_schedules`'s
+  quota read is coded and tested but inert in production — it reads a
+  `brr_dir`-level cache nothing writes to yet"): `claude_usage` only ever
+  caches into a *run's own* outbox dir, never `brr_dir` itself, so a
+  shared-level reader has to go find the freshest one a recent run left
+  behind. Fixed in both consumers at once — `cloud.py`'s new quota publish
+  and `daemon._fire_due_schedules`'s pacing read, which had the identical
+  bug and is now unblocked as a side effect, not a separate follow-up.
+- `PUT /v1/daemons/quota` (`src/brnrd/routers/daemons.py`) + `Daemon.
+  quota_json`/`quota_updated_at` (`models.py`, migration in
+  `migrations.py`) — same last-write-wins shape as `ActivityRecord`/
+  `Repo.plan_md`.
+- `activity_dashboard.py::_quota_views` replaces
+  `_quota_shell_placeholders` — reads the real report, flags a shell
+  "stale" past 300s without a fresh publish (the honest-fallback the
+  ticket asked for) rather than silently trusting old numbers, and still
+  renders an explicit "unknown" placeholder card for any shell with active
+  runs but no quota report yet (older daemon build, cold cache) instead of
+  omitting the panel. `dashboard.html`'s window row had a latent
+  display bug fixed alongside this: it always showed "unknown" whenever
+  `used`/`limit` were absent, even with a real `percent` in hand — the
+  placeholder was the only shape ever rendered before, so nothing had
+  exercised that branch.
+
+**Not done, named for the next slice:** reset is carried as opaque display
+text (`session_reset`/`week_reset`, Claude's raw TUI-parsed string; Codex's
+reset isn't exposed as a separate field at all yet, only baked into its
+`summary` string) — item 1 of the prior entry's "both numbers" ask is
+satisfied for percent, but a machine-parseable reset epoch/duration (what
+the window-track visual's position-based time-remaining axis will actually
+need) isn't there yet. `codex_status.parse_token_count` would need a
+`primary_resets_at`/`secondary_resets_at` epoch pass-through alongside the
+existing `_remaining_percent` fields — small, additive, deferred rather
+than bundled into this slice's diff. brnrd-token/raw-provider-token ledger
+(item 1's second half) is untouched — no such ledger exists yet.
+
 ## Read next
 
 - [`design-resident-boundary.md`](design-resident-boundary.md) §7 — the

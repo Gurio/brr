@@ -10589,3 +10589,38 @@ threads, both acted on rather than parked:
    built — capture for whoever scopes the actual slice.
 
 Branch: brr/self-merge-policy-and-dashboard-feedback-2026-07-05.
+
+## [2026-07-06] ship | Dashboard quota card gets real numbers (#237 slice 1) + B2 pacing-read fix
+
+"Alright, merged, let's build it" — the maintainer's go-ahead after PR
+#239 merged, read as: start the dashboard live-surface work, #237 first
+per `active.md`'s own next-step note (the dead quota card is the
+prerequisite for the window-track visual proposed in
+`design-dashboard-live-surface.md`).
+
+Shipped: `PUT /v1/daemons/quota` + `Daemon.quota_json`/`quota_updated_at`
+(mirrors the Activity/Plans publish shape a third time) — daemon-side
+collector `cloud.py::_quota_snapshot` reads Codex live and Claude via a new
+`runner_quota.latest_claude_usage_outbox_dir` helper, which also fixed an
+adjacent bug found while building it: `daemon._fire_due_schedules`'s quota
+pacing read (`plan-director-execution.md` §B2) was reading a `brr_dir`
+cache nothing ever writes to in production — same root cause, same fix,
+applied to both call sites at once. `activity_dashboard.py::_quota_views`
+replaces the hardcoded-`UNKNOWN` placeholder, flags a report stale past
+300s instead of trusting silently-old numbers, and still shows an honest
+"unknown" card for a shell with runs but no report yet. `dashboard.html`
+had a latent bug fixed alongside: it always rendered "unknown" whenever
+used/limit were absent, even with a real percent in hand — never
+exercised before because the placeholder was the only shape ever
+rendered. 1306 tests pass (5 new: `test_brnrd_quota.py` + additions to
+`test_cloud_gate.py`, `test_runner_quota.py`, `test_brnrd_dashboard.py`,
+`test_schedule_daemon.py`'s fixture corrected to match the real cache
+location).
+
+Not done, named for next: reset is opaque display text, not a
+machine-parseable epoch — the window-track visual's time-remaining axis
+will need `codex_status`/`claude_usage` to expose a real reset
+epoch/duration, not just a formatted string. brnrd-token ledger (separate
+resource class per the maintainer's multi-axis note) untouched — no such
+ledger exists yet. Detail: `kb/design-dashboard-live-surface.md` §"Shipped
+(2026-07-06)". Branch: brr/dashboard-quota-publish-2026-07-06.
