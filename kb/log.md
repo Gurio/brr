@@ -10342,3 +10342,102 @@ active plan.
 
 Branch: brr/director-tick-false-alarm-notify-bar. Account dominion
 (separate repo, no remote — local-only) committed directly.
+
+## [2026-07-05] fix | Response-text leak on aborted streams; A2/A3 closed; next-move discipline evidence
+
+Maintainer turn responding to the same-day notify-bar fix: closed A3
+(#213 — ranked move list, evidence: three re-ranks across 07-04/07-05
+closeouts plus this run's own bundle confirming live injection), shrunk
+A2 (#212 — closeout parse) to validate-only after confirming
+`conversations.py`'s recent-turns selection already threads the
+resident's own prior numbered-options reply back into the next wake for
+free (no daemon `next:` parsing/store needed); maintainer confirmed
+buttons stay parked, free-form numbered text wins for now. B6 (#224)
+agreed as next up.
+
+The substantive ask: check the last 2 days of chat history as evidence
+for a standing observation that output felt less rich than before —
+closeouts not reliably naming their next move, prompts not updated to
+match prior discussion. Sampled all 27 chat-facing response artifacts
+from 2026-07-03 through 2026-07-05 (`.brr/runs/*/history/gate_thread-*
+.jsonl`, `artifact_kind` in `response`/`outbound_message`). Two real
+findings:
+
+1. **Prompt-discipline gap, confirmed.** Several 2026-07-04 closeouts
+   were bare single-token stubs (`.`, `-`, `done`, `(unchanged)`) with no
+   `done —`/`continuing —`/`blocked —`/fork line anywhere in the turn,
+   despite the A1 next-move contract (`src/brr/prompts/daemon-substrate.md`)
+   already existing since 2026-07-03. Fixed: tightened the contract to
+   state explicitly that options sit compactly at the message's very end,
+   free-form text (not buttons — the same A2 call), plus an explicit
+   "check the literal last line before sending" guard, since prose alone
+   had already been in place and wasn't enough.
+
+2. **Genuine code bug, found while tracing #1.** `run-260704-1704-ttrd`'s
+   stored "response" conversation artifact was a raw Claude CLI
+   `--output-format json` result envelope
+   (`"result":""`, `"terminal_reason":"aborted_streaming"`) rather than
+   any reply text. Root cause: `claude_status.result_text()` only checks
+   `result` (non-empty string) then `errors` (non-empty list); when a
+   stream aborts mid-turn, Claude Code can return `subtype: success,
+   is_error: false, result: ""` with no `errors` — neither branch fires,
+   and the function fell back to its `fallback` parameter, which at its
+   only call site (`capture_stdout`) is always the very stdout JSON it
+   had just parsed as that envelope. The raw JSON got written to the
+   response file and indexed into conversation history as if it were the
+   reply. Fixed in `src/brr/claude_status.py`: when `result` is present
+   but empty/blank and there are no usable `errors`, return
+   `(runner produced no reply text: <terminal_reason or stop_reason>)`
+   instead of the envelope; the pre-existing "non-JSON stdout passes
+   through unchanged" path (a dict with no `result` key at all — e.g. a
+   custom command's own intentional JSON output) is untouched. Regression
+   test added: `tests/test_claude_status.py::test_result_text_does_not_leak_raw_envelope_on_empty_result`.
+
+Two secondary points from the same maintainer message: silent PR merges
+were already addressed by the same-day notify-bar widening (confirmed,
+no further change); "harden the message reception path after the burst
+handling issue" was named as still outstanding, but tracing found no open
+issue or unshipped gap — burst-coalescing (#128) shipped 2026-06-20 and
+closed. Flagged back to the maintainer in the reply rather than
+manufacturing work against an untraceable reference — inventing a fix for
+a gap that can't be located would be the same failure mode this run was
+about correcting. A "morning briefing" idea (low-frequency, non-spam
+digest) was scoped but not built: `schedule.py` has no "fixed local time
+daily" primitive (only one-shot `at:` and drift-anchored `every:`), so
+this is a real design fork on cadence/content, handed back with options
+rather than guessed at.
+
+`kb/plan-director-execution.md` §A2/§A3 updated; account dominion
+`plans/Gurio__brr/active.md` and `ledger/decisions.md` updated with the
+same evidence.
+
+Branch: brr/response-text-leak-and-next-move-discipline.
+
+## [2026-07-05] fix | Pending-event injection framed as action, not telemetry — caught live mid-run
+
+Direct continuation of the same-day next-move/response-leak run: while
+composing that reply, three more same-thread follow-ups arrived pointing
+at a live example in progress — two earlier follow-ups had already been
+read (correctly, via the `PostToolBatch` system-reminder) and used, but
+never surfaced on `.card`, an 8-minute silent gap on the only surface the
+maintainer was watching. Maintainer's diagnosis: "pending events and
+missing user update should scream at your attention... so you are
+compelled to react," and named the likely cause precisely — a missing
+reaction usually means the injection either didn't fire or wasn't
+*framed* as something needing action.
+
+Traced to `src/brr/hooks.py::format_delta` (used by every hook phase):
+the pending-event line was `"[header] N pending event(s), M undelivered
+outbox file(s)."` — pure data, no imperative, indistinguishable from
+telemetry once habituated to seeing it every batch. Fixed: when
+`pending > 0`, the line gets an explicit tail — `"Address each below —
+fold in, or say on .card why it stays queued — before your next plan
+boundary or closeout."` The zero-pending affirmative line (`kb/log.md`
+2026-06-23 decision — silence is ambiguous, "0 pending" is not) is
+unchanged. `src/brr/prompts/run.md`'s daemon-runs bullet gets the same
+lesson in prose. Regression test:
+`tests/test_hooks.py::test_post_tool_pending_events_are_framed_as_action_not_telemetry`.
+Full suite: 1296 passed.
+
+Same branch/PR as the response-leak and next-move fixes:
+brr/response-text-leak-and-next-move-discipline, PR #232.
