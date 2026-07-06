@@ -2892,7 +2892,7 @@ def _queue_respawn_request(
         "origin_message_key", "respawn", "event", "gate",
         "runner", "proposed_runner", "shell", "core", "at", "defer_until",
         "carry_forward", "quality", "quality_escalation", "escalation",
-        "worker",
+        "worker", "task_classification",
     }
     meta = {
         k: v for k, v in current.items()
@@ -2915,6 +2915,9 @@ def _queue_respawn_request(
         meta["defer_until"] = defer_until
     if worker:
         meta["worker"] = True
+    task_classification = str(fm.get("task_classification") or "").strip()
+    if task_classification:
+        meta["task_classification"] = task_classification
     reason = str(fm.get("reason") or "").strip()
     meta["respawned_from_event"] = event_id
     meta["respawned_by_run"] = task.id
@@ -4053,6 +4056,11 @@ def _run_worker_and_finalize(
             Path(str(task.meta["outbox_path"]))
             if task.meta.get("outbox_path") else None
         )
+        control_classification = run_ledger.read_task_classification_control(
+            outbox_path
+        )
+        if control_classification:
+            task.meta["task_classification"] = control_classification
         try:
             run_ledger.append_closed_run(
                 repo_root,

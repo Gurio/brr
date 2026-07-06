@@ -231,3 +231,20 @@ def test_append_preserves_prior_rows(tmp_path, monkeypatch):
         for line in path.read_text(encoding="utf-8").splitlines()
     ]
     assert [row["run_id"] for row in rows] == ["run-one", "run-two"]
+
+
+def test_read_task_classification_control_reads_first_line(tmp_path):
+    outbox = tmp_path / "outbox"
+    outbox.mkdir()
+    (outbox / ".task-classification").write_text(
+        "dashboard-slice\nignored second line\n", encoding="utf-8"
+    )
+
+    assert (
+        run_ledger.read_task_classification_control(outbox) == "dashboard-slice"
+    )
+
+
+def test_read_task_classification_control_missing_file_and_dir(tmp_path):
+    assert run_ledger.read_task_classification_control(tmp_path / "no-outbox") is None
+    assert run_ledger.read_task_classification_control(None) is None

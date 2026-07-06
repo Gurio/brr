@@ -21,6 +21,8 @@ from .run import Run
 
 LEDGER_NAME = "run-ledger.jsonl"
 ESTIMATE_ACTUAL = "actual"
+TASK_CLASSIFICATION_CONTROL_NAME = ".task-classification"
+_TASK_CLASSIFICATION_MAX_BYTES = 200
 
 _BEFORE_WEEKLY_KEY = "run_ledger_weekly_used_before"
 _BEFORE_FIVE_HOUR_KEY = "run_ledger_five_hour_used_before"
@@ -297,6 +299,26 @@ def task_classification(task: Run) -> str | None:
         if value:
             return value
     return None
+
+
+def read_task_classification_control(outbox_dir: Path | None) -> str | None:
+    """Read the resident-authored ``.task-classification`` control file.
+
+    A run tags its own cost-ledger shape by writing a one-line slug to this
+    dotfile anytime before closeout (``kb/design-quota-scheduling-loom.md``
+    §"Tracking-table schema" calls this "the only field that makes
+    rollup-by-shape possible"). Best-effort: an unreadable or missing file
+    is silently ``None``, never a closeout failure.
+    """
+    if outbox_dir is None:
+        return None
+    path = outbox_dir / TASK_CLASSIFICATION_CONTROL_NAME
+    try:
+        raw = path.read_bytes()
+    except OSError:
+        return None
+    text = raw[:_TASK_CLASSIFICATION_MAX_BYTES].decode("utf-8", errors="replace")
+    return _str_or_none(text.splitlines()[0]) if text.splitlines() else None
 
 
 def usd_credits_equivalent(levels: Mapping[str, Any] | None) -> float | None:
