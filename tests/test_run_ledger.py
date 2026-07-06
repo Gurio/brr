@@ -148,6 +148,47 @@ def test_claude_snapshot_absence_writes_nulls(tmp_path, monkeypatch):
     assert row["tokens_input"] is None
 
 
+def test_closeout_forces_claude_usage_refresh_not_a_stale_cache(tmp_path, monkeypatch):
+    """Design rule (kb/design-quota-scheduling-loom.md): Claude usage must be
+    force-refreshed at closeout, never trusted from a stale TUI-scrape cache.
+    ``mark_run_started`` (pre-run baseline) may read the cache as-is, but
+    ``append_closed_run`` (post-run) must request ``max_age_seconds=0.0``."""
+    (tmp_path / ".brr").mkdir()
+    calls: list[float | None] = []
+
+    def _fake_refresh(*args, **kwargs):
+        calls.append(kwargs.get("max_age_seconds"))
+        return None
+
+    monkeypatch.setattr(
+        run_ledger.claude_usage, "load_or_refresh_snapshot", _fake_refresh
+    )
+    monkeypatch.setattr(run_ledger.claude_status, "load_snapshot", lambda _outbox: None)
+
+    task = Run(
+        id="run-claude-refresh",
+        event_id="evt-claude-refresh",
+        body="",
+        source="telegram",
+        meta={
+            "runner_name": "claude",
+            "runner_shell": "claude",
+            "runner_core": "claude-sonnet",
+            "repo_label": "Gurio/brr",
+        },
+    )
+
+    run_ledger.mark_run_started(task, "claude", tmp_path / "outbox", tmp_path)
+    task.meta["ended_at"] = "2026-07-06T10:00:10Z"
+    run_ledger.append_closed_run(
+        tmp_path, task, {}, outbox_dir=tmp_path / "outbox", work_dir=tmp_path
+    )
+
+    assert len(calls) == 2
+    assert calls[0] is None  # pre-run baseline: cache is fine
+    assert calls[1] == 0.0  # closeout: must force a fresh scrape
+
+
 def test_five_hour_delta_never_drives_subscription_usd():
     task = _task()
     task.meta["started_at"] = "2026-07-06T10:00:00Z"
