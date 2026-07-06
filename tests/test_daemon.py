@@ -1,5 +1,6 @@
 """Tests for the daemon worker after the triage stage was removed."""
 
+import json
 import os
 import subprocess
 import threading
@@ -127,6 +128,61 @@ def test_run_worker_constructs_task_without_triage(tmp_path, monkeypatch):
     assert persisted.status == "done"
     response = (tmp_path / ".brr" / "responses" / "evt-1.md").read_text(encoding="utf-8")
     assert response == "plain answer\n"
+
+
+def test_run_worker_finalize_appends_run_ledger_row(tmp_path, monkeypatch):
+    write_repo_scaffold(tmp_path)
+    event = make_event(tmp_path, eid="evt-ledger")
+    monkeypatch.setattr(daemon.runner, "resolve_runner", lambda _root: "codex")
+    monkeypatch.setattr(daemon.gitops, "current_branch", lambda _root: "main")
+    monkeypatch.setattr(
+        daemon.prompts,
+        "build_daemon_prompt",
+        lambda task, eid, rp, root, **kw: "PROMPT",
+    )
+    monkeypatch.setattr(
+        envs,
+        "get_env",
+        lambda _name: StubWorktreeEnv(invoke_fn=succeed_invoke("ledger done\n")),
+    )
+    snapshots = iter([
+        {
+            "quota": {
+                "primary_used_percent": 10.0,
+                "secondary_used_percent": 20.0,
+            },
+        },
+        {
+            "quota": {
+                "primary_used_percent": 12.0,
+                "secondary_used_percent": 25.0,
+            },
+        },
+    ])
+    monkeypatch.setattr(
+        daemon.run_ledger,
+        "load_quota_levels",
+        lambda *args, **kwargs: next(snapshots),
+    )
+
+    task = daemon._run_worker_and_finalize(
+        event,
+        tmp_path,
+        tmp_path / ".brr" / "responses",
+        {"run_ledger.subscription_price.codex": 20},
+        0,
+    )
+
+    ledger = tmp_path / ".brr" / "run-ledger.jsonl"
+    rows = [json.loads(line) for line in ledger.read_text(encoding="utf-8").splitlines()]
+    assert len(rows) == 1
+    assert rows[0]["run_id"] == task.id
+    assert rows[0]["event_id"] == "evt-ledger"
+    assert rows[0]["weekly_pct_delta"] == 5.0
+    assert rows[0]["five_hour_pct_delta"] == 2.0
+    assert rows[0]["usd_subscription_attributed"] == 1.0
+    assert rows[0]["estimate_vs_actual"] == "actual"
+    assert not (tmp_path / ".brr" / "outbox" / "evt-ledger").exists()
 
 
 def test_run_worker_does_not_infer_native_hooks_from_runner_name(

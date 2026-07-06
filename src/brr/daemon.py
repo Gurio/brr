@@ -68,6 +68,7 @@ from . import prompts
 from . import codex_status
 from . import protocol
 from . import run_context
+from . import run_ledger
 from . import runner
 from . import runner_failures
 from . import runner_quota
@@ -1617,6 +1618,7 @@ def _run_worker(
     )
     runner_catalog = runner.available_runner_catalog(repo_root, selected=runner_name)
     _record_task_runner(task, runner_name, runner_meta)
+    run_ledger.mark_run_started(task, runner_name, outbox_dir, run_root)
     task.save(runs_dir)
     _write_live_portal_state(
         outbox_dir,
@@ -1960,7 +1962,6 @@ def _run_worker(
                 signal=signal,
                 attempt=attempt,
             )
-            _remove_outbox(outbox_dir)
             # Payload carries the multi-thread delivery shape so the card
             # can reflect "delivered to N threads" / "sent N out-of-bound"
             # / "no reply — committed work" instead of collapsing
@@ -2068,6 +2069,7 @@ def _run_worker(
             )
             quality_escalation = _quality_escalation_meta(repo_root, runner_name)
             _record_task_runner(task, runner_name, runner_meta)
+            run_ledger.mark_run_started(task, runner_name, outbox_dir, run_root)
             task.save(runs_dir)
             reason = f"fallback after {failure_kind}"
             fallback_notice = (
@@ -2138,7 +2140,6 @@ def _run_worker(
     emit("finalizing", run_id=task.id, stage="failed")
     with _branch_lock(branch_plan.target_branch):
         task = env_backend.finalize(env_ctx, task, runs_dir)
-    _remove_outbox(outbox_dir)
     _emit_preserved_containers(emit, task)
     # Classify the failure for the card. The no-output case is the clean-exit-
     # but-no-signal path: the runner never recorded a hard failure, yet the run
@@ -4048,6 +4049,21 @@ def _run_worker_and_finalize(
         if task.status == "error":
             print(f"[brr] run {task.id}: failed")
 
+        outbox_path = (
+            Path(str(task.meta["outbox_path"]))
+            if task.meta.get("outbox_path") else None
+        )
+        try:
+            run_ledger.append_closed_run(
+                repo_root,
+                task,
+                cfg,
+                outbox_dir=outbox_path,
+                work_dir=repo_root,
+            )
+        except Exception as exc:  # noqa: BLE001 - ledger must not block delivery
+            print(f"[brr] run {task.id}: run-ledger append failed: {exc}")
+
         publish(repo_root, task)
         repo_label = str(task.meta.get("repo_label") or _repo_label(repo_root, event, cfg))
         _persist_run_state_doc(
@@ -4073,6 +4089,8 @@ def _run_worker_and_finalize(
             presence.deregister(
                 gitops.shared_brr_dir(repo_root), task.meta["presence_id"],
             )
+        if task is not None and task.meta.get("outbox_path"):
+            _remove_outbox(Path(str(task.meta["outbox_path"])))
 
 
 # ── Burst coalescing (dispatch debounce) ────────────────────────────
