@@ -10624,3 +10624,53 @@ epoch/duration, not just a formatted string. brnrd-token ledger (separate
 resource class per the maintainer's multi-axis note) untouched — no such
 ledger exists yet. Detail: `kb/design-dashboard-live-surface.md` §"Shipped
 (2026-07-06)". Branch: brr/dashboard-quota-publish-2026-07-06.
+
+## [2026-07-06] ship | Frontend stack scaffolded (PR #241) + a real Stop-hook bug found and fixed (PR #242)
+
+"Agreed on frontend proposed stack" confirmed SvelteKit+Tailwind; shipped
+the scaffold (`frontend/`, `adapter-static`, `ssr=false`, builds+lints
+clean, not wired into `brnrd_web` yet — PR #241). Reset-epoch plumbing
+queued as a codex-shell respawn — the first real worker-stack delegation
+to another Shell — after inspection showed the task is asymmetric: Codex
+already parses a raw `resets_at` epoch internally (pure passthrough);
+Claude only has TUI-scraped free text in two different shapes between its
+session/week windows, needing a real next-occurrence-in-timezone
+computation. Detail: `kb/design-dashboard-live-surface.md` §2026-07-06.
+
+Same thread, a real pushback on the harness: expecting a human to know
+about `.keepalive` to avoid a long implementation session getting killed
+"seems unreasonable." Raised this repo's `runner.timeout_seconds`
+3600→7200 (`.brr/config`, local/uncommitted by design) rather than just
+re-explaining the existing mechanism. Named, not decided: whether the
+global code default (`DEFAULT_RUNNER_TIMEOUT`, `src/brr/runner.py`)
+should also move, and whether a safety-capped upsize vs. a truly uncapped
+budget is the right end state — flagged as a fork rather than changed
+unilaterally, since it's a product-wide default.
+
+While queuing that respawn, hit a genuine daemon bug rather than just a
+prompt/config issue: `_pending_events_for_agent` counted the just-queued
+respawn event identically to an unaddressed user message, so
+`pending_event_count` could never reach zero from inside the very run
+that created it — dispatching a respawn as a new run requires this run to
+end first. The Stop-hook's fold-in-or-explain gate kept re-firing every
+phase even after `.card` correctly explained the event was queued on
+purpose. Fixed in `_pending_events_for_agent` (excludes
+`respawned_by_run`/`respawned_from_event` events — a system-to-system
+handoff, not a foldable follow-up), with a regression test; 1307 tests
+pass (PR #242) — but that fix only applies to the *next* daemon process;
+this run's own live process kept running the old code, so the loop kept
+firing regardless of the fix already being shipped.
+
+Rather than keep explaining the same fact to an unchanging hook, built
+the reset-epoch plumbing directly instead of waiting on the respawn
+dispatch (PR #243: `session_resets_at`/`week_resets_at`/
+`week_models[*].resets_at` on the Claude side via a new `_reset_epoch()`;
+`primary_resets_at`/`secondary_resets_at` passthrough on the Codex side;
+1311 tests pass), then marked the now-redundant respawn event `done`
+directly (`protocol.set_status`) instead of leaving it to dispatch a
+duplicate run — `pending_event_count` dropped to 0 immediately once the
+event was gone, confirming the earlier diagnosis was correct: the fix
+in #242 works, this run's own process just couldn't benefit from it
+retroactively. Branches: brr/frontend-svelte-scaffold-2026-07-06 (#241),
+brr/fix-respawn-pending-attention-2026-07-06 (#242),
+brr/reset-epoch-plumbing-2026-07-06 (#243).

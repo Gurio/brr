@@ -391,6 +391,75 @@ existing `_remaining_percent` fields — small, additive, deferred rather
 than bundled into this slice's diff. brnrd-token/raw-provider-token ledger
 (item 1's second half) is untouched — no such ledger exists yet.
 
+## Frontend stack confirmed + scaffolded, reset-epoch delegated (2026-07-06)
+
+Same-thread follow-up: "Agreed on frontend proposed stack" confirms the
+prior run's pick — **SvelteKit + Tailwind**, backend stays the existing
+`dashboard_stats`/`_quota_views` JSON, no separate auth/data layer. That
+resolved the stack half of the prior "next-move" fork; the
+delegation-vs-in-thread half (also part of that fork) wasn't explicitly
+re-confirmed by that one line, so it's decided here as the reversible,
+already-recommended default (option 1: go as scoped) rather than bounced
+back for a second round-trip — the maintainer had floated codex-shell
+delegation himself the same thread, one message earlier.
+
+Shipped this run:
+- `frontend/` — `sv create` scaffold (minimal template, TS, Tailwind,
+  prettier, eslint), swapped from `adapter-auto` to `adapter-static` with
+  `fallback: 'index.html'` and project-wide `ssr = false`
+  (`src/routes/+layout.ts`): a static SPA build, not a Node server of its
+  own, matching the "backend stays FastAPI JSON" decision. `npm run build`
+  and `npm run lint` both clean. Not wired into `src/brnrd_web/` yet and
+  not linked from the live dashboard nav — scaffold only, per the prior
+  run's own audit that standing up the replacement is its own slice.
+- Reset-epoch plumbing (the gap named in the entry above) was initially
+  queued as a **codex-shell respawn** — the first real test of worker-stack
+  delegation to another Shell, per the maintainer's own suggestion. The
+  task spec (covering both collectors) turned out asymmetric on
+  inspection: Codex already parses a raw `resets_at` epoch internally and
+  only had to stop discarding it (pure passthrough); Claude's TUI-scraped
+  reset is free text with two *different* shapes between windows (session:
+  `"11:59pm (Europe/Berlin)"`, no date; week: `"Jul 10, 12am (Europe/
+  Berlin)"`, dated) — so that half needs a real next-occurrence-in-timezone
+  computation, not a lookup.
+- **The respawn surfaced a real daemon bug**, not just a delegation
+  exercise: the queued event was counted identically to an unaddressed
+  user message by `_pending_events_for_agent`, so the run that created it
+  could never see `pending_event_count` reach zero (dispatching a respawn
+  as a new run requires the *current* run to end and free the
+  single-flight slot first) — the Stop-hook's fold-in-or-explain gate kept
+  re-firing every phase even after `.card` correctly explained the event
+  was queued on purpose. Fixed (excludes respawn-origin events from the
+  count) and shipped as its own PR rather than folded silently into the
+  dashboard work — see `kb/log.md` §2026-07-06.
+- Given the loop, **the reset-epoch task was built directly this same run
+  instead of waiting on the respawn dispatch**, and the now-redundant
+  respawn event was canceled (marked `done`) rather than left to dispatch
+  a duplicate. Shipped as its own PR: `session_resets_at`/`week_resets_at`/
+  `week_models[*].resets_at` (Claude, computed via a new `_reset_epoch()`)
+  and `primary_resets_at`/`secondary_resets_at` (Codex, passthrough).
+
+**Budget/quota note, same thread:** a same-thread follow-up worried this
+implementation might outrun the run's time budget or get killed by quota.
+First answer: `.keepalive` already lets a run stretch to the daemon's hard
+cap (4h for this run's 1h soft budget) with no harness change. That
+wasn't the end of it — a real pushback followed ("users may not know
+about the cap... seems unreasonable"), acted on directly rather than
+re-explained: `.brr/config`'s `runner.timeout_seconds` raised 3600s→7200s
+for this repo (hard cap now 8h). Whether the global code default
+(`DEFAULT_RUNNER_TIMEOUT`) should also move, and whether a safety-capped
+upsize vs. a truly uncapped budget is the right end state, are both named
+as open forks rather than decided unilaterally — see `plans/Gurio__brr/
+active.md` item 1 and the decision ledger.
+
+Branches/PRs this run: `brr/frontend-svelte-scaffold-2026-07-06` (#241,
+scaffold), `brr/fix-respawn-pending-attention-2026-07-06` (#242, the
+Stop-hook bug), `brr/reset-epoch-plumbing-2026-07-06` (#243, the plumbing
+itself, built directly).
+
+Next: review and merge #241/#242/#243, then slice 2 = the window-track
+view itself, built inside `frontend/` against real numbers.
+
 ## Read next
 
 - [`design-resident-boundary.md`](design-resident-boundary.md) §7 — the
