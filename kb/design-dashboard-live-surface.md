@@ -56,22 +56,19 @@ from code:
   distinguished. This is the concrete referent for "cheesy" — it reads as
   a costume (the same one `identity-core.md` warns against wearing), not a
   considered visual language.
-- **A real bug, not an aesthetic complaint**: the Activity/Runs view and
-  the dashboard's "Recent daemon reports" panel both show the *same*
-  message repeated verbatim 3-6 times with identical timestamps
-  (`17:08:39` six times in a row; "Thanks this is a very good and deep
-  overview..." three times across different "pending" run cards). Daemon
-  reports are not being deduplicated before render. Worth its own GH issue
-  — it actively undermines trust in the "live" framing the maintainer is
-  asking to *strengthen*, since right now the log looks live but is
-  actually stuttering.
-- **The Budget/Runner-quotas card reads `UNKNOWN` for both the 5h and
-  weekly bars** — this is the already-tracked gap: `plan-Gurio__brr/
-  active.md` item 4 (B2, "live-quota gap") — the quota read is coded but
-  reads a `brr_dir`-level cache nothing writes to yet. This single dead
-  card is a large part of why "the whole live information and control
-  point is missing": the one gauge meant to answer "how much runway do I
-  have" answers nothing.
+- **Daemon reports now collapse repeated snapshots by repo/record id**:
+  the Activity/Runs view and the dashboard's "Recent daemon reports"
+  panel keep the freshest row per daemon report instead of replaying the
+  same record across reconnects. (Earlier versions rendered every
+  token-scoped copy verbatim; fixed 2026-07-06 in
+  `src/brnrd/activity_records.py`, `src/brnrd/routers/accounts.py`, and
+  `src/brnrd_web/activity_dashboard.py`.)
+- **The Budget/Runner-quotas card now renders real per-shell windows** —
+  the `UNKNOWN` placeholder is gone. The dashboard reads the daemon-
+  published quota snapshot, and the Svelte slice consumes the same
+  `/v1/dashboard/quota` payload. (Earlier versions only had the
+  placeholder or stale snapshots; fixed 2026-07-06 in the quota-publish
+  path and slice 2.)
 - **No temporal/flow visual language exists at all.** Every panel is a
   static card or a table row. Nothing represents the *moving* 5-hour
   window, nothing shows a task's position in a queued→running→done

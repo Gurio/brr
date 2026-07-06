@@ -10827,3 +10827,15 @@ self-merged — a real feature diff, not the hotfix shape the same-thread
 self-merge precedent (#245/#246) was scoped to. Detail:
 `kb/design-dashboard-live-surface.md` §"Shipped (2026-07-06): slice 2".
 Branch: `brr/window-track-quota-view-2026-07-06`.
+
+## [2026-07-06] fix | Collapse repeated daemon activity snapshots in the live dashboard
+
+`/v1/accounts/activity`, `/activity`, and the dashboard's recent daemon
+report projection now dedupe rows by `(repo_id, record_id)` so
+reconnects/re-pairs no longer replay the same daemon snapshot multiple
+times. The shared helper lives in `src/brnrd/activity_records.py`, both
+read paths call it, and `tests/test_brnrd_activity.py` now covers the
+public API plus the rendered views. The quota pipeline already had real
+windows; the stale `UNKNOWN` / duplicate-render note in
+`kb/design-dashboard-live-surface.md` was rewritten to match current
+state.
