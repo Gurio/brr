@@ -1,7 +1,9 @@
 # Plan: the loom realtime build — from polling gauges to a watchable ticker
 
 Status: active — opened 2026-07-07 (run-260707-1728-czlk); slices 0/1
-shipped same run. Direct response to
+shipped that run, slice 2 (+ a root-canvas bug found while building it)
+shipped 2026-07-07 (run-260707-1849-hnj8) — see §Slice 1.5 and §Slice 2.
+Direct response to
 "you should realistically deeply expand the path to an actual loom
 implementation... what is the minimal but true and evolvable shape we *can*
 deliver within a week." [`design-quota-scheduling-loom.md`](design-quota-scheduling-loom.md)
@@ -90,26 +92,76 @@ passed).
   transition on the draining bar; it needed the faster poll, not new
   motion code. Build/lint/`svelte-check` clean (0 errors/warnings).
 
+### Slice 1.5 — the root-canvas bug, found while building slice 2 — owner: resident — *shipped 2026-07-07, run-260707-1849-hnj8*
+
+Not in the original slice list — found by actually looking, not assumed:
+asked to "check the screenshots to get an idea of how wrong it currently
+looks," but the daemon has no telegram-photo ingestion at all (checked;
+no `photo`/`file_id`/download code path anywhere in `src/brr`), so the
+maintainer's own screenshots weren't reachable this run. Screenshotted
+`https://brnrd.dev/` directly instead (Playwright + a real browser,
+installed fresh this run) and found the actual bug: every component
+(`WindowTrack`/`LiveRuns`/`PRReviewQueue`) is built against
+`bg-slate-900`/`text-slate-100` — i.e. assumes a dark page — but **nothing
+in the app ever sets a page-level background**. `grep` for
+`bg-slate-950`/`min-h-screen` across `src/frontend/src` returned zero
+hits. Net effect, confirmed via screenshot: a near-white page, near-
+invisible pale-gray-on-white headings, translucent cards that read as
+blank. This is likely most of "how wrong it is on how many various
+levels" — a foundational bug, not a polish gap, and higher-leverage to
+fix than any single component's redesign. Fixed in
+`src/frontend/src/routes/layout.css`: `html { color-scheme: dark }` +
+`body { background-color: #020617; color: #f1f5f9 }`. Verified before/
+after via local Playwright screenshots (desktop + mobile viewport, the
+maintainer's own primary device) — see the PR for both.
+
+### Slice 2 — the first real mechanic: live-runs as a lane, not a list — owner: resident — [#270](https://github.com/Gurio/brr/issues/270) — *shipped 2026-07-07, run-260707-1849-hnj8*
+
+Re-checked the issue's own "queued/running/done positions" framing
+against the real data before building it blind: `presence.list_active`
+(`src/brr/presence.py`) only ever holds *active* entries — registered on
+run start, deregistered on finish — so there is no queued or done state
+to render, only running-or-gone. "Done" already reads as the pre-existing
+fade-out exit transition; "queued" isn't representable without a new
+backend collector, which this plan deliberately deferred to keep this
+slice at zero new backend data (see the gap-analysis table above) — not
+silently built past that scope, and not silently reinterpreted without
+saying so.
+
+What shipped instead, honest about what the data actually carries:
+`LiveRuns.svelte` now renders a responsive card grid (was a `<ul>` list)
+— each run a card with a status dot + badge, primary/secondary label, age,
+and an indeterminate scanning activity bar (no known total duration to
+bind a real percent to, so a moving stripe — the Zachtronics "in motion"
+tell — rather than a fabricated fill). The badge derives a real second
+state from data slice 0/1 already ship fresh: `running` (heartbeat within
+90s) vs. `stalling` (heartbeat older than that but not yet pruned at the
+registry's 300s cutoff) — the same three-tier status palette as
+`WindowTrack` (ample/low/critical → running/stalling/unknown), not a new
+one. Position-in-lane motion reuses the existing keyed `{#each}` +
+`svelte/animate:flip` from slice 1; a card moving order on refresh was
+already correct behavior, it just needed to be a card, not a row.
+
+Kept the palette question exactly as scoped in the design page and
+reinforced live by the maintainer same-thread: psyche.network is a
+container/element reference (card + progress-bar + status-badge shape)
+only — substance, color, and composition stay this project's own
+hearth/frost direction, not psyche's mint-green. No recolor attempted
+this run beyond the slate palette already shared with the other three
+lanes — the hearth/ember palette in `design-brand-visual-language.md` is
+still a proposal, not an asset, and deserves its own considered pass
+rather than a rushed partial recolor bolted onto this slice. Named as the
+natural next visual-language step, not started.
+
+Build/lint/`svelte-check` clean (0 errors/warnings); no backend touched,
+no backend tests re-run.
+
 Slices 0+1 shipped together as the single next largest actionable, exactly
 as scoped: two files' worth of backend loop change, three components'
 worth of frontend interval/transition change, zero new schema, zero new
 endpoint, fully reversible.
 
-### Slice 2 — the first real mechanic: live-runs as a lane, not a list — owner: unclaimed — [#270](https://github.com/Gurio/brr/issues/270) — *this week, day 3-4*
-
-`LiveRuns.svelte` currently renders `live_runs_json` as a status-tagged
-list. Re-render the same data (zero backend change) as the SpaceChem-molecule
-mapping named in the design page: a lane with queued/running/done
-positions, each run a small token that moves position on data refresh
-rather than a row that re-sorts. This is the cheapest of the six mechanics
-specifically because slice 0/1 already deliver fresh, animatable data for
-it — the only new work is the lane layout and position-mapping logic. A
-maintainer-supplied reference (psyche.network/runs — see
-`design-brand-visual-language.md` §"Reference check: psyche.network")
-independently confirms the card/progress-bar/status-badge shape; keep our
-own hearth/frost palette, not their mint-green theme.
-
-### Slice 3 — the receipt: per-run solution-report card — owner: unclaimed — [#271](https://github.com/Gurio/brr/issues/271) — *stretch, day 5-7, may slip past the week*
+### Slice 3 — the receipt: per-run solution-report card — owner: unclaimed — [#271](https://github.com/Gurio/brr/issues/271) — *next up*
 
 The loom page's own diagnosis: `run_ledger.jsonl` has real rows (wall-clock,
 tokens, weekly/5h deltas) and nothing reads them back. Smallest useful
@@ -119,15 +171,25 @@ small card that appears when a live run transitions to done — tokens spent
 against the run's own budget envelope, the Opus Magnum framing already
 named. First slice with a genuinely new (if small) backend surface; ranked
 last because it's the first one that isn't purely a rendering change.
+Timing note (2026-07-07, same-thread): the original "may slip past the
+week" framing was the maintainer's own direct read as too pessimistic,
+given slices 0-2 landed inside two runs, not the original day-by-day
+estimate — loosened here to "next up" rather than restated with a new
+guess at a day number; the honest signal is velocity-so-far, not a
+re-padded date.
 
-### Explicitly not this week
+### Explicitly not this week — narrower than it reads, worth re-checking before slice 3
 
 KB node-map, message-value pulse, CPS chapter-map — named in full above.
 Each needs a new backend collector this plan deliberately doesn't start,
 since none of slices 0-3 depend on them and building a collector before its
 consumer is exactly the "accreted, not structured" pattern this page exists
 to stop. Revisit once slices 0-2 are live and the "does this actually read
-as a loom" question has a real screen to answer it against, not a diagram.
+as a loom" question has a real screen to answer it against, not a diagram
+— that condition is now true (slice 2 is live, this page's own §Slice 2 has
+the first real screenshot-verified read). Not reopened this run for lack of
+budget, not lack of standing: whoever picks up slice 3 should re-read this
+section's premise before deferring the other three again by default.
 
 ## Read next
 
