@@ -665,6 +665,9 @@ stay green.
 
 ## Read next
 
+- [`plan-loom-realtime-build.md`](plan-loom-realtime-build.md) — the
+  week-scoped, ranked slices that turn this page's six-mechanic proposal
+  into an actual build order; start there for "what ships next."
 - [`design-quota-scheduling-loom.md`](design-quota-scheduling-loom.md) —
   the cost/tracking-table design this page's rendering vocabulary now
   explicitly shares a data model with (see above).

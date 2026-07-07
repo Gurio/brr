@@ -396,6 +396,9 @@ specifically:
 
 ## Read next
 
+- [`plan-loom-realtime-build.md`](plan-loom-realtime-build.md) — the
+  week-scoped build plan; slice 3 is this page's own "next real slice"
+  (a `run_ledger` rollup reader) turned into a scoped, ranked ticket.
 - [`design-dashboard-live-surface.md`](design-dashboard-live-surface.md)
   §Zachtronics-mechanics deconstruction — the rendering vocabulary
   (window-track, SpaceChem molecules, Opus Magnum solution report) this
