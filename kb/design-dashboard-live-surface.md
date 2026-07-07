@@ -745,7 +745,10 @@ a checkable spec, a near-invisible scanline field, and monospace/
 uppercase-tracking data typography applied consistently across
 `WindowTrack`/`LiveRuns`/`PRReviewQueue`/`RunLedgerReceipt`. Full detail
 and verification method: `kb/log.md` §2026-07-08 "dashboard visual-
-language pass". Branch: brr/dashboard-visual-language-2026-07-08.
+language pass". Branch: brr/dashboard-visual-language-2026-07-08 (PR
+#281, self-merged `bf47321`, live-verified on `brnrd.dev` — the deployed
+asset hash and a Playwright screenshot both confirm the new chrome is
+serving, not just merged).
 
 Not done, named for next: the "sci-fi-cybernetic-weaver-spirit-altar"
 Nordic layer stays untouched by this pass on purpose — bracket panels and
