@@ -81,6 +81,12 @@ dive-in map) and are stable until something contradicts them.
   worker stack slim-down, post-delivery linger), plus the voice-workstream
   tail. Each ticket carries scope, touch points, and a resident-vs-
   delegable owner call.
+- [spawn: gap closure plan](plan-spawn-gap-closure.md) — *2026-07-08,
+  partially shipped*. Names the agreed `spawn:` vision from the actual
+  conversation and the two remaining implementation gaps: working-
+  directory isolation under `environment=host` (fixed, PR #278) and
+  `reload_requested` coupling spawn dispatch to daemon re-exec (named
+  fork, awaiting a nod).
 - [Brand space design](design-brand-brnrd-brr.md) — *active, 2026-07-01*.
   bRnЯd as textual mascot (card/CLI-native, `ornament` knob as the cheese
   valve), sell-the-pacing/skin-the-game positioning (dev-facing winks, B2B
