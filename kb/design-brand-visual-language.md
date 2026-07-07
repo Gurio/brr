@@ -210,6 +210,19 @@ proposal above, unchanged. Cross-linked so slice 2's implementer has both
 halves in one place instead of re-deriving the mechanic from a screenshot
 with no note attached.
 
+**Sharpened same-thread, 2026-07-07 (run-260707-1849-hnj8):** the
+maintainer went further than "keep our palette" — psyche is "very
+superficial" as a reference, container/element-outline only; "the
+substance and the colors and the composition, almost everything, should
+be loom-focused." Read as tightening, not contradicting, the line above:
+don't treat psyche as a design partner to reconcile with, treat it as
+proof a card-grid-with-status-badges *shape* reads as live-and-legible,
+full stop. Slice 2 shipped this run kept the existing dashboard slate
+palette (not psyche's, not yet the hearth/ember one either — see below);
+a real "loom-focused" composition pass — hearth/ember substance, not just
+avoiding mint-green — is still the open next step, named again in
+`plan-loom-realtime-build.md` §Slice 2, not started.
+
 ## What is privy.io, and does it fit here? (asked same thread)
 
 Checked directly rather than guessed: [Privy](https://www.privy.io/) is an
