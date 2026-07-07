@@ -11342,3 +11342,73 @@ false" / §"the deeper bug: a crashed spawn never notified its parent".
 
 Branch: brr/spawn-crash-notify-and-tick-cooldown-2026-07-07 (PR #266,
 merged).
+
+## [2026-07-07] fix | crashed schedule-source runs (director tick) were fully silent
+
+Direct maintainer report: "look at the previous two runs — they didn't
+close with a message and they didn't hang opened either... a cutoff
+communication." Root-caused two distinct, real bugs rather than one:
+
+1. `run-260707-1154-kem3` (11:54 director tick) was killed mid-run
+   (returncode 143, empty stdout/stderr — a hard crash, not a timeout).
+   `_write_terminal_failure_response` correctly fires on that failure path,
+   but its only gate was `_event_requires_thread_delivery`, which treats
+   `source: schedule` as internal — right for the *success* path (a tick
+   that re-derived nothing new is supposed to stay quiet, the notify-bar
+   logic), wrong for the *failure* path, where it made a genuine crash
+   render identically to "did its job quietly." Fixed via `_crash_requires_notice`:
+   the terminal-failure path now also delivers for `schedule`-sourced
+   events specifically, using the `last_chat_id` routing PR #244 already
+   built. Regression test:
+   `test_write_terminal_failure_response_notices_schedule_crash`.
+2. `run-260707-1321-auhp` (13:21, the loom status-check run) did real
+   work — two commits (`4805991`, `da2ea7b`), PR #269, issue #268 — and
+   even narrated it mid-run via outbox interims, but its terminal stdout
+   collapsed to a bare "Done." with an empty final response file. This is
+   the same "sharp case" `daemon-substrate.md` §next move already names
+   and guards against (added earlier the same day) — the guard didn't
+   hold here. Named, not yet hardened in code: a daemon-side check that
+   treats a degenerate bare-word terminal reply following a substantive
+   outbox interim as *not* satisfying delivery (or suppresses it outright,
+   since the substance already shipped) would close this the way #244
+   closed the missing-chat-id gap — a harness backstop instead of relying
+   on the prompt holding every time.
+
+Full suite: 1366 passed. Branch/PR: not yet opened as of this entry — see
+`plans/Gurio__brr/active.md` (account dominion) for receipt.
+
+## [2026-07-07] build | loom realtime slices 0/1 shipped; week-scoped plan written
+
+Same run as above, direct response to "what is the minimal but true and
+evolvable shape we can deliver within a week." Checked before proposing:
+today's dashboard (window-track, live-runs, PR-review-queue — all
+previously shipped) publishes on a ~25s cadence coupled to the chat
+long-poll (`gates/cloud.py::_loop_once`, `_POLL_WAIT_S = 25`) and the
+frontend already polls (`+page.svelte`, was `POLL_MS = 20_000`) but
+renders zero motion on refresh — not "nothing is live," a slower and
+less legible version of live. New page
+[`kb/plan-loom-realtime-build.md`](plan-loom-realtime-build.md) splits the
+design pages' six-mechanic proposal by whether it needs new backend
+collection, and ranks the three that don't (window-track/live-runs/PR-queue
+render, then a run-ledger receipt) ahead of the three that do (KB node-map,
+message-pulse, CPS chapter-map).
+
+Shipped this run, not just planned: slice 0 (`gates/cloud.py`'s new
+`_dashboard_publish_loop`, its own 3s-interval background thread,
+decoupled from the inbox long-poll) and slice 1 (frontend poll tightened
+to 2s; `LiveRuns.svelte`/`PRReviewQueue.svelte` gained `svelte/transition`
++ `svelte/animate` on their already-keyed `{#each}` blocks). Build/lint/
+`svelte-check` clean; backend suite 1366 passed. Slices 2
+([#270](https://github.com/Gurio/brr/issues/270)) and 3
+([#271](https://github.com/Gurio/brr/issues/271)) filed, unclaimed.
+
+A maintainer-supplied reference (psyche.network/runs) arrived mid-run and
+was checked directly rather than described back: its card/progress-bar/
+status-badge mechanic matches slice 2's own independently-scoped shape;
+its light mint-green palette doesn't, and shouldn't replace
+`design-brand-visual-language.md`'s existing hearth/frost proposal — both
+captured in that page's new "Reference check: psyche.network" section.
+
+Detail: `kb/plan-loom-realtime-build.md`, `kb/design-brand-visual-language.md`
+§"Reference check: psyche.network". Branch: not yet opened as of this
+entry — see `plans/Gurio__brr/active.md`.

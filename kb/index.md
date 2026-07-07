@@ -839,6 +839,16 @@ dive-in map) and are stable until something contradicts them.
   retention scenario modeled; recommendation leans toward an add-on
   credit-pack, not a subscription replacement) — flagged back as a fork,
   not applied.
+- [Plan: the loom realtime build](plan-loom-realtime-build.md) —
+  *active, opened 2026-07-07*. Converts the two design pages above into
+  dated, ranked slices: checked (not assumed) that today's gap is backend
+  publish cadence (~25s, bound to an unrelated chat long-poll) plus a
+  frontend poll that already exists (20s) but has zero animated motion —
+  not "nothing is live." Slices 0-2 (cadence + motion + the live-runs lane
+  as a Zachtronics mechanic) need zero new backend data; slice 3 (a
+  per-run token receipt) is the first with a small new endpoint. KB
+  node-map / message-pulse / CPS chapter-map explicitly deferred past this
+  week — each needs a new collector this plan doesn't start yet.
 - [Dashboard MVP plan](plan-brnrd-dashboard-mvp.md) —
   *accepted 2026-05-26; not started*. Eight views (accounts/projects, project detail,
   task detail, conversation proxy, credentials vault (AI +

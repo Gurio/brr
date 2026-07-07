@@ -189,6 +189,27 @@ concrete, buildable idea worth flagging to whoever designs the first
 screen — the marks already exist and already carry meaning; a bind-rune
 rendering would be pure skin, not new invention.
 
+### Reference check: psyche.network (2026-07-07)
+
+Maintainer-supplied reference, checked directly rather than taken on
+description: [Nous Psyche](https://psyche.network/runs)'s training-runs
+page — a distributed-compute network's live dashboard. His own read: "almost
+matches my vision... needs [this page's own dim-amber/hearth proposal above]
+applied [to it]." Precise about which half of the match is real: the
+*mechanic* is a strong hit — a card grid, one card per run, each carrying a
+live token-count, a bounded progress bar, and a status badge
+(`PAUSED`/`WAITING FOR COMPUTE`/`COMPLETED`) — structurally the same shape
+[`plan-loom-realtime-build.md`](plan-loom-realtime-build.md) slice 2 (live
+runs as SpaceChem-molecule cards, not a plain list) is already scoped to
+build, independently arrived at. The *palette* is not a match and
+shouldn't become one: psyche renders in a light mint-green paper theme,
+which is their brand, not this page's hearth-vs-frost structure — the
+card/progress-bar/status-badge mechanic is the reusable idea, the color
+answer stays this page's own dim-amber/ember-vs-cold-blue-white-and-void
+proposal above, unchanged. Cross-linked so slice 2's implementer has both
+halves in one place instead of re-deriving the mechanic from a screenshot
+with no note attached.
+
 ## What is privy.io, and does it fit here? (asked same thread)
 
 Checked directly rather than guessed: [Privy](https://www.privy.io/) is an
