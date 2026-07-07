@@ -11787,3 +11787,52 @@ now says explicitly that "fold in" means the `event:` file, with the
 live confirmation dated. No code change — the daemon's behavior is
 correct and arguably obvious in hindsight; the gap was a prompt reading
 one resident (this run) got wrong, worth guarding for the next one.
+
+## [2026-07-08] implement | Quota status colors reskinned + more CRT glow (direct maintainer ask)
+
+Same-thread follow-up right after the visual-language pass landed ("wow,
+just wow... now could you add a bit more crt glow, and amber/frost/
+darkness color coding (especially the green/red coding on the quota
+percentage bars we have now)... does it make sense?"). Checked before
+acting: `WindowTrack.svelte`'s `LEVEL_COLOR` (`#0ca30c`/`#fab219`/
+`#d03b3b`) turned out to be the dataviz skill's own generic reference-
+palette status defaults, lifted verbatim and never actually reskinned in
+either the 2026-07-07 or 2026-07-08 passes — the earlier kb line ("fixed
+traffic-light status colors remain unthemed so semantic state doesn't
+double as brand hue") was closer to an oversight than a considered
+position, and the skill's real rule (`color-formula.md` §"Status is
+fixed") only forbids borrowing *categorical/identity* hues for status,
+not giving status its own brand-appropriate scale.
+
+Shipped: `ample = #e8b34a` (hearth amber), `low = #7aa9c2` (frost —
+deliberately dimmer/less saturated than the `sky-300` "stale report"
+badge in the same card, so "quota low" and "report stale" don't collide
+as one hue meaning two things), `critical = #c0523f` (dying ember —
+literal near-black "darkness" fails the skill's own ≥3:1 contrast floor
+as a foreground color, so critical reads as the warmth *going* rather
+than *gone*). All three checked via dataviz's `scripts/
+validate_palette.js` `contrast()` against the body/panel/track surfaces,
+≥3.7:1 throughout. CRT glow nudged up one notch: scanline/hearth-glow
+alpha increased with a second wider bloom, a soft phosphor `box-shadow`
+on `.panel`'s bracket chrome, a resting glow on `.boot-glitch` (previously
+lit only during its flicker animation), and a matching glow on the quota
+bar fill/dot in their own status color — literal CRT phosphor on the
+gauge, the one element where both asks overlap.
+
+Named, not fixed this pass: `LiveRuns.svelte`/`PRReviewQueue.svelte` still
+carry the old unreskinned `#0ca30c`/`#fab219` pair for their own 2-state
+badges — out of scope of what was actually asked ("the quota percentage
+bars" by name), flagged rather than silently left inconsistent or
+silently expanded past what was asked.
+
+Verified before calling it done: `npm run build`/`check`/`lint` clean;
+rendered a static mock of both palettes (ample/low/critical/stale) through
+the real compiled CSS via headless Chrome and eyeballed corner-bloom,
+bar-glow, and the frost/stale hue separation; pushed directly to `main`
+(`bf214d7`, this repo's existing self-merge authorization for dashboard/
+build work) and confirmed live — polled `brnrd.dev/_app/version.json`
+until the Upsun redeploy landed, then diffed the live CSS byte-for-byte
+against the local build (identical) and grepped the deployed page-2 JS
+chunk for the three new status hexes (all present). Detail:
+`kb/design-brand-visual-language.md` §"Status palette reconsidered,
+2026-07-08".
