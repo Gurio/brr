@@ -11130,3 +11130,56 @@ Detail: `kb/design-dashboard-live-surface.md` §"Reconsidered 2026-07-06".
 Branches: brr/quota-loom-schema-cohere-2026-07-06 (#252, merged),
 brr/run-ledger-cost-tracking-2026-07-06 (#254), brr/crash-loop-backstop-
 2026-07-06 (#256), brr/sub-spawn-slice1-2026-07-06 (#257).
+
+## [2026-07-07] fix+ship | #257 merge race fixed; spawn: leak diagnosed; #258 live-runs view shipped end to end
+
+Maintainer confirmed #252/#254/#256/#257 all merged and asked to actually
+*use* the new `spawn:` primitive: dispatch real work to codex (which had
+quota headroom) while testing dispatch itself, with an explicit
+clarification that the expectation is to wait on the sub-runner and
+review it, addressing the boot prompts if that wasn't clear.
+
+Found #257 was marked MERGED on GitHub but its diff never reached `main`
+— it was stacked on #254's own branch, and the maintainer's own
+github-web merge landed it there *after* #254 had already been
+squash-merged off that branch onto `main`, orphaning the stack. Fixed by
+cherry-picking the one unique commit onto a fresh branch off `main` (PR
+#260, tests green, merged) — `spawn:` is for real on `main` now.
+
+Tightened the `spawn:` bullet in `src/brr/prompts/daemon-substrate.md`
+and the account dominion playbook's §Delegation: a spawn doesn't end this
+thought to start (unlike `respawn:`), so the default is to linger for it
+in the same run and review its diff before closing out, not defer to a
+future wake by default.
+
+First live dispatch attempt leaked two internal task-spec messages into
+the chat thread instead of dispatching anything — root-caused to a
+structural gap, not a code bug: this repo's `--dev-reload` daemon process
+predates the #257/#260 merge, and its reload watcher only re-execs once
+its worker slot frees (this run), so the live process was still running
+pre-`spawn:` code and silently treated the unrecognized frontmatter as a
+plain reply. Conclusion: `spawn:` can't be dogfooded in the very run that
+first lands the code enabling it on a persistent dev daemon — documented
+in `kb/design-director-loop.md` §"#257 merge race, and spawn: can't be
+dogfooded in the run that lands it" and the dominion playbook, so the
+next wake doesn't repeat the investigation. The maintainer caught the
+leak live and was graceful about it; acknowledged, stopped retrying.
+
+Pivoted to shipping #258 (account-scoped live/coexisting-runs view)
+directly rather than via spawn, since it needed code, not dispatch.
+Mirrors Activity/Plans/Quota a fourth time: daemon-side collector reading
+the local presence registry, `PUT /v1/daemons/live-runs` publish,
+`Daemon.live_runs_json`/`live_runs_updated_at` (+ migration),
+account-scoped dedup on the dashboard read side, `GET
+/v1/dashboard/live-runs`, and a `LiveRuns.svelte` frontend view wired
+into the SvelteKit scaffold below the quota tracks. 1339 backend tests
+pass, frontend build/lint/svelte-check clean. PR #261, merged, deployed —
+and verified live end to end, not just "the PR merged": `upsun
+activity:log` showed the build+deploy succeed, the deployed JS bundle was
+confirmed (via direct fetch + grep) to carry the new component, and
+`upsun ssh` + `psql \d daemons` confirmed the new columns exist on the
+production database. Detail: `kb/design-dashboard-live-surface.md`
+§"Shipped (2026-07-07): #258, live/coexisting-runs view".
+
+Branches: brr/land-sub-spawn-slice1-2026-07-07 (#260, merged),
+brr/live-runs-view-2026-07-07 (#261, merged).

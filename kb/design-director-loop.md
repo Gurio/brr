@@ -367,6 +367,51 @@ status`, exercises the loop directly and stayed green). The queueing
 unit-tested; the loop-level wiring is code review + that one pre-existing
 regression test, not a purpose-built integration test.
 
+### #257 merge race, and spawn: can't be dogfooded in the run that lands it (2026-07-07)
+
+Two related findings from the first real attempt to *use* the slice above,
+same day it should have first become reachable.
+
+**Finding 1 — #257 was marked MERGED on GitHub but never reached `main`.**
+It was stacked on #254's own feature branch
+(`brr/run-ledger-cost-tracking-2026-07-06`); the maintainer's own
+github-web merge landed #257 onto that branch *after* #254 had already
+been squash-merged off it onto `main` — so GitHub correctly reports #257
+"merged" into a base that itself was orphaned. `git diff main <257's
+head>` still showed the whole 447-line diff missing. Fixed by cherry-
+picking the one commit unique to #257 onto a fresh branch off `main`
+(PR #260, tests green, merged) — a real gap in "PR shows merged" ⇒ "code
+is on main," worth remembering whenever a PR is stacked on another PR's
+branch rather than on `main` directly: squash-merging the base out from
+under a still-open stacked PR silently strands its commits.
+
+**Finding 2 — a long-running `--dev-reload` daemon can't dogfood code it
+hasn't reloaded, and reload is deliberately deferred.** Once #257/#260
+were live on `main`, dispatching a `spawn: true` outbox message against
+*this same run's* daemon process (up since before the merge) silently
+failed: the running process's in-memory `daemon` module predates
+`_queue_spawn_request` entirely, so the unrecognized `spawn:` frontmatter
+key fell through to the plain-reply path and delivered the internal task
+spec as two ordinary chat messages instead of dispatching anything —
+confirmed by `current`/`other` delivery counters incrementing instead of
+a new presence entry or `.brr/inbox/*.md` file appearing. Root cause:
+`start()`'s dev-reload watcher only re-execs once `current is None`
+(`src/brr/daemon.py` ~line 4603) — by design, so a live reload never
+kills an in-flight thought — but that means the very run that first lands
+code enabling a new dispatch primitive can never observe that primitive
+working, on a long-lived dev daemon: the process has to finish this run,
+restart into fresh code, and *then* a later wake can dispatch. Not a bug
+to fix so much as a sequencing fact to remember: **a `spawn:`/`respawn:`
+capability change and the first live test of it are structurally two
+different wakes**, whenever the daemon is a persistent `--dev-reload`
+process rather than a fresh-process-per-run production deploy. Documented
+in the account dominion playbook (§Delegation) so a future wake doesn't
+repeat the same "why did my spawn leak into chat" investigation from
+scratch. The actual spawn-dispatch test (does a `spawn:` outbox message
+correctly start a concurrent worker-stack child) is still open, queued for
+whenever a wake follows a `main`-advancing merge by more than "the same
+run."
+
 ## Hot-idle residency and quota-aware pacing (maintainer, 2026-07-02)
 
 Follow-up sharpening the stingy-director economics: if the wake already

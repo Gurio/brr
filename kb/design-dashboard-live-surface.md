@@ -616,6 +616,38 @@ Cross-links: `decision-account-centered-daemon.md`
 exactly a "coexisting run" the live view would need to show, including
 its `parent_run_id` rollup relationship to its parent).
 
+## Shipped (2026-07-07): #258, live/coexisting-runs view
+
+Built directly (not via `spawn:` — see `kb/design-director-loop.md`
+§"spawn: can't be dogfooded in the run that lands it" for why), same
+run as the sub-spawn slice-1 landing fix. Mirrors Activity/Plans/Quota a
+fourth time exactly as scoped above: `src/brr/gates/cloud.py::
+_live_runs_snapshot` reads the local presence registry
+(`src/brr/presence.py`), `_publish_live_runs` PUTs `PUT
+/v1/daemons/live-runs` alongside the other three publishers in
+`_loop_once`; `Daemon.live_runs_json`/`live_runs_updated_at` (+
+migration); `activity_dashboard.py::_live_runs_views` flattens/dedupes
+across every `Daemon` row an account owns (one per repo it's registered
+under — the same physical daemon publishes the same presence list under
+each, deduped by run identity, freshest report wins); `GET
+/v1/dashboard/live-runs` JSON endpoint. Frontend:
+`src/frontend/src/lib/{liveRuns.ts,LiveRuns.svelte}`, wired into
+`+page.svelte` below the quota tracks, same fixed status palette as
+`WindowTrack.svelte`. 1339 backend tests pass; frontend build/lint/
+svelte-check clean. PR #261, merged, deployed — verified live: `upsun
+activity:log` showed the build+deploy succeed, the deployed JS bundle
+was confirmed carrying the `LiveRuns` component (`grep` on the fetched
+chunk), and the production postgres schema was confirmed carrying
+`live_runs_json`/`live_runs_updated_at` via `upsun ssh` + `psql \d
+daemons` — not just "the PR merged," the actual running system.
+
+Not done, named for whoever picks it up next: `parent_run_id`/
+`is_subspawn` enrichment (a spawn child showing its parent relationship)
+was scoped out of this slice — the presence registry entries don't carry
+that field today, only `run_ledger` rows do, and joining them was judged
+gold-plating for a first cut. #259 (PR-review-queue lane) is still
+unbuilt, next in the slice queue.
+
 ## Read next
 
 - [`design-quota-scheduling-loom.md`](design-quota-scheduling-loom.md) —
