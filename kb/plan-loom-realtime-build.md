@@ -1,10 +1,14 @@
 # Plan: the loom realtime build — from polling gauges to a watchable ticker
 
-Status: active — opened 2026-07-07 (run-260707-1728-czlk); slices 0/1
-shipped that run, slice 2 (+ a root-canvas bug found while building it)
-shipped 2026-07-07 (run-260707-1849-hnj8), slice 3 and the amber/ice
-chrome pass shipped 2026-07-07 (run-260707-1930-7074) — see §Slice 1.5,
-§Slice 2, and §Slice 3.
+Status: shipped on 2026-07-07 — opened that day (run-260707-1728-czlk);
+slices 0/1 shipped that run, slice 2 (+ a root-canvas bug found while
+building it) shipped 2026-07-07 (run-260707-1849-hnj8), slice 3 and the
+amber/ice chrome pass shipped 2026-07-07 (run-260707-1930-7074) — see
+§Slice 1.5, §Slice 2, and §Slice 3. A follow-on bug found in the quota
+lane (staleness measured off the wrong clock) plus a credits exposure
+shipped as PR #275 the same day, tracked in
+`kb/design-dashboard-live-surface.md`, not this page — this plan is done,
+not a place for new slices.
 Direct response to
 "you should realistically deeply expand the path to an actual loom
 implementation... what is the minimal but true and evolvable shape we *can*

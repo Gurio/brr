@@ -11490,3 +11490,39 @@ Docs updated: `kb/plan-loom-realtime-build.md` marks slice 3 shipped and
 proposal to shipped dashboard chrome.
 
 Branch: brr/loom-run-ledger-palette-2026-07-07.
+
+## [2026-07-07] fix | The "lying Claude usage panel" + credits exposure + remote_scm=absent
+
+Root-caused why the live dashboard's quota bars were right for Codex but
+wrong for Claude: `_quota_views`' staleness check measured the daemon's
+publish cadence (always fresh — it PUTs every ~25-30s tick) instead of the
+underlying cached `/usage` scrape's own age, so hours-old Claude numbers
+never got flagged stale while a Claude run wasn't active to refresh them.
+Fixed by forwarding the scrape's own `updated_at` per shell
+(`cloud.py`, `schemas.py::QuotaShellIn`) and measuring staleness against it.
+
+Confirmed live by the maintainer, same thread: a Claude run keeps working
+(and billing, ~$1 → $3.92 over this session) straight through the 5h
+subscription window hitting 100% used — the account falls through to
+metered credits rather than blocking, at least for the 5h window (weekly
+untested). Exposed this on the dashboard the same way as quota:
+`claude_status.py` already collected a real per-run `total_cost_usd` for
+the boot-prompt `spend` facet but never published it anywhere; added
+`cloud.py::_claude_credits_block` + `runner_quota.latest_claude_spend_
+outbox_dir`, a `credits` field on the schema, and a small sky-hued line in
+`WindowTrack.svelte`.
+
+Also fixed, a same-thread follow-up: `remote_scm` stayed `absent` for a
+whole run even after the resident created a real PR mid-thought, because
+`task.meta['github_pr_number']` is only ever populated for GitHub-sourced
+tasks. Added a `.pr` control file (same tier as `.card`/`.keepalive`) the
+resident writes after `gh pr create`; the daemon prefers it over
+`task.meta` each heartbeat, keeping `remote_scm` network-free per its own
+design. Documented in `src/brr/prompts/daemon-substrate.md`.
+
+1382 tests pass (7 new/updated), frontend lint/check/build clean, credits
+line screenshot-verified with a mocked dashboard API.
+
+Detail: `kb/design-dashboard-live-surface.md` §"Shipped (2026-07-07): the
+'lying Claude usage panel' + credits exposure". Branch:
+brr/claude-credits-and-usage-panel-2026-07-07.
