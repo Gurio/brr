@@ -663,6 +663,63 @@ into `+page.svelte` below the live-runs slice, with age from
 draft/open into a quick visual read. Backend tests and the frontend build
 stay green.
 
+## Shipped (2026-07-07): the "lying Claude usage panel" + credits exposure
+
+Direct maintainer report: the live quota bars were correct for Codex but
+not for Claude ("claude's currently at 91% weekly used, and 5h used
+completely" — confirmed by a fresh manual `/usage` probe run this same
+thought). Root-caused, not just re-scraped:
+
+**The staleness bug.** `_quota_views`' `stale` flag (`activity_dashboard.py`,
+#237) was gated on `Daemon.quota_updated_at` — when the *daemon last
+published* the quota payload. The daemon PUTs that payload every ~25-30s
+poll tick regardless of whether the underlying data changed, so that
+timestamp is *always* fresh — it can never trip the staleness gate. Claude's
+quota shell is a cached interactive `/usage` PTY scrape
+(`claude_usage.py`) that only refreshes while a Claude run is actively
+heartbeating; with no Claude run active for a stretch, the dashboard kept
+showing hours-old numbers flagged "known", never "stale". Codex reads its
+quota live off the session rollout every tick, so it never exhibited this
+gap — which is exactly why the maintainer saw "codex right, claude wrong."
+Fixed by forwarding the scrape's own `updated_at` per shell
+(`cloud.py::_claude_quota_shell`/`_codex_quota_shell`) and measuring
+staleness against *that* clock, falling back to the publish timestamp only
+when a shell carries none (`QuotaShellIn.updated_at` in `schemas.py`).
+
+**Credits exposure.** The maintainer confirmed live, same thread: this very
+run kept working (and billing, ~$1 → $1.15 → $3.92 over the session)
+straight through Claude's 5h window hitting 100% used — the account falls
+through to metered credits rather than blocking. `claude_status.py` already
+collects a real per-run `total_cost_usd` from Claude's headless result
+JSON for the boot-prompt `spend` facet, but nothing published it anywhere
+visible. Added `cloud.py::_claude_credits_block` (new
+`runner_quota.latest_claude_spend_outbox_dir` helper, same freshest-mtime
+pattern as the quota one but over `.claude-result-levels.json`), a
+`credits` field on the claude shell payload (`QuotaCreditsIn` schema), and
+a small line in `WindowTrack.svelte` under the two bars — fixed sky hue,
+the same "outside the firelight" signifier the stale badge already uses,
+not a new status color. No credits collector exists for Codex (no
+comparable metered-overage behavior observed there yet), so its shell
+simply never carries the key — absent, not a fake zero.
+
+**Not built:** no idle-time background refresh of the Claude `/usage`
+scrape — the underlying data can still go stale for hours between runs,
+the dashboard now just says so honestly instead of miscasting the daemon's
+publish cadence as data freshness. If that gap matters enough to close,
+the fix is a periodic scheduled probe independent of an active run, not
+part of this pass.
+
+Also fixed in the same run (a same-thread follow-up, not part of the
+credits ask but landed on the same branch/PR): `remote_scm` stayed
+`absent` for an entire run even after the resident created a real PR
+mid-thought (`gh pr create` — not a GitHub-sourced task, which is the only
+path that ever populated `task.meta['github_pr_number']`). Added a `.pr`
+control file (same tier as `.card`/`.keepalive`) the resident writes right
+after creating a PR; the daemon reads it each heartbeat
+(`daemon._read_pr_control`) and prefers it over `task.meta`, keeping
+`remote_scm` network-free per its own design (`brr.facets` docstring).
+Documented in `src/brr/prompts/daemon-substrate.md`.
+
 ## Read next
 
 - [`plan-loom-realtime-build.md`](plan-loom-realtime-build.md) — the
