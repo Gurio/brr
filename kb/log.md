@@ -11183,3 +11183,38 @@ production database. Detail: `kb/design-dashboard-live-surface.md`
 
 Branches: brr/land-sub-spawn-slice1-2026-07-07 (#260, merged),
 brr/live-runs-view-2026-07-07 (#261, merged).
+
+## [2026-07-07] fix+ship | spawn: dispatch test closes — #263 (live-run label) reviewed and merged
+
+Self-scheduled follow-up to the run above: reviewed the codex `spawn:`
+dispatch queued by run-260707-0911-rdw4 (add a per-run `label` field to
+the dashboard's live-runs card, `evt-...-lr16`). It had been stuck
+`pending` mid-run (the addendum in `kb/design-director-loop.md`
+§"#257 merge race..." explains why — dev-reload gates the spawn slot on
+the same `reload_requested` flag as re-exec); by this wake it had
+dispatched on its own once the daemon reloaded, run codex to completion,
+and pushed PR #263 (`brr/live-runs-label-2026-07-07`).
+
+Reviewed the whole diff directly (not the worker's own summary): matched
+the brief across `presence.py::register()`, the daemon call site,
+`cloud.py::_live_runs_snapshot`, `liveRuns.ts`/`LiveRuns.svelte`, plus one
+disclosed, correct deviation — codex found `schemas.py::LiveRunIn` would
+have silently dropped the new `label` field on the wire, a real schema
+boundary the brief's "all pass-through, no allowlists" framing missed,
+and fixed it too. Independently re-ran the full pytest suite (1341
+passed) and `npm run build`/`lint`/`check` from `src/frontend` rather than
+trusting codex's own green report. Merged directly (`f167503`) — the
+same self-merge shape as the #245/#246/#253 precedent (direct, bounded,
+already reviewed by the resident), not a director-tick unreviewed merge.
+
+Net: `spawn:` dispatch works end to end on this repo now — a cross-Shell
+worker queued while its own parent thought was still running, survived
+across a dev-reload boundary between two separate resident wakes,
+completed unattended, and reached review/merge through the
+wait-and-review contract the prior run tightened in the boot prompts.
+Full writeup: `kb/design-director-loop.md` §"Addendum 2026-07-07 —
+the spawn-dispatch test closed, third attempt, across the reload
+boundary". One-shot review entry removed from the account dominion
+`schedule.md`.
+
+Branch: brr/live-runs-label-2026-07-07 (PR #263, merged).

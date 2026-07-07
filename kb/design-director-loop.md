@@ -459,6 +459,37 @@ for that turn) and lean on the review-self-wake fallback instead. The
 actual spawn-dispatch test is *still* open after two attempts across two
 different structural causes.
 
+**Addendum 2026-07-07 (run-260707-0959-mnrr) — the spawn-dispatch test
+closed, third attempt, across the reload boundary.** The `evt-...-lr16`
+spawn stuck `pending` in Finding 2's addendum above wasn't lost: once
+run-260707-0911-rdw4 ended and `brnrd up --dev-reload` reloaded into the
+now-committed `spawn:` code, the queued event dispatched on its own, ran
+codex to completion (`status: done` in the inbox record), and pushed PR
+#263 (`brr/live-runs-label-2026-07-07`) — a real, bounded backend+frontend
+slice (per-run `label` field on the live-runs dashboard card), not a toy.
+A follow-up run (this one, self-scheduled via the `at:` entry the
+dispatching run left in `schedule.md`) reviewed the whole diff directly
+(not the worker's own summary — see `dominion-playbook.md` §"Reading
+economically" exception for spawned diffs), re-ran the full pytest suite
+(1341 passed) and `npm run build`/`lint`/`check` independently rather than
+trusting codex's self-report of the same, confirmed it matched the brief
+with one disclosed, correct deviation (codex caught that
+`schemas.py::LiveRunIn` would've silently dropped the new `label` field —
+a real schema boundary the brief's own "all pass-through, no allowlists"
+framing missed), and merged it (`f167503`).
+
+So: `spawn:` dispatch works end to end — a cross-Shell child queued while
+its parent's own daemon process was still mid-run, survived across a
+reload boundary between two different resident thoughts, completed
+unattended, and reached a resident review/merge decision exactly along
+the wait-and-review contract this page's Finding 2/addendum motivated
+tightening in the boot prompts. What took three attempts wasn't `spawn:`
+itself — it was this repo's own dev-reload gating (Findings 1/2 and the
+addendum above), which is now a known, named cost of dogfooding on a
+persistent `--dev-reload` daemon, not a spawn-primitive defect. The
+`reload_requested`-vs-spawn-gate design question named above is still
+open; it didn't need resolving for this test to close.
+
 ## Hot-idle residency and quota-aware pacing (maintainer, 2026-07-02)
 
 Follow-up sharpening the stingy-director economics: if the wake already
