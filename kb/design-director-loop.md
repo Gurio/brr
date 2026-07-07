@@ -490,6 +490,47 @@ persistent `--dev-reload` daemon, not a spawn-primitive defect. The
 `reload_requested`-vs-spawn-gate design question named above is still
 open; it didn't need resolving for this test to close.
 
+**Addendum 2026-07-07 (run-260707-1033-jyzb) — "no reply" root-caused: a
+bare `done` stub, not a delivery failure.** The maintainer reported both
+run-260707-0911-rdw4 (11:37 CEST) and the #263 review self-wake above as
+having "not produced any reply," read as a possible harness regression
+worth checking alongside re-testing `spawn:`. It wasn't a crash and
+nothing was lost: both runs shipped their real content via outbox interim
+messages mid-thought (confirmed live in the conversation-log JSONL —
+substantive `interim_response` artifacts are there, timestamps line up),
+but each then closed its *terminal* stdout with a bare `done`/`done.`
+stub. The multi-response contract (`kb/design-multi-response.md` §Streaming
+delivery) already has a clean path for this — a genuinely empty terminal
+stdout skips the closeout message entirely once outbox already delivered
+the substance — but a trivial *non-empty* stdout isn't that path:
+`deliver_stream` still ships it as one more real, separate message
+(`protocol.read_response` returns non-None, `deliver_terminal` fires). So
+the literal last thing to land in the thread, both times, was an empty
+word — reading as "nothing happened" from the reader's seat even though
+real work had, and specifically explains why the maintainer's own
+timestamp match (11:37 CEST) landed exactly on the terminal artifact, not
+the substantive interim ones sent minutes earlier.
+
+Root cause is prompt discipline, not code: `daemon-substrate.md`'s
+next-move contract already banned "a bare status word" as an ending, but
+didn't name this specific split-the-difference trap (non-empty-but-
+contentless close, after the substance already shipped elsewhere) —
+apparently a real enough gap to hit twice in one day across two different
+resident thoughts. Fixed at the source: `src/brr/prompts/daemon-
+substrate.md` §next-move now names the failure mode explicitly and states
+the two clean options (genuinely empty stdout, or a real one-line
+receipt) — nothing in between. This run's own closing reply follows that
+rule rather than repeating the pattern it just diagnosed.
+
+Also acted on directly, same run: the maintainer's "own the sub runs,
+proper workers interface" ask (asked because this exact silence read as
+the mechanism failing) — dispatched another `spawn:` (codex, #259
+PR-review-queue dashboard lane, mirroring the Activity/Plans/Quota/Live-
+runs publish shape a fifth time) as both a fourth dogfood data point and
+real dashboard-priority work, with the resident lingering in-run to
+review and fold in per the wait-and-review contract rather than parking a
+self-wake — the convention exercised, not just re-stated.
+
 ## Hot-idle residency and quota-aware pacing (maintainer, 2026-07-02)
 
 Follow-up sharpening the stingy-director economics: if the wake already

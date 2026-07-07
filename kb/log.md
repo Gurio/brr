@@ -11218,3 +11218,37 @@ boundary". One-shot review entry removed from the account dominion
 `schedule.md`.
 
 Branch: brr/live-runs-label-2026-07-07 (PR #263, merged).
+
+## [2026-07-07] fix | "no reply" root-caused — bare `done` stub, not a delivery bug; #259 spawn dispatched
+
+Maintainer reported both run-260707-0911-rdw4 and the #263 review
+self-wake as having produced no reply, alongside asking to re-test
+`spawn:` dogfooding and tighten the sub-run/worker interface. Traced
+through the conversation-log JSONL and the delivery code
+(`gates/runtime.py::deliver_stream`) rather than guessed: both runs did
+ship real content via outbox interim messages, but each closed its
+*terminal* stdout with a bare `done`/`done.` stub. The multi-response
+design already treats a genuinely empty terminal stdout as a clean
+skip-the-closeout path once outbox already delivered the substance — but
+a non-empty trivial stdout isn't that path, and still ships as one more
+real message. So the last thing in the thread each time was an empty
+word, landing exactly on the maintainer's own quoted timestamp (11:37
+CEST matches run-0911-rdw4's terminal artifact, not its earlier
+substantive interim messages).
+
+Fixed at the source: `src/brr/prompts/daemon-substrate.md` §next-move
+now names this exact split-the-difference trap and states the two clean
+options (genuinely empty stdout, or a real one-line receipt) — the
+existing "no bare status word" rule didn't cover this specific case,
+hence hitting it twice in one day. Full writeup:
+`kb/design-director-loop.md` §"Addendum 2026-07-07 — 'no reply'
+root-caused".
+
+Also dispatched a fresh `spawn:` (codex) on #259 (PR-review-queue
+dashboard lane) as the fourth dogfood data point and real dashboard
+work in the same motion — lingering in this run to review + merge
+inline per the wait-and-review contract rather than parking a
+self-wake.
+
+Branch: main (prompt fix landed directly — text-only, reversible,
+matches the existing self-fix precedent for prompt/policy gaps).
