@@ -11912,3 +11912,21 @@ this fix should improve but wasn't reproduced live to confirm.
 
 Detail: `plans/Gurio__brr/active.md`, `ledger/decisions.md` (account
 dominion). Branch: `brr/stop-hook-refire-and-card-run-id-2026-07-08`.
+
+## [2026-07-08] investigate | Authenticated agent view of brnrd.dev — named, not built
+
+Direct ask: "what would it take" for a resident to see brnrd.dev
+rendered logged into the maintainer's own account (unauthenticated
+Playwright screenshots already work, `plan-loom-realtime-build.md`
+§Slice 1.5 — the gap is the *authenticated* dashboard).
+
+Confirmed: GitHub OAuth is the only login path (`src/brnrd/oauth.py`);
+sessions are a DB-backed bearer cookie (`brnrd_session`, 30-day TTL,
+`Token` table, no device binding — `src/brnrd/models.py`,
+`src/brnrd_web/routes.py:340-365`); no impersonation/admin/dev-login/
+staging concept exists anywhere in code or kb; `Token.KIND_API_KEY` is
+schema-only, no issuance route. Full writeup + three options (cookie
+handoff / finish the API key + token-login exchange / a proper scoped
+viewer identity), read as a fork for the maintainer rather than picked:
+`kb/design-agent-visual-inspection.md`. Branch:
+`brr/agent-visual-inspection-auth-2026-07-08`.
