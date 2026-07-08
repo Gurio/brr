@@ -61,9 +61,10 @@ def _account_and_repo(client):
     return repo_id
 
 
-def _oauth_start(client, *, next="/"):
+def _oauth_start(client, *, next="/", accept_terms=True):
+    suffix = "&accept_terms=1" if accept_terms else ""
     return client.get(
-        f"/auth/github/start?next={next}", follow_redirects=False
+        f"/auth/github/start?next={next}{suffix}", follow_redirects=False
     )
 
 
@@ -100,8 +101,18 @@ def test_login_page_uses_github_only(client):
     assert "/static/brnrd_web/app.css" in r.text
     assert "managed brr control plane" in r.text
     assert "preview-frame" in r.text
+    assert "/terms" in r.text
+    assert "Hosted Execution Beta Disclaimer" in r.text
     assert "Sign in with GitHub" in r.text
     assert "password" not in r.text.lower()
+
+
+def test_terms_page_serves_beta_disclaimer(client):
+    r = client.get("/terms")
+    assert r.status_code == 200
+    assert "brnrd Terms and Hosted Execution Beta Disclaimer" in r.text
+    assert "HugiMuni SAS, France" in r.text
+    assert "not promised as a security sandbox" in r.text
 
 
 def test_web_static_assets_are_served(client):
@@ -126,6 +137,12 @@ def test_github_login_redirect_uses_state_and_pkce(client):
     assert query["code_challenge"][0]
 
 
+def test_github_login_requires_terms_acceptance(client):
+    r = _oauth_start(client, accept_terms=False)
+    assert r.status_code == 400
+    assert "Accept the beta terms" in r.text
+
+
 def test_github_callback_sets_session_cookie_without_seed_repo(
     client, monkeypatch
 ):
@@ -143,6 +160,7 @@ def test_github_callback_sets_session_cookie_without_seed_repo(
         ).scalar_one()
         assert account.github_login == _LOGIN
         assert account.email == _EMAIL
+        assert account.terms_accepted_at is not None
         repos = db.execute(
             select(Repo).where(Repo.account_id == account.id)
         ).scalars().all()

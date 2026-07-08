@@ -69,7 +69,7 @@ def _cookie_secure(request: Request) -> bool:
 
 def _clear_oauth_cookies(resp: RedirectResponse, request: Request) -> None:
     s = request.app.state.settings
-    for name in (s.oauth_state_cookie, s.oauth_pkce_cookie, s.oauth_next_cookie):
+    for name in (s.oauth_state_cookie, s.oauth_pkce_cookie, s.oauth_next_cookie, s.oauth_terms_cookie):
         resp.delete_cookie(name, samesite="lax", secure=_cookie_secure(request))
 
 
@@ -329,14 +329,16 @@ def disconnect_repo(repo_id: str, request: Request, db: Session = Depends(get_db
 @router.get("/login", response_class=HTMLResponse)
 def login_form(request: Request, next: str = "/"):
     safe_next = _safe_next(next)
-    signin = f"/auth/github/start?next={quote(safe_next, safe='/')}"
-    return _render(request, "login.html", {"body_class": "auth-page", "title": "Sign in to brnrd", "signin_url": signin, "oauth_ready": _github_oauth_ready(request)})
+    return _render(request, "login.html", {"body_class": "auth-page", "title": "Sign in to brnrd", "next_url": safe_next, "oauth_ready": _github_oauth_ready(request)})
 
 
 @router.get("/auth/github/start")
-def github_login_start(request: Request, next: str = "/"):
+def github_login_start(request: Request, next: str = "/", accept_terms: str | None = None):
     if not _github_oauth_ready(request):
         return _render(request, "message.html", {"title": "Login unavailable", "eyebrow": "Configuration required", "heading": "GitHub login is not configured", "message": "Set the brnrd GitHub OAuth client id and secret.", "action_url": "/login", "action_label": "Back to login", "severity": "warning"}, status_code=503)
+    accepted_terms = (accept_terms or "").strip().casefold()
+    if accepted_terms not in {"1", "true", "on", "yes"}:
+        return _render(request, "message.html", {"title": "Terms required", "eyebrow": "Terms", "heading": "Accept the beta terms to continue", "message": "brnrd account signup requires accepting the Terms and Hosted Execution Beta Disclaimer before GitHub sign-in starts.", "action_url": f"/login?next={quote(_safe_next(next), safe='/')}", "action_label": "Back to sign in", "severity": "warning"}, status_code=400)
     state = oauth.new_state()
     verifier, challenge = oauth.new_pkce_pair()
     s = request.app.state.settings
@@ -345,6 +347,7 @@ def github_login_start(request: Request, next: str = "/"):
     resp.set_cookie(s.oauth_state_cookie, state, httponly=True, samesite="lax", secure=secure, max_age=s.oauth_state_ttl_s)
     resp.set_cookie(s.oauth_pkce_cookie, verifier, httponly=True, samesite="lax", secure=secure, max_age=s.oauth_state_ttl_s)
     resp.set_cookie(s.oauth_next_cookie, _safe_next(next), httponly=True, samesite="lax", secure=secure, max_age=s.oauth_state_ttl_s)
+    resp.set_cookie(s.oauth_terms_cookie, "1", httponly=True, samesite="lax", secure=secure, max_age=s.oauth_state_ttl_s)
     return resp
 
 
@@ -361,11 +364,23 @@ def github_login_callback(request: Request, code: str | None = None, state: str 
     except oauth.OAuthError as exc:
         return _render(request, "message.html", {"title": "Login failed", "eyebrow": "GitHub provider", "heading": "GitHub login failed", "message": str(exc), "action_url": "/login", "action_label": "Try again", "severity": "error"}, status_code=502)
     account = account_for_github_identity(db, identity)
+    terms_cookie = request.cookies.get(s.oauth_terms_cookie)
+    if account.terms_accepted_at is None:
+        if terms_cookie != "1":
+            return _render(request, "message.html", {"title": "Terms required", "eyebrow": "Terms", "heading": "Accept the beta terms to continue", "message": "The sign-in attempt did not include a recorded Terms acceptance. Start sign-in again from brnrd.", "action_url": f"/login?next={quote(next_url, safe='/')}", "action_label": "Back to sign in", "severity": "warning"}, status_code=400)
+        account.terms_accepted_at = datetime.now(timezone.utc)
+        db.add(account)
+        db.commit()
     raw = issue_session_token(db, account)
     resp = RedirectResponse(url=next_url, status_code=303)
     resp.set_cookie(s.session_cookie, raw, httponly=True, samesite="lax", secure=_cookie_secure(request), max_age=int(SESSION_TTL.total_seconds()))
     _clear_oauth_cookies(resp, request)
     return resp
+
+
+@router.get("/terms", response_class=HTMLResponse)
+def terms_page(request: Request):
+    return _render(request, "terms.html", {"body_class": "app-page legal-page", "title": "brnrd Terms and Hosted Execution Beta Disclaimer"})
 
 
 @router.get("/connect/{code}", response_class=HTMLResponse)

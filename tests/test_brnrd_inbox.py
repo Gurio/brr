@@ -15,7 +15,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 from brnrd import create_app  # noqa: E402
 from brnrd.config import Settings  # noqa: E402
 from brnrd.inbox import CapturingForwarder  # noqa: E402
-from brnrd.models import Event  # noqa: E402
+from brnrd.models import Account, Event  # noqa: E402
 from sqlalchemy import select  # noqa: E402
 from _helpers import brnrd_account_headers  # noqa: E402
 
@@ -121,6 +121,43 @@ def test_full_round_trip(env):
     assert client.post(
         "/v1/daemons/deregister", json={"daemon_name": "laptop"}, headers=dmn
     ).status_code == 200
+
+
+def test_hosted_enqueue_requires_first_execution_terms_acceptance(env):
+    app, client, _ = env
+    acc = _account(client)
+    rid = _repo(client, acc)
+
+    blocked = client.post(
+        "/v1/_dev/enqueue",
+        json={"repo_id": rid, "body": "hosted task", "source": "hosted"},
+        headers=acc,
+    )
+    assert blocked.status_code == 409
+    assert "hosted execution terms" in blocked.json()["detail"]
+
+    accepted = client.post(
+        "/v1/_dev/enqueue",
+        json={
+            "repo_id": rid,
+            "body": "hosted task",
+            "source": "hosted",
+            "accept_hosted_execution_terms": True,
+        },
+        headers=acc,
+    )
+    assert accepted.status_code == 201, accepted.text
+
+    followup = client.post(
+        "/v1/_dev/enqueue",
+        json={"repo_id": rid, "body": "second hosted task", "source": "hosted"},
+        headers=acc,
+    )
+    assert followup.status_code == 201, followup.text
+
+    with app.state.SessionLocal() as db:
+        account = db.execute(select(Account)).scalar_one()
+        assert account.hosted_exec_terms_accepted_at is not None
 
 
 def test_response_records_metadata_only(env):

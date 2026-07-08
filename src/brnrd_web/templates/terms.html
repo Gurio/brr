@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block body %}
+<main class="state-shell legal-shell" aria-labelledby="terms-title">
+  <section class="panel state-panel legal-panel">
+    <p class="eyebrow">Beta terms</p>
+    <h1 id="terms-title">brnrd Terms and Hosted Execution Beta Disclaimer</h1>
+    <p class="panel-copy">Last updated: 2026-07-08. These beta terms are provided by HugiMuni SAS, France, for brnrd account signup and hosted execution access.</p>
+
+    <h2>1. Service</h2>
+    <p>brnrd is a beta service for routing repository work to AI coding agents. Some features may let brnrd run a subscriber's agent on brnrd-operated compute with file, shell, network, and repository access.</p>
+
+    <h2>2. Hosted Execution Risk</h2>
+    <p>Hosted execution can run powerful agent sessions in yolo-exec mode. Those sessions may execute commands, modify files, install dependencies, access configured network services, and interact with connected repositories. You are responsible for the repositories, prompts, credentials, secrets, and data you provide to those sessions.</p>
+
+    <h2>3. No Sandbox Guarantee</h2>
+    <p>Unless brnrd states a specific default in the product or documentation, hosted execution is not promised as a security sandbox, tenant-isolation boundary, malware-containment boundary, or credential-containment boundary. Technical containment work is separate from this beta disclaimer and should not be assumed to exist.</p>
+
+    <h2>4. Account and Repository Access</h2>
+    <p>You must have the rights needed to connect a repository and authorize work against it. Do not use brnrd to run unlawful code, attack systems you do not own or administer, exfiltrate data, abuse third-party services, or bypass access controls.</p>
+
+    <h2>5. Beta Availability</h2>
+    <p>brnrd is provided as a beta service. Features may change, fail, be rate-limited, or be suspended. HugiMuni may refuse or pause hosted execution where needed to protect the service, users, third parties, or infrastructure.</p>
+
+    <h2>6. Disclaimers</h2>
+    <p>To the fullest extent permitted by applicable law, brnrd is provided without warranties about uninterrupted operation, fitness for a particular purpose, non-infringement, security outcomes, generated code quality, or the results of hosted agent execution.</p>
+
+    <h2>7. Liability</h2>
+    <p>To the fullest extent permitted by applicable law, HugiMuni SAS and brnrd's operators will not be liable for indirect, incidental, special, consequential, punitive, or exemplary damages, lost profits, lost revenue, lost data, repository damage, credential exposure, or business interruption arising from beta access or hosted execution.</p>
+    <p>Where liability cannot be excluded, liability is limited to the greater of the amount you paid to brnrd for the affected service during the three months before the claim or EUR 100, except where applicable law requires a higher or non-waivable remedy.</p>
+
+    <h2>8. Non-Waivable Rights</h2>
+    <p>Nothing in these terms limits liability where limitation is not allowed by law, including non-waivable French or EU consumer-protection rights, liability for death or personal injury caused by negligence where applicable, fraud, wilful misconduct, gross negligence where applicable, or statutory rights that cannot be contracted away.</p>
+
+    <h2>9. Governing Law</h2>
+    <p>These beta terms are intended to be governed by French law, without excluding mandatory rights that apply to consumers under French or EU law.</p>
+  </section>
+</main>
+{% endblock %}

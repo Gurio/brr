@@ -82,6 +82,8 @@ def _migrate_accounts(conn: Connection) -> None:
     conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_accounts_github_id ON accounts (github_id)"))
     conn.execute(text("CREATE INDEX IF NOT EXISTS ix_accounts_github_login ON accounts (github_login)"))
     conn.execute(text("CREATE INDEX IF NOT EXISTS ix_accounts_email ON accounts (email)"))
+    conn.execute(text("ALTER TABLE accounts ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMP"))
+    conn.execute(text("ALTER TABLE accounts ADD COLUMN IF NOT EXISTS hosted_exec_terms_accepted_at TIMESTAMP"))
 
     # CPS (Current Planned State) — account-level plan/ledger mirror.
     conn.execute(text("ALTER TABLE accounts ADD COLUMN IF NOT EXISTS cross_repo_plan_md TEXT DEFAULT ''"))

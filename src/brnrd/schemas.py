@@ -397,6 +397,7 @@ class DevEnqueue(BaseModel):
     body: str
     source: str = "dev"
     reply_to: dict[str, Any] = Field(default_factory=dict)
+    accept_hosted_execution_terms: bool = False
 
 
 class DevEnqueued(BaseModel):
