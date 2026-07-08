@@ -321,7 +321,7 @@ reopen any of that. What it adds:
   maintainer has already said can wait (see next page's correction: wanted,
   postponable on effort grounds, not rejected on taste grounds).
 
-## Darkness dial: soft warm hearth vs. sharp cold-white edges (2026-07-08, discussion, not decided)
+## Darkness dial: soft warm hearth vs. sharp cold-white edges (2026-07-08, resolved same day — see addendum below)
 
 Direct ask, named explicitly as open: "amber/frost/darkness (the darkness
 could be close to black but with sharp white outlines or text, I don't
@@ -403,25 +403,64 @@ metaphorically, and it's small enough to prototype on one component
 the whole chrome system. Not started; this section is the discussion,
 not a build.
 
+### Darkness dial resolved: it was never a texture fork (2026-07-08, same day)
+
+Maintainer follow-up, direct: "I lack frontend experience, so bear with
+me... I still want all the warmth and blur, what I don't want: any
+red/green color language... my comment about amber/frost/darkness was
+more about color coding the states: amber instead of green, frost/bluish
+instead of orange-warn, dark/void theme, with white/frost on edge/text for
+readability/contrast instead of red-alert. So no cold/graphic."
+
+The three-option framing above misread the ask — "sharp white outlines"
+was never a bid to swap blur-and-warmth for crisp-and-cold (option 3,
+correctly flagged as the Severance-ish risk, is explicitly what's *not*
+wanted); it meant white/frost text reserved for *readability on a status
+that needs to read clearly*, not a structural edge treatment competing
+with the amber glow. Read against the code rather than the prose: this
+maps almost exactly onto the three-tier semantic scale `WindowTrack.svelte`
+already shipped 2026-07-08 (`ample`→amber `#e8b34a`, `low`→frost
+`#7aa9c2`, `critical`→ember `#c0523f`) — the maintainer independently
+re-derived the same hearth/frost/ember system from the live screenshot,
+which is a real confirmation signal, not a coincidence to wave past. So
+option (1) — deepen warmth, keep the blur, let frost do more work — was
+the closer reading all along; option (2)'s structural crisp/blur split was
+never the ask. Void could still go slightly darker/more retro-sci-fi per
+"could be shifted even slightly more" in the same message, but that's a
+dial to nudge later, not a fork to resolve now.
+
+Closed the same run, not left as a second round-trip: extracted
+`src/frontend/src/lib/statusPalette.ts` (`STATUS_GOOD`/`STATUS_WARN`/
+`STATUS_CRITICAL`/`STATUS_UNKNOWN`, the exact hexes above) as the single
+source, and wired `WindowTrack`/`LiveRuns`/`PRReviewQueue` to import it —
+closing punch-list item 3 below. Worth naming precisely: `LiveRuns.svelte`
+and `PRReviewQueue.svelte` weren't merely un-reskinned, their own comments
+*claimed* "same three-tier palette as WindowTrack" while still hardcoding
+the pre-reskin `#0ca30c`/`#fab219` stock hexes underneath — a false-parity
+comment, not just a missed pass. One module structurally forecloses that
+drift instead of relying on a future grep to catch it (the "palette drift
+check" the maintainer's own visual-inspection run flagged as a portal
+worth having, 2026-07-08 same day). Build+lint+typecheck clean.
+
 ## Punch list: what's still open on the visuals (2026-07-08 check-in)
 
 Asked directly: "what we still gotta address at the visuals." In order
 of how load-bearing each gap is, checked against the live site and the
 kb record above, not just recalled:
 
-1. **The darkness-dial fork above** — genuinely undecided, blocks nothing
-   else, worth resolving before the next chrome pass so effort isn't
-   spent twice.
+1. ~~The darkness-dial fork above~~ — **resolved same day** (§"Darkness
+   dial resolved"): it was never a texture fork, keep warmth+blur, no
+   cold/graphic. Void could still nudge darker/more retro-sci-fi later —
+   a dial, not a blocker.
 2. **Layer 3 stays unsolved, and stays the real one.** Both this page and
    `design-dashboard-live-surface.md` name it explicitly: bracket panels
    and a boot glitch are terminal/structural chrome, not an answer to "how
    does a dashboard represent dialogue with an agentic, not-fully-
    programmed resident." No shipped screen attempts this yet.
-3. **Status-badge reskin gap, now visually confirmed** (see above) —
-   `LiveRuns`/`PRReviewQueue`'s running/stalling dots are the one visibly
-   inconsistent element on the live page today: stock traffic-light hues
-   next to an otherwise coherent hearth/frost/ember system. Small, scoped,
-   already named — just not done.
+3. ~~Status-badge reskin gap~~ — **closed same day**: `LiveRuns`/
+   `PRReviewQueue` now import `statusPalette.ts` (`WindowTrack`'s own
+   hearth/frost/ember hexes) instead of the stock traffic-light values
+   their comments falsely claimed parity with.
 4. **Runic/bind-rune glyph treatment for the weave's own mark channel**
    (✓ ✗ ? → Δ) — still only proposed, never built, and still the most
    direct place this project's own "retro-engineering = runes" thesis
