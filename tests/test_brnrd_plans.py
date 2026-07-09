@@ -141,3 +141,47 @@ def test_plans_dashboard_requires_login():
     page = client.get("/plans", follow_redirects=False)
     assert page.status_code == 303
     assert page.headers["location"].startswith("/login")
+
+
+def test_dashboard_plans_api_returns_mirrored_decisions_space():
+    """#324 Phase 0: the SvelteKit dashboard's JSON view of the same
+    `PUT /v1/daemons/plans` mirror the Jinja `/plans` page renders raw."""
+    client = _client()
+    _, daemon_headers, _repo_id = _repo_and_daemon(client)
+    assert client.post(
+        "/v1/daemons/register",
+        json={"daemon_name": "laptop"},
+        headers=daemon_headers,
+    ).status_code == 200
+    client.put(
+        "/v1/daemons/plans",
+        json={
+            "repo_plan_md": "# Active plan\n\nUpdated: 2026-07-09\n\n## Ranked moves\n1. **Merge PR** now.\n2. **Fix bug** later.",
+            "cross_repo_plan_md": "",
+            "decision_ledger_md": "## Chose X (2026-07-08)\nBecause Y.",
+        },
+        headers=daemon_headers,
+    )
+    _login_cookie(client)
+
+    res = client.get("/v1/dashboard/plans")
+
+    assert res.status_code == 200
+    body = res.json()
+    assert body["plans"] == [
+        {
+            "repo_label": "Gurio/brr",
+            "plan_md": "# Active plan\n\nUpdated: 2026-07-09\n\n## Ranked moves\n1. **Merge PR** now.\n2. **Fix bug** later.",
+            "updated_at": body["plans"][0]["updated_at"],
+        }
+    ]
+    assert body["plans"][0]["updated_at"] is not None
+    assert body["decisions_md"] == "## Chose X (2026-07-08)\nBecause Y."
+    assert body["cross_repo_plan_md"] == ""
+    assert body["reported_at"] is not None
+
+
+def test_dashboard_plans_api_requires_session():
+    client = _client()
+    res = client.get("/v1/dashboard/plans")
+    assert res.status_code == 401
