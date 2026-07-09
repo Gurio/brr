@@ -46,6 +46,7 @@ nav:
       - Gates and portals: concepts/gates-and-portals.md
   - Reference:
       - CLI: reference/cli.md
+      - Execution environments: reference/environments.md
   - Self-hosting brnrd: self-hosting/index.md
   - Hosted brnrd (brnrd.dev): https://brnrd.dev
 

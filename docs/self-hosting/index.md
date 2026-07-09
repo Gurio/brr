@@ -18,6 +18,8 @@ If you'd rather not operate the always-on process yourself at all, see
 [brnrd.dev](https://brnrd.dev) — same software, hosted for you, with a
 free tier.
 
-In the meantime, [Quickstart](../getting-started/quickstart.md) and the
-[CLI reference](../reference/cli.md) already cover everything needed to
-run brr on a machine you control.
+In the meantime, [Quickstart](../getting-started/quickstart.md), the
+[CLI reference](../reference/cli.md), and the
+[execution environments reference](../reference/environments.md) (worktree
+isolation, Docker credential wiring, image requirements) already cover
+everything needed to run brr on a machine you control.

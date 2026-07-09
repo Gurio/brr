@@ -31,7 +31,10 @@ the two most common:
   worktree behavior. `host` runs directly in your checkout; `worktree`
   isolates each task onto its own git worktree; `docker` runs in a
   container with your AI CLI's host credentials (`~/.claude/`,
-  `~/.codex/`, `~/.gemini/`) bind-mounted in automatically.
+  `~/.codex/`, `~/.gemini/`) bind-mounted in automatically. See the
+  [execution environments reference](environments.md) for the full
+  picture — publish outcomes, Docker credential wiring, image
+  requirements, troubleshooting.
 
 Deep customization (new gates, new runner profiles, environment plugins)
 belongs in a local checkout, editable install, or fork — `.brr/config`
