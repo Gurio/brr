@@ -1,35 +1,26 @@
-# Installing
+# Install
+
+brnrd needs Python 3.10 or newer, git, and at least one supported coding-agent
+CLI on `PATH`: Claude Code (`claude`), Codex (`codex`), or Gemini CLI
+(`gemini`). Authenticate that CLI with your own subscription or API key first.
+
+Install brnrd with the tool manager you already use:
 
 ```bash
-pip install brr
+uv tool install brnrd        # recommended when uv is already present
+# or: pipx install brnrd
+# or: npx brnrd init -i
 ```
 
-Or run from a local checkout while developing or customizing brr itself:
+`npx brnrd` is a bootstrapper for the Python package, not a JavaScript port. It
+keeps its own environment and leaves your system Python alone.
+
+Check the installation:
 
 ```bash
-git clone https://github.com/Gurio/brr
-/path/to/brr/brnrd init
+brnrd --version
+brnrd --help
 ```
-
-For an editable install:
-
-```bash
-pip install -e /path/to/brr
-```
-
-Forks work with normal Python packaging too:
-
-```bash
-pip install git+https://github.com/you/brr.git
-```
-
-## Requirements
-
-- Python 3.11+
-- At least one AI CLI on `PATH` that brr can drive as a runner —
-  `claude` (Claude Code), `codex`, or `gemini` are the built-in profiles.
-  You bring your own subscription/API key for whichever one you use.
-- git, for the branch/PR workflow.
 
 ## Development install
 
@@ -50,5 +41,4 @@ brnrd up --dev-reload
 
 ## Next
 
-Continue to [Quickstart](quickstart.md) to initialize a repo and run
-your first task.
+Continue to [Connect](connect.md) and choose your door.

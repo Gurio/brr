@@ -1,48 +1,82 @@
 # CLI reference
 
-| Command | What it does |
-|---------|--------------|
-| `brnrd init [url]` | Create `AGENTS.md` + `kb/`, detect runner |
-| `brnrd run "<task>"` | Run a task via the configured runner |
-| `brnrd bind <repo> <gate>` | Bind a repo-local gate |
-| `brnrd connect [url]` | Connect this daemon to the brnrd hosted service |
-| `brnrd add <repo>` | Add a repo to the connected account home |
-| `brnrd kb "<query>"` | Search home/repo knowledge |
-| `brnrd up` | Start the daemon (foreground) |
-| `brnrd down` | Stop the foreground daemon |
-| `brnrd daemon up` | Start the installed daemon service, or foreground daemon if no service is installed |
-| `brnrd daemon down` | Stop the installed daemon service, or foreground daemon if no service is installed |
-| `brnrd daemon status` | Show service and foreground daemon status |
-| `brnrd daemon install` | Install the native user service (systemd or LaunchAgent) |
-| `brnrd daemon uninstall` | Remove the native user service |
-| `brnrd daemon logs` | Tail native service logs |
+This page reflects the public command tree printed by the installed CLI on
+2026-07-17. Run `brnrd <command> --help` for the exact options in your version.
 
-Gates: `telegram`, `slack`, `github`.
+## Core workflow
 
-## `.brr/config`
+| Command | Purpose |
+|---|---|
+| `brnrd init [url]` | Set up a repo; `-i` runs interactive setup. |
+| `brnrd run "<instruction>"` | Run one task through the configured Runner. |
+| `brnrd review <pack>` | Validate or project a diffense review pack; supports `--check`, `--pr-body`, `--pr-title`, `--relay`, and `--json`. |
+| `brnrd up [--foreground] [--dev-reload]` | Start the daemon; shortcut for `daemon up`. |
+| `brnrd down` | Stop the daemon; shortcut for `daemon down`. |
 
-Lightweight runtime choices live in `.brr/config` as `key=value` lines —
-the two most common:
+## Gates and accounts
 
-- `runner=<name>` — pick a built-in runner profile (`claude`, `codex`,
-  `gemini`) or a name defined in `.brr/runners.md`.
-- `environment=<auto|host|worktree|docker>` — the daemon backend a task
-  runs in. `auto` prefers configured Docker isolation, then falls back to
-  worktree behavior. `host` runs directly in your checkout; `worktree`
-  isolates each task onto its own git worktree; `docker` runs in a
-  container with your AI CLI's host credentials (`~/.claude/`,
-  `~/.codex/`, `~/.gemini/`) bind-mounted in automatically. See the
-  [execution environments reference](environments.md) for the full
-  picture — publish outcomes, Docker credential wiring, image
-  requirements, troubleshooting.
+| Command | Purpose |
+|---|---|
+| `brnrd gate setup <gate>` | Authenticate and bind a gate in one flow. |
+| `brnrd gate auth <gate>` | Authenticate `telegram`, `slack`, `github`, or `cloud`. |
+| `brnrd gate bind <repo> <gate>` | Bind a repo-local gate. |
+| `brnrd gate list [--json]` | Show gates configured here. |
+| `brnrd account connect [url]` | Pair the daemon with brnrd; accepts `--daemon-name`. |
+| `brnrd account add <repo>` | Add a repo to the connected account home. |
+| `brnrd account status [--json]` | Show the resolved home and its repos. |
+| `brnrd home link` | Back up resident memory and project knowledge to private GitHub repos; use `--help` before this mutating operation. |
 
-Deep customization (new gates, new runner profiles, environment plugins)
-belongs in a local checkout, editable install, or fork — `.brr/config`
-is intentionally limited to the choices most repos actually need to
-change.
+The retired top-level spellings `auth`, `bind`, `setup`, `add`, and `connect`
+are not aliases. Use the noun-first commands above.
 
-## Platform notes
+## Daemon lifecycle
 
-On macOS, the first daemon run that opens network sockets can trigger the
-system "accept incoming network connections" prompt. Allow it if you want
-gates and managed brnrd traffic to reach the local daemon.
+| Command | Purpose |
+|---|---|
+| `brnrd daemon up [--foreground] [--dev-reload]` | Start the installed service, or foreground daemon when selected. |
+| `brnrd daemon down` | Stop it. |
+| `brnrd daemon status` | Show service and foreground status. |
+| `brnrd daemon install` | Install the systemd user service or macOS LaunchAgent; supports `--no-start`. |
+| `brnrd daemon uninstall` | Remove the service. |
+| `brnrd daemon logs [-n LINES] [--no-follow]` | Read or follow service logs. |
+
+## Knowledge, diagnostics, and resident tools
+
+| Command | Purpose |
+|---|---|
+| `brnrd docs [topic]` | Read the documentation bundled with the tool. |
+| `brnrd kb "<query>" [--limit N]` | Search home and repo knowledge. |
+| `brnrd portal state [--json] [--path PATH]` | Inspect live daemon portal state. |
+| `brnrd portal facets [--json] [--path PATH]` | List the portal facet catalogue and live population. |
+| `brnrd agent inject [--task TEXT]` | Print the wake context a daemon task would receive. |
+| `brnrd ergonomics summary [--days N] [--json]` | Summarize captured agent-ergonomics records. |
+| `brnrd ergonomics list [--issue ID] [--days N] [--limit N] [--json]` | List captured records. |
+| `brnrd ergonomics clear [--before YYYY-MM-DD]` | Delete captured records. |
+
+## Runners, bench, and completions
+
+| Command | Purpose |
+|---|---|
+| `brnrd runners list [--json] [--all]` | List configured profiles and bundled Cores. |
+| `brnrd bench scenarios` | List scripted seam probes. |
+| `brnrd bench run [--scenario NAME] [--shell SHELL]` | Run a probe in a sandbox; it spends real Runner quota. |
+| `brnrd completions bash` | Print Bash completions. |
+| `brnrd completions zsh` | Print Zsh completions. |
+| `brnrd completions fish` | Print Fish completions. |
+
+The bench runner also accepts `--root`, `--timeout`, and repeatable
+`--config KEY=VALUE` options.
+
+## Common project settings
+
+`.brr/config` uses `key=value` lines:
+
+```ini
+environment=worktree
+shell=codex
+core=default
+runner_policy=fixed
+```
+
+See [Runs & environments](../concepts/environments.md) and
+[Models & quota](../guides/models.md) before changing these settings.

@@ -1,12 +1,11 @@
-site_name: brr docs
+site_name: brnrd docs
 site_url: https://gurio.github.io/brr-docs/
-repo_url: https://github.com/Gurio/brr
-repo_name: Gurio/brr
+repo_url: https://github.com/Gurio/brr-docs
+repo_name: Gurio/brr-docs
 edit_uri: edit/main/docs/
 site_description: >-
-  brr — structured AI agent playbook with persistent knowledge base and
-  remote execution. Documentation for adopters running brr or the
-  hosted brnrd service.
+  brnrd — local coding agents, reachable from anywhere, with continuity
+  across runs.
 
 theme:
   name: material
@@ -38,17 +37,20 @@ theme:
 nav:
   - Home: index.md
   - Getting started:
-      - Quickstart: getting-started/quickstart.md
-      - Installing: getting-started/install.md
+      - 1. Install: getting-started/install.md
+      - 2. Connect: getting-started/connect.md
+      - 3. First task: getting-started/first-task.md
   - Concepts:
-      - AGENTS.md + kb: concepts/agents-and-kb.md
-      - The daemon: concepts/daemon.md
-      - Gates and portals: concepts/gates-and-portals.md
+      - The resident: concepts/resident.md
+      - Runs & environments: concepts/environments.md
+      - Gates & authorization: concepts/gates.md
+  - Guides:
+      - Models & quota: guides/models.md
+      - Troubleshooting: guides/troubleshooting.md
+  - Security & privacy: security.md
+  - Self-hosting brnrd: self-hosting/index.md
   - Reference:
       - CLI: reference/cli.md
-      - Execution environments: reference/environments.md
-  - Self-hosting brnrd: self-hosting/index.md
-  - Hosted brnrd (brnrd.dev): https://brnrd.dev
 
 markdown_extensions:
   - admonition

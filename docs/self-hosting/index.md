@@ -1,25 +1,37 @@
 # Self-hosting brnrd
 
-Everything on this site describes running brr yourself — there's no
-separate "self-hosted edition." `brnrd up` / `brnrd daemon install` on
-your own machine or server *is* self-hosting: full feature parity with
-the hosted product, no time limit, no crippled tier.
+Self-hosting means keeping the brnrd daemon and coding-agent CLIs on a machine
+you control. That can be your workstation or an always-on host with access to
+the repositories and credentials the resident needs.
 
-This page is a placeholder for the deployment-specific guidance that
-belongs here as it gets written:
+Start with the normal [Install](../getting-started/install.md), then configure a
+self-hosted gate:
 
-- Running the daemon as a persistent service on a always-on machine you
-  control (a spare box, a small VPS, a home server).
-- Bring-your-own billing if you want to offer brr to others yourself
-  (Stripe alternatives, or no billing at all for personal use).
-- Backup/durability guidance for the knowledge base and dominion state.
+```bash
+brnrd gate setup telegram
+brnrd daemon install
+brnrd daemon status
+```
 
-If you'd rather not operate the always-on process yourself at all, see
-[brnrd.dev](https://brnrd.dev) — same software, hosted for you, with a
-free tier.
+The installer uses a systemd user service on Linux or a LaunchAgent on macOS.
+Use `brnrd daemon logs` for service output and `brnrd daemon uninstall` to
+remove it.
 
-In the meantime, [Quickstart](../getting-started/quickstart.md), the
-[CLI reference](../reference/cli.md), and the
-[execution environments reference](../reference/environments.md) (worktree
-isolation, Docker credential wiring, image requirements) already cover
-everything needed to run brr on a machine you control.
+## What you operate
+
+- the host and its network exposure;
+- the Claude Code, Codex, or Gemini CLI login;
+- gate credentials and authorization choices;
+- repository and resident-state backups;
+- updates to this alpha software.
+
+Project work and runner execution remain local to that host. A self-hosted
+Telegram, Slack, or GitHub gate still carries messages through the transport's
+own service.
+
+Read [Security & privacy](../security.md) before exposing a gate. In particular,
+the currently shipped gates authorize rooms or trigger syntax rather than each
+sender.
+
+For managed service availability and pricing, see [brnrd.dev](https://brnrd.dev).
+This page makes no parity or hosted-compute claim.
