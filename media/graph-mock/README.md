@@ -23,7 +23,8 @@ Run frames from `/home/gurio/.local/state/brnrd/accounts/acc_bdda426da378d4f0c3c
 ## Self-contained
 
 No build step. Open `index.html` directly in a browser.
-`snap.js` is the Playwright snapshot script; run from `/tmp/shotwork/` where playwright is installed:
+`snap.js` is the Playwright snapshot script. Run it from this directory; it
+falls back to the known Playwright install at `/tmp/shotwork/node_modules`:
 ```
-cd /tmp/shotwork && node graph-snap.js
+cd media/graph-mock && node snap.js
 ```

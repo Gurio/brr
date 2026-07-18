@@ -1,4 +1,14 @@
-const { chromium } = require('playwright');
+function loadPlaywright() {
+  try {
+    return require('playwright');
+  } catch (_) {
+    // The evaluation machine keeps Playwright in /tmp/shotwork; make the
+    // artifact runnable there without a local install step.
+    return require('/tmp/shotwork/node_modules/playwright');
+  }
+}
+
+const { chromium } = loadPlaywright();
 const path = require('path');
 const url = 'file://' + path.resolve(__dirname, 'index.html');
 
