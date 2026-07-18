@@ -1,11 +1,11 @@
 # graph-mock
 
 Standalone visual prototype of the "dense time-based cells" loom graph.
-Evaluation artifact for the P3 loom design decision (maintainer, 2026-07-18).
+Evaluation artifact for the P3 loom design decision (maintainer, 2026-07-17).
 
 ## Data snapshot
 
-2026-07-18 23:54 UTC — 15 most recent runs for Gurio/brr, baked in.
+2026-07-17 — 15 most recent runs for Gurio/brr, baked in.
 Run frames from `/home/gurio/.local/state/brnrd/accounts/acc_bdda426da378d4f0c3cad2eb/home/run-state/Gurio__brr/`.
 
 ## Design refs
